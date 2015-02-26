@@ -1655,7 +1655,7 @@ function selectPointsBtn_Callback(hObject, ~, handles)
 function subFigClickCallBack(hObject,~,handles)
 
     % Find out which of the subfigures the click came through
-    subIdx = find(ismember(handles.hSub,get(hObject,'Parent')));
+    subIdx = find(ismember(handles.hSub,get(hObject,'Parent')))
     
     
 %     % Indicate selected

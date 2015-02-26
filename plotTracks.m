@@ -6,8 +6,9 @@ end
 
 ret = 0;
 ids = unique([tracks.id]);
+%col = distinguishable_colors(nTracks,{'r','k','y'});
+col = distinguishable_colors(max(ids),{'r','k','y'});
 nTracks = length(ids);
-col = distinguishable_colors(nTracks,{'r','k','y'});
 h = zeros(nTracks,1);
 
 for k = 1:nTracks
@@ -16,7 +17,7 @@ for k = 1:nTracks
     
     [~,idx] = sort([idTrack.t]);
     idTrack = idTrack(idx);
-    h(k) = plot(ax,[idTrack.t],[idTrack.f1],'.-','Color',col(k,:));
+    h(k) = plot(ax,[idTrack.t],[idTrack.f1],'.-','Color',col(ids(k),:));
     
     if ismember(k,selId)
         plot(ax,[idTrack.t],[idTrack.f1],'oy');
