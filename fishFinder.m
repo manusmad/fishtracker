@@ -898,9 +898,10 @@ function loadSpecBtn_Callback(hObject, ~, handles)
         try
             progressbar('Loading spectrogram data');
             tic;
-
             load(fullfile(specFilePath,specFileName),'spec');
             spec = hlp_deserialize(spec);
+            runTime = toc;
+            progressbar(1);
             
             % Verify that the loaded data conforms to the rest of the data
             if compareMetaAll(handles,'spec',spec.meta)
@@ -921,9 +922,6 @@ function loadSpecBtn_Callback(hObject, ~, handles)
                 handles = createSubplots(handles);
                 handles = populateChannelList(handles);
                 handles = computeResolutions(handles);
-
-                runTime = toc;
-                progressbar(1);
 
                 handles = refreshPlot(handles);
                 handles = writeLog(handles,'Loaded spectrogram file %s (%.2f s)',specFileName,runTime);
@@ -1426,122 +1424,7 @@ function splitTracksBtn_Callback(hObject, ~, handles)
     end
     guidata(hObject,handles); 
     
-    
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% CREATEFCNS AND OTHER NECESSARY BUT JUNK CODE %%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% --- Executes during object creation, afte~ setting all properties.
-function prefixEdit_CreateFcn(hObject, ~, ~)
-    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-        set(hObject,'BackgroundColor','white');
-    end
-
-% --- Executes during object creation, after setting all properties.
-function log_CreateFcn(hObject, ~, ~)
-    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-        set(hObject,'BackgroundColor','white');
-    end
-
-% --- Executes during object creation, after setting all properties.
-function specPresetPopup_CreateFcn(hObject, ~, ~)
-    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-        set(hObject,'BackgroundColor','white');
-    end
-
-% --- Executes during object creation, after setting all properties.
-function channelListBox_CreateFcn(hObject, ~, ~)
-    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-        set(hObject,'BackgroundColor','white');
-    end
-
-% --- Executes during object creation, after setting all properties.
-function rangeF1Edit_CreateFcn(hObject, ~, ~)
-    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-        set(hObject,'BackgroundColor','white');
-    end
-
-% --- Executes during object creation, after setting all properties.
-function nFFTEdit_CreateFcn(hObject, ~, ~)
-    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-        set(hObject,'BackgroundColor','white');
-    end
-
-% --- Executes during object creation, after setting all properties.
-function tResValTxt_CreateFcn(hObject, ~, ~)
-    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-        set(hObject,'BackgroundColor','white');
-    end
-
-% --- Executes during object creation, after setting all properties.
-function fResValTxt_CreateFcn(hObject, ~, ~)
-    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-        set(hObject,'BackgroundColor','white');
-    end
-
-% --- Executes during object creation, after setting all properties.
-function overlapEdit_CreateFcn(hObject, ~, ~)
-    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-        set(hObject,'BackgroundColor','white');
-    end
-
-% --- Executes during object creation, after setting all properties.
-function rangeF2Edit_CreateFcn(hObject, ~, ~)
-    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-        set(hObject,'BackgroundColor','white');
-    end
-
-% --- Executes during object creation, after setting all properties.
-function rangeT1Edit_CreateFcn(hObject, ~, ~)
-    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-        set(hObject,'BackgroundColor','white');
-    end
-
-% --- Executes during object creation, after setting all properties.
-function rangeT2Edit_CreateFcn(hObject, ~, ~)
-    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-        set(hObject,'BackgroundColor','white');
-    end
-
-% --- Executes during object creation, after setting all properties.
-function threshSlider_CreateFcn(hObject, ~, ~)
-    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-        set(hObject,'BackgroundColor',[.9 .9 .9]);
-    end
-
-% --- Executes during object creation, after setting all properties.
-function bwThreshEdit_CreateFcn(hObject, ~, ~)
-    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-        set(hObject,'BackgroundColor','white');
-    end
-
-% --- Executes during object creation, after setting all properties.
-function threshEdit_CreateFcn(hObject, ~, ~)
-    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-        set(hObject,'BackgroundColor','white');
-    end
-
-% --- Executes on button press in rangeRestoreBtn.
-function rangeRestoreBtn_Callback(hObject, ~, handles)
-    if isfield(handles,'spec')
-        handles = setRanges(handles,handles.spec.F(1),handles.spec.F(end),handles.spec.T(1),handles.spec.T(end));
-        handles = refreshPlot(handles);
-    end
-    guidata(hObject,handles);
-
-
-% --- Executes on selection change in tracksListBox.
-function tracksListBox_Callback(hObject, ~, handles)
-    handles = refreshPlot(handles);
-    guidata(hObject,handles);
-
-% --- Executes during object creation, after setting all properties.
-function tracksListBox_CreateFcn(hObject, ~, ~)
-    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-        set(hObject,'BackgroundColor','white');
-    end
-
-% --- Executes on button press in trackHighlightCheck.
+ % --- Executes on button press in trackHighlightCheck.
 function trackHighlightCheck_Callback(hObject, ~, handles)
     handles.params.trackHighlight = get(hObject,'Value');
     handles = refreshPlot(handles);
@@ -1846,4 +1729,119 @@ function tracksRedoBtn_Callback(hObject, eventdata, handles)
         handles = writeLog(handles,'No tracks data found');
     end
     
+    guidata(hObject,handles);   
+
+% --- Executes on button press in rangeRestoreBtn.
+function rangeRestoreBtn_Callback(hObject, ~, handles)
+    if isfield(handles,'spec')
+        handles = setRanges(handles,handles.spec.F(1),handles.spec.F(end),handles.spec.T(1),handles.spec.T(end));
+        handles = refreshPlot(handles);
+    end
     guidata(hObject,handles);
+
+
+% --- Executes on selection change in tracksListBox.
+function tracksListBox_Callback(hObject, ~, handles)
+    handles = refreshPlot(handles);
+    guidata(hObject,handles);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% CREATEFCNS AND OTHER NECESSARY BUT JUNK CODE %%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% --- Executes during object creation, afte~ setting all properties.
+function prefixEdit_CreateFcn(hObject, ~, ~)
+    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+        set(hObject,'BackgroundColor','white');
+    end
+
+% --- Executes during object creation, after setting all properties.
+function log_CreateFcn(hObject, ~, ~)
+    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+        set(hObject,'BackgroundColor','white');
+    end
+
+% --- Executes during object creation, after setting all properties.
+function specPresetPopup_CreateFcn(hObject, ~, ~)
+    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+        set(hObject,'BackgroundColor','white');
+    end
+
+% --- Executes during object creation, after setting all properties.
+function channelListBox_CreateFcn(hObject, ~, ~)
+    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+        set(hObject,'BackgroundColor','white');
+    end
+
+% --- Executes during object creation, after setting all properties.
+function rangeF1Edit_CreateFcn(hObject, ~, ~)
+    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+        set(hObject,'BackgroundColor','white');
+    end
+
+% --- Executes during object creation, after setting all properties.
+function nFFTEdit_CreateFcn(hObject, ~, ~)
+    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+        set(hObject,'BackgroundColor','white');
+    end
+
+% --- Executes during object creation, after setting all properties.
+function tResValTxt_CreateFcn(hObject, ~, ~)
+    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+        set(hObject,'BackgroundColor','white');
+    end
+
+% --- Executes during object creation, after setting all properties.
+function fResValTxt_CreateFcn(hObject, ~, ~)
+    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+        set(hObject,'BackgroundColor','white');
+    end
+
+% --- Executes during object creation, after setting all properties.
+function overlapEdit_CreateFcn(hObject, ~, ~)
+    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+        set(hObject,'BackgroundColor','white');
+    end
+
+% --- Executes during object creation, after setting all properties.
+function rangeF2Edit_CreateFcn(hObject, ~, ~)
+    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+        set(hObject,'BackgroundColor','white');
+    end
+
+% --- Executes during object creation, after setting all properties.
+function rangeT1Edit_CreateFcn(hObject, ~, ~)
+    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+        set(hObject,'BackgroundColor','white');
+    end
+
+% --- Executes during object creation, after setting all properties.
+function rangeT2Edit_CreateFcn(hObject, ~, ~)
+    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+        set(hObject,'BackgroundColor','white');
+    end
+
+% --- Executes during object creation, after setting all properties.
+function threshSlider_CreateFcn(hObject, ~, ~)
+    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+        set(hObject,'BackgroundColor',[.9 .9 .9]);
+    end
+
+% --- Executes during object creation, after setting all properties.
+function bwThreshEdit_CreateFcn(hObject, ~, ~)
+    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+        set(hObject,'BackgroundColor','white');
+    end
+
+% --- Executes during object creation, after setting all properties.
+function threshEdit_CreateFcn(hObject, ~, ~)
+    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+        set(hObject,'BackgroundColor','white');
+    end
+
+% --- Executes during object creation, after setting all properties.
+function tracksListBox_CreateFcn(hObject, ~, ~)
+    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+        set(hObject,'BackgroundColor','white');
+    end
+
