@@ -276,34 +276,6 @@ function log_Callback(hObject, ~, handles)
     jEdit = jhEdit.getComponent(0).getComponent(0);
     jEdit.setCaretPosition(jEdit.getDocument.getLength);
     guidata(hObject,handles);    
-    
-% --- Executes on button press in saveElecBtn.
-function saveElecBtn_Callback(hObject, ~, handles)
-    if isfield(handles,'elec')
-        if isfield(handles,'elecFilePath')
-            if isfield(handles,'elecFileName')
-                [elecFileName,elecFilePath] = uiputfile(fullfile(handles.elecFilePath,handles.elecFileName),'Save electrode data as...');
-            else
-                [elecFileName,elecFilePath] = uiputfile([handles.elecFilePath filesep '*.mat'],'Save electrode data as...');
-            end
-        else
-            [elecFileName,elecFilePath] = uiputfile('*.mat','Save electrode data as...');
-        end
-        
-        elec = handles.elec;
-        tic;
-        savefast(fullfile(elecFilePath,elecFileName),'elec');
-        runTime = toc;
-
-        handles = writeLog(handles,'Saved data file %s (%.2f s)',elecFileName,runTime);
-        set(handles.elecFileTxt,'String',elecFileName);
-
-        handles.elecFileName = elecFileName;
-        handles.elecFilePath = elecFilePath;
-    else
-        handles = writeLog(handles,'No electrode data loaded');
-    end
-    guidata(hObject,handles);
 
 % --- Executes on edits on the overlap field.
 function overlapEdit_Callback(hObject, ~, handles)
@@ -841,6 +813,37 @@ function loadElecBtn_Callback(hObject, ~, handles)
     end
     guidata(hObject,handles);
 
+% --- Executes on button press in saveElecBtn.
+function saveElecBtn_Callback(hObject, ~, handles)
+    if isfield(handles,'elec')
+        if isfield(handles,'elecFileName') && isfield(handles,'elecFilePath')
+            [elecFileName,elecFilePath] = uiputfile(fullfile(handles.elecFilePath,handles.elecFileName),'Save electrode data as...');
+        elseif isfield(handles,'elecFilePath')
+            [elecFileName,elecFilePath] = uiputfile([handles.elecFilePath filesep '*.mat'],'Save electrode data as...');
+        elseif isfield(handles,'lastOpenPath')
+            [elecFileName,elecFilePath] = uiputfile([handles.lastOpenPath filesep '*.mat'],'Save electrode data as...');
+        else
+            [elecFileName,elecFilePath] = uiputfile('*.mat','Save electrode data as...');
+        end
+        
+        if elecFileName
+            elec = handles.elec;
+            tic;
+            savefast(fullfile(elecFilePath,elecFileName),'elec');
+            runTime = toc;
+
+            handles = writeLog(handles,'Saved data file %s (%.2f s)',elecFileName,runTime);
+            set(handles.elecFileTxt,'String',elecFileName);
+
+            handles.elecFileName = elecFileName;
+            handles.elecFilePath = elecFilePath;
+            handles.lastOpenPath = elecFilePath;
+        end
+    else
+        handles = writeLog(handles,'No electrode data loaded');
+    end
+    guidata(hObject,handles);
+    
 % --- Executes on button press in loadSmrBtn.
 function loadSmrBtn_Callback(hObject, ~, handles)
     if isfield(handles,'smrFilePath')
@@ -881,7 +884,6 @@ function loadSmrBtn_Callback(hObject, ~, handles)
     end
     guidata(hObject,handles);
     
-
 % --- Executes on button press in loadSpecBtn.
 function loadSpecBtn_Callback(hObject, ~, handles)
     if isfield(handles,'specFilePath')
