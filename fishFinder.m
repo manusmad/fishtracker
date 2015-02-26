@@ -1856,9 +1856,11 @@ function tracksListBox_CreateFcn(hObject, ~, ~)
     end
 
 % --- MAIN KEYPRESS FUNCTION FOR FIGURE WINDOW, ADD KEYBOARD SHORTCUTS HERE --- %
-function figure1_KeyReleaseFcn(~, eventdata, handles)
+function figure1_KeyReleaseFcn(hObject, eventdata, handles)
     if strcmp(eventdata.Key,'z') && ~isempty(eventdata.Modifier) && strcmp(eventdata.Modifier,'control')
         handles = undo(handles);
     elseif strcmp(eventdata.Key,'y') && ~isempty(eventdata.Modifier) && strcmp(eventdata.Modifier,'control')
         handles = redo(handles);
     end
+
+    guidata(hObject,handles);
