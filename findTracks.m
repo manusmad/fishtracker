@@ -46,7 +46,7 @@ for tstep = 1:nT
         while(~isempty(locs))
             % If this is the fundamental, find all the peaks at harmonics
             f1 = F(locs(1));
-            nHarm = floor(F(end)/f1);
+            nHarm = 3;%floor(F(end)/f1);
             harmIdx = false(length(locs),nHarm);
             for harm = 1:nHarm             
                 harmIdx(:,harm) = abs(F(locs)-harm*f1) <= Fsep;

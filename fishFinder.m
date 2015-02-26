@@ -1153,7 +1153,9 @@ function clearElecBtn_Callback(hObject, ~, handles)
 function handles = clearElec(handles)
     if isfield(handles,'elec')
         handles = rmfield(handles,'elec');
-        handles = rmfield(handles,'elecFileName');
+        if isfield(handles,'elecFileName')
+            handles = rmfield(handles,'elecFileName');
+        end
         set(handles.elecFileTxt,'String','<None>');
         handles = writeLog(handles,'Cleared electrode data');
         
@@ -1176,7 +1178,9 @@ function clearSpecBtn_Callback(hObject, ~, handles)
 function handles = clearSpec(handles)
     if isfield(handles,'spec')
         handles = rmfield(handles,'spec');
-        handles = rmfield(handles,'specFileName');
+        if isfield(handles,'specFileName')
+            handles = rmfield(handles,'specFileName');
+        end
         set(handles.specFileTxt,'String','<None>');
         handles = writeLog(handles,'Cleared spectrogram data');
          
@@ -1202,7 +1206,9 @@ function clearTracksBtn_Callback(hObject, ~, handles)
 function handles = clearTracks(handles) 
     if isfield(handles,'tracks')
         handles = rmfield(handles,'tracks');
-        handles = rmfield(handles,'tracksFileName');
+        if isfield(handles,'tracksFileName')
+            handles = rmfield(handles,'tracksFileName');
+        end
         set(handles.tracksFileTxt,'String','<None>');
         handles.undo.empty();
         handles.redo.empty();
@@ -1850,9 +1856,9 @@ function tracksListBox_CreateFcn(hObject, ~, ~)
     end
 
 % --- MAIN KEYPRESS FUNCTION FOR FIGURE WINDOW, ADD KEYBOARD SHORTCUTS HERE --- %
-function figure1_KeyReleaseFcn(hObject, eventdata, handles)
-    if strcmp(eventdata.Key,'z') && strcmp(eventdata.Modifier,'control')
+function figure1_KeyReleaseFcn(~, eventdata, handles)
+    if strcmp(eventdata.Key,'z') && ~isempty(eventdata.Modifier) && strcmp(eventdata.Modifier,'control')
         handles = undo(handles);
-    elseif strcmp(eventdata.Key,'y') && strcmp(eventdata.Modifier,'control')
+    elseif strcmp(eventdata.Key,'y') && ~isempty(eventdata.Modifier) && strcmp(eventdata.Modifier,'control')
         handles = redo(handles);
     end
