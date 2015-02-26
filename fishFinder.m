@@ -22,7 +22,7 @@ function varargout = fishFinder(varargin)
 
 % Edit the above text to modify the response to help fishFinder
 
-% Last Modified by GUIDE v2.5 26-Feb-2015 12:37:55
+% Last Modified by GUIDE v2.5 26-Feb-2015 15:55:13
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;

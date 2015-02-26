@@ -250,8 +250,11 @@ for tstep = 1:nT
     if ~isempty(strayFish)
         % Integrate good strays into active
         goodIdx = find([strayFish.conf]>=strayConfMax);
-        activeFish = [activeFish strayFish(goodIdx)];
-        strayFish(goodIdx) = [];
+        for g = 1:length(goodIdx)
+            idx = [strayFish.id]==strayFish(goodIdx(g)).id;
+            activeFish = [activeFish strayFish(idx)];
+            strayFish(idx) = [];
+        end
 
         % Discard bad strays
         badIdx = [strayFish.conf]<=strayConfMin;
