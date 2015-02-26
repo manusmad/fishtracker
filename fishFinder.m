@@ -785,57 +785,59 @@ function loadElecBtn_Callback(hObject, ~, handles)
         [elecFileName,elecFilePath] = uigetfile('*.mat','Choose electrode data file');
     end
     
-    try
-        progressbar('Loading electrode data');
-        tic;
-        load(fullfile(elecFilePath,elecFileName),'elec');
-        runTime = toc;
-        progressbar(1);
+    if elecFileName
+        try
+            progressbar('Loading electrode data');
+            tic;
+            load(fullfile(elecFilePath,elecFileName),'elec');
+            runTime = toc;
+            progressbar(1);
 
-        if ~isfield(elec,'meta')
-            elec2 = elec;
-            clear elec;
-            fnames = fieldnames(elec2);
-            for f = 1:length(fnames)
-                if any(strcmp(fnames{f},{'data','t'}))
-                    elec.(fnames{f}) = elec2.(fnames{f});
-                else
-                    elec.meta.(fnames{f}) = elec2.(fnames{f});
+            if ~isfield(elec,'meta')
+                elec2 = elec;
+                clear elec;
+                fnames = fieldnames(elec2);
+                for f = 1:length(fnames)
+                    if any(strcmp(fnames{f},{'data','t'}))
+                        elec.(fnames{f}) = elec2.(fnames{f});
+                    else
+                        elec.meta.(fnames{f}) = elec2.(fnames{f});
+                    end
                 end
             end
+
+            if ~isfield(elec.meta,'nCh')
+                elec.meta.nCh = length(elec.data,2);
+            end
+            if ~isfield(elec.meta,'N')
+                elec.meta.N = length(elec.t);
+            end
+            if ~isfield(elec.meta,'chNum')
+                elec.meta.chNum = 1:elec.meta.nCh;
+            end
+            if ~isfield(elec.meta,'chPrefix')
+                elec.meta.chPrefix = 'Ch';
+            end
+            if ~isfield(elec.meta,'sourceFile')
+                elec.meta.sourceFile = elecFileName;
+            end
+
+            handles.elecFileName = elecFileName;
+            handles.elecFilePath = elecFilePath;
+            handles.lastOpenPath = elecFilePath;
+            handles.elec = elec;
+
+            handles.meta = elec.meta;
+            handles = setRanges(handles,0,elec.meta.Fs/2,elec.t(1),elec.t(end));
+            handles = createSubplots(handles);
+            handles = populateChannelList(handles);
+            handles = computeResolutions(handles);
+
+            set(handles.elecFileTxt,'String',elecFileName);
+            handles = writeLog(handles,'Loaded data file %s (%.2f s)',elecFileName,runTime);
+        catch
+            handles = writeLog(handles,'Could not load %s (%.2f s)',elecFileName,runTime);
         end
- 
-        if ~isfield(elec.meta,'nCh')
-            elec.meta.nCh = length(elec.data,2);
-        end
-        if ~isfield(elec.meta,'N')
-            elec.meta.N = length(elec.t);
-        end
-        if ~isfield(elec.meta,'chNum')
-            elec.meta.chNum = 1:elec.meta.nCh;
-        end
-        if ~isfield(elec.meta,'chPrefix')
-            elec.meta.chPrefix = 'Ch';
-        end
-        if ~isfield(elec.meta,'sourceFile')
-            elec.meta.sourceFile = elecFileName;
-        end
-        
-        handles.elecFileName = elecFileName;
-        handles.elecFilePath = elecFilePath;
-        handles.lastOpenPath = elecFilePath;
-        handles.elec = elec;
-        
-        handles.meta = elec.meta;
-        handles = setRanges(handles,0,elec.meta.Fs/2,elec.t(1),elec.t(end));
-        handles = createSubplots(handles);
-        handles = populateChannelList(handles);
-        handles = computeResolutions(handles);
-        
-        set(handles.elecFileTxt,'String',elecFileName);
-        handles = writeLog(handles,'Loaded data file %s (%.2f s)',elecFileName,runTime);
-    catch
-        handles = writeLog(handles,'Could not load %s (%.2f s)',elecFileName,runTime);
     end
     guidata(hObject,handles);
 
@@ -849,27 +851,33 @@ function loadSmrBtn_Callback(hObject, ~, handles)
         [smrFileName,smrFilePath,~] = uigetfile('*.smr','Choose smr file');
     end
 
-    tic;
-    elec = loadSmrFile(smrFilePath,smrFileName,handles.params.smrFilePrefix);
-    runTime = toc;
-    
-    % Verify that the loaded data conforms to the rest of the data
-    if compareMetaAll(handles,'elec',elec.meta)
-        handles = writeLog(handles,'Parsed smr file %s, %d channels loaded. (%.2f s)',smrFileName,elec.meta.nCh,runTime);
-        set(handles.elecFileTxt,'String',sprintf('Data from %s',smrFileName));
+    if smrFileName
+        try
+            tic;
+            elec = loadSmrFile(smrFilePath,smrFileName,handles.params.smrFilePrefix);
+            runTime = toc;
 
-        handles.smrFileName = smrFileName;
-        handles.smrFilePath = smrFilePath;
-        handles.lastOpenPath = smrFilePath;
-        handles.elec = elec;
-        handles.meta = elec.meta;
+            % Verify that the loaded data conforms to the rest of the data
+            if compareMetaAll(handles,'elec',elec.meta)
+                handles = writeLog(handles,'Parsed smr file %s, %d channels loaded. (%.2f s)',smrFileName,elec.meta.nCh,runTime);
+                set(handles.elecFileTxt,'String',sprintf('Data from %s',smrFileName));
 
-        handles = setRanges(handles,0,elec.meta.Fs/2,elec.t(1),elec.t(end));
-        handles = createSubplots(handles);
-        handles = populateChannelList(handles);
-        handles = computeResolutions(handles);
-    else
-        handles = writeLog(handles,'File %s not loaded',smrFileName);
+                handles.smrFileName = smrFileName;
+                handles.smrFilePath = smrFilePath;
+                handles.lastOpenPath = smrFilePath;
+                handles.elec = elec;
+                handles.meta = elec.meta;
+
+                handles = setRanges(handles,0,elec.meta.Fs/2,elec.t(1),elec.t(end));
+                handles = createSubplots(handles);
+                handles = populateChannelList(handles);
+                handles = computeResolutions(handles);
+            else
+                handles = writeLog(handles,'File %s not loaded, try clearing all stored data',smrFileName);
+            end
+        catch
+            handles = writeLog(handles,'Could not load %s (%.2f s)',smrFileName,runTime);
+        end      
     end
     guidata(hObject,handles);
     
@@ -924,29 +932,31 @@ function loadSpecBtn_Callback(hObject, ~, handles)
 % --- Executes on button press in saveSpecBtn.
 function saveSpecBtn_Callback(hObject, ~, handles)
     if isfield(handles,'spec')
-        if isfield(handles,'specFilePath')
-            if isfield(handles,'specFileName')
-                [specFileName,specFilePath] = uiputfile(fullfile(handles.specFilePath,handles.specFileName),'Save spectrogram as...');
-            else
-                [specFileName,specFilePath] = uiputfile([handles.specFilePath filesep '*.mat'],'Save spectrogram as...');
-            end
+        if isfield(handles,'specFileName') && isfield(handles,'specFilePath')
+            [specFileName,specFilePath] = uiputfile(fullfile(handles.specFilePath,handles.specFileName),'Save spectrogram as...');
+        elseif isfield(handles,'specFilePath')
+            [specFileName,specFilePath] = uiputfile([handles.specFilePath filesep '*.mat'],'Save spectrogram as...');
+        elseif isfield(handles,'lastOpenPath')
+            [specFileName,specFilePath] = uiputfile([handles.lastOpenPath filesep '*.mat'],'Save spectrogram as...');
         else
             [specFileName,specFilePath] = uiputfile('*.mat','Save spectrogram as...');
         end
         
+        if specFileName
+            progressbar('Saving spectrogram data');
+            tic;
+            spec = hlp_serialize(handles.spec);
+            savefast(fullfile(specFilePath,specFileName),'spec');
+            runTime = toc;
+            progressbar(1);
 
-        progressbar('Saving spectrogram data');
-        tic;
-        spec = hlp_serialize(handles.spec);
-        savefast(fullfile(specFilePath,specFileName),'spec');
-        runTime = toc;
-        progressbar(1);
+            handles = writeLog(handles,'Saved spectrogram file %s (%.2f s)',specFileName,runTime);
+            set(handles.specFileTxt,'String',specFileName);
 
-        handles = writeLog(handles,'Saved spectrogram file %s (%.2f s)',specFileName,runTime);
-        set(handles.specFileTxt,'String',specFileName);
-
-        handles.specFileName = specFileName;
-        handles.specFilePath = specFilePath;
+            handles.specFileName = specFileName;
+            handles.specFilePath = specFilePath;
+            handles.lastOpenPath = specFilePath;
+        end
     else
         handles = writeLog(handles,'No spectrogram data available');
     end
@@ -963,29 +973,31 @@ function loadTracksBtn_Callback(hObject, ~, handles)
         [tracksFileName,tracksFilePath] = uigetfile('*.mat','Choose tracks file');
     end
     
-    try
-        progressbar('Loading tracks data');
-        tic;
-        load(fullfile(tracksFilePath,tracksFileName),'tracks');
-        runTime = toc;
-        progressbar(1);
+    if tracksFileName
+        try
+            progressbar('Loading tracks data');
+            tic;
+            load(fullfile(tracksFilePath,tracksFileName),'tracks');
+            runTime = toc;
+            progressbar(1);
 
-        handles.tracksFileName = tracksFileName;
-        handles.tracksFilePath = tracksFilePath;
-        handles.lastOpenPath = tracksFilePath;
-        handles.tracks = tracks;
-  
-        handles = refreshPlot(handles);
-        handles = populateTracksList(handles);
-        
-        handles.undo.empty();
-        handles.redo.empty();
-        handles = setUndoVisibility(handles);
-        
-        set(handles.tracksFileTxt,'String',tracksFileName);
-        handles = writeLog(handles,'Loaded data file %s (%.2f s)',tracksFileName,runTime);
-    catch
-        handles = writeLog(handles,'Could not load %s (%.2f s)',tracksFileName,runTime);
+            handles.tracksFileName = tracksFileName;
+            handles.tracksFilePath = tracksFilePath;
+            handles.lastOpenPath = tracksFilePath;
+            handles.tracks = tracks;
+
+            handles = refreshPlot(handles);
+            handles = populateTracksList(handles);
+
+            handles.undo.empty();
+            handles.redo.empty();
+            handles = setUndoVisibility(handles);
+
+            set(handles.tracksFileTxt,'String',tracksFileName);
+            handles = writeLog(handles,'Loaded data file %s (%.2f s)',tracksFileName,runTime);
+        catch
+            handles = writeLog(handles,'Could not load %s (%.2f s)',tracksFileName,runTime);
+        end
     end
     guidata(hObject,handles);
 
@@ -993,32 +1005,35 @@ function loadTracksBtn_Callback(hObject, ~, handles)
 % --- Executes on button press in saveTracksBtn.
 function saveTracksBtn_Callback(hObject, ~, handles)
     if isfield(handles,'tracks')
-        if isfield(handles,'tracksFilePath')
-            if isfield(handles,'tracksFileName')
-                [tracksFileName,tracksFilePath] = uiputfile(fullfile(handles.tracksFilePath,handles.tracksFileName),'Save tracks as...');
-            else
-                [tracksFileName,tracksFilePath] = uiputfile([handles.tracksFilePath filesep '*.mat'],'Save tracks as...');
-            end
+        if isfield(handles,'tracksFileName') && isfield(handles,'tracksFilePath')
+            [tracksFileName,tracksFilePath] = uiputfile(fullfile(handles.tracksFilePath,handles.tracksFileName),'Save tracks as...');
+        elseif isfield(handles,'tracksFilePath')
+            [tracksFileName,tracksFilePath] = uiputfile([handles.tracksFilePath filesep '*.mat'],'Save tracks as...');
+        elseif isfield(handles,'lastOpenPath')
+            [tracksFileName,tracksFilePath] = uiputfile([handles.lastOpenPath filesep '*.mat'],'Save tracks as...');
         else
             [tracksFileName,tracksFilePath] = uiputfile('*.mat','Save tracks as...');
         end
-        
-        progressbar('Filling empty data...','Saving tracks data');
-        handles.tracks = fillWithNaNs(handles.tracks,handles.spec.T,size(handles.spec.S,3));
-        tracks = handles.tracks;
-        tic;
-        meta = handles.meta;
-        meta.F = handles.spec.F;
-        meta.T = handles.spec.T;
-        save(fullfile(tracksFilePath,tracksFileName),'tracks','meta');
-        runTime = toc;
-        progressbar(1,1);
 
-        handles = writeLog(handles,'Saved data file %s (%.2f s)',tracksFileName,runTime);
-        set(handles.tracksFileTxt,'String',tracksFileName);
+        if tracksFileName
+            progressbar('Filling empty data...','Saving tracks data');
+            handles.tracks = fillWithNaNs(handles.tracks,handles.spec.T,size(handles.spec.S,3));
+            tracks = handles.tracks;
+            tic;
+            meta = handles.meta;
+            meta.F = handles.spec.F;
+            meta.T = handles.spec.T;
+            save(fullfile(tracksFilePath,tracksFileName),'tracks','meta');
+            runTime = toc;
+            progressbar(1,1);
 
-        handles.tracksFileName = tracksFileName;
-        handles.tracksFilePath = tracksFilePath;
+            handles = writeLog(handles,'Saved data file %s (%.2f s)',tracksFileName,runTime);
+            set(handles.tracksFileTxt,'String',tracksFileName);
+
+            handles.tracksFileName = tracksFileName;
+            handles.tracksFilePath = tracksFilePath;
+            handles.lastOpenPath = tracksFilePath;
+        end
     else
         handles = writeLog(handles,'No tracks data available');
     end
