@@ -63,12 +63,7 @@ function fishFinder_OpeningFcn(hObject, ~, handles, varargin)
     % Undo and redo stacks
     handles.undo = CStack();
     handles.redo = CStack();
-    
-    % Set selection highlight color in tracksListBox
-%     jScrollPane = findjobj(handles.tracksListBox);
-%     jListbox = jScrollPane.getViewport.getComponent(0);
-%     set(jListbox, 'SelectionBackground',java.awt.Color.yellow); % option #1
-   
+  
     % Parameter structure - All the global parameters which can be saved and
     % loaded should go here, and should be set in the function setParams
     handles.params.smrFilePrefix = 'Ch';
@@ -89,7 +84,12 @@ function fishFinder_OpeningFcn(hObject, ~, handles, varargin)
 
     handles = initParams(handles);
   
-    handles = writeLog(handles,'Ready');
+    %handles = writeLog(handles,'Ready');
+     % Set selection highlight color in tracksListBox
+%     jScrollPane = findjobj(handles.tracksListBox);
+%     jListbox = jScrollPane.getViewport.getComponent(0);
+%     set(jListbox, 'SelectionBackground',java.awt.Color.yellow); % option #1
+
     guidata(hObject, handles);
   
 function handles = initParams(handles)
@@ -267,9 +267,9 @@ function handles = writeLog(handles,str,varargin)
     logStr = [logStr ; str];
     set(handles.log,'String',logStr);
     
-%     jhEdit = findjobj(handles.log);
-%     jEdit = jhEdit.getComponent(0).getComponent(0);
-%     jEdit.setCaretPosition(jEdit.getDocument.getLength);
+     jhEdit = findjobj(handles.log);
+     jEdit = jhEdit.getComponent(0).getComponent(0);
+     jEdit.setCaretPosition(jEdit.getDocument.getLength);
 
 function log_Callback(hObject, ~, handles)
     jhEdit = findjobj(handles.log);
