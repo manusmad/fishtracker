@@ -68,12 +68,6 @@ function fishFinder_OpeningFcn(hObject, ~, handles, varargin)
 %     jScrollPane = findjobj(handles.tracksListBox);
 %     jListbox = jScrollPane.getViewport.getComponent(0);
 %     set(jListbox, 'SelectionBackground',java.awt.Color.yellow); % option #1
-    
-    % Global variables
-    handles.smrFileName = '';
-    handles.smrFilePath = '';
-    handles.elecFileName = '';
-    handles.elecFilePath = '';
    
     % Parameter structure - All the global parameters which can be saved and
     % loaded should go here, and should be set in the function setParams
@@ -785,6 +779,8 @@ function printPlotBtn_Callback(hObject, ~, handles)
 function loadElecBtn_Callback(hObject, ~, handles)
     if isfield(handles,'elecFilePath')
         [elecFileName,elecFilePath] = uigetfile([handles.elecFilePath filesep '*.mat'],'Choose electrode data file');
+    elseif isfield(handles,'lastOpenPath')
+        [elecFileName,elecFilePath] = uigetfile([handles.lastOpenPath filesep '*.mat'],'Choose electrode data file');
     else
         [elecFileName,elecFilePath] = uigetfile('*.mat','Choose electrode data file');
     end
@@ -827,6 +823,7 @@ function loadElecBtn_Callback(hObject, ~, handles)
         
         handles.elecFileName = elecFileName;
         handles.elecFilePath = elecFilePath;
+        handles.lastOpenPath = elecFilePath;
         handles.elec = elec;
         
         handles.meta = elec.meta;
@@ -844,7 +841,13 @@ function loadElecBtn_Callback(hObject, ~, handles)
 
 % --- Executes on button press in loadSmrBtn.
 function loadSmrBtn_Callback(hObject, ~, handles)
-    [smrFileName,smrFilePath,~] = uigetfile('*.smr','Choose smr file');
+    if isfield(handles,'smrFilePath')
+        [smrFileName,smrFilePath] = uigetfile([handles.smrFilePath filesep '*.smr'],'Choose smr file');
+    elseif isfield(handles,'lastOpenPath')
+        [smrFileName,smrFilePath] = uigetfile([handles.lastOpenPath filesep '*.smr'],'Choose smr file');
+    else
+        [smrFileName,smrFilePath,~] = uigetfile('*.smr','Choose smr file');
+    end
 
     tic;
     elec = loadSmrFile(smrFilePath,smrFileName,handles.params.smrFilePrefix);
@@ -857,6 +860,7 @@ function loadSmrBtn_Callback(hObject, ~, handles)
 
         handles.smrFileName = smrFileName;
         handles.smrFilePath = smrFilePath;
+        handles.lastOpenPath = smrFilePath;
         handles.elec = elec;
         handles.meta = elec.meta;
 
@@ -874,41 +878,46 @@ function loadSmrBtn_Callback(hObject, ~, handles)
 function loadSpecBtn_Callback(hObject, ~, handles)
     if isfield(handles,'specFilePath')
         [specFileName,specFilePath] = uigetfile([handles.specFilePath filesep '*.mat'],'Choose spectrogram file');
+    elseif isfield(handles,'lastOpenPath')
+        [specFileName,specFilePath] = uigetfile([handles.lastOpenPath filesep '*.mat'],'Choose spectrogram file');
     else
         [specFileName,specFilePath] = uigetfile('*.mat','Choose spectrogram file');
     end
     
-    try
-        progressbar('Loading spectrogram data');
-        tic;
-        
-        load(fullfile(specFilePath,specFileName),'spec');
-        spec = hlp_deserialize(spec);
-        
-        set(handles.specFileTxt,'String',specFileName);
-        handles.specFileName = specFileName;
-        handles.specFilePath = specFilePath;
-        handles.spec = spec;
-        handles.meta = spec.meta;
-        
-        handles.params.nFFT = spec.meta.nFFT;
-        set(handles.nFFTEdit,'String',num2str(spec.meta.nFFT));
-        handles.params.overlap = spec.meta.overlap;
-        set(handles.overlapEdit,'String',num2str(spec.meta.overlap));
-        handles.Smag = normSpecMag(spec.S);
-        
-        handles = setRanges(handles,spec.F(1),spec.F(end),spec.T(1),spec.T(end));
-        handles = createSubplots(handles);
-        handles = populateChannelList(handles);
-        handles = computeResolutions(handles);
-        
-        runTime = toc;
-        progressbar(1);
+    if specFileName
+        try
+            progressbar('Loading spectrogram data');
+            tic;
 
-        handles = refreshPlot(handles);
-        handles = writeLog(handles,'Loaded spectrogram file %s (%.2f s)',specFileName,runTime);
-    catch
-        handles = writeLog(handles,'Could not load %s',specFileName);
+            load(fullfile(specFilePath,specFileName),'spec');
+            spec = hlp_deserialize(spec);
+
+            set(handles.specFileTxt,'String',specFileName);
+            handles.specFileName = specFileName;
+            handles.specFilePath = specFilePath;
+            handles.lastOpenPath = specFilePath;
+            handles.spec = spec;
+            handles.meta = spec.meta;
+
+            handles.params.nFFT = spec.meta.nFFT;
+            set(handles.nFFTEdit,'String',num2str(spec.meta.nFFT));
+            handles.params.overlap = spec.meta.overlap;
+            set(handles.overlapEdit,'String',num2str(spec.meta.overlap));
+            handles.Smag = normSpecMag(spec.S);
+
+            handles = setRanges(handles,spec.F(1),spec.F(end),spec.T(1),spec.T(end));
+            handles = createSubplots(handles);
+            handles = populateChannelList(handles);
+            handles = computeResolutions(handles);
+
+            runTime = toc;
+            progressbar(1);
+
+            handles = refreshPlot(handles);
+            handles = writeLog(handles,'Loaded spectrogram file %s (%.2f s)',specFileName,runTime);
+        catch
+            handles = writeLog(handles,'Could not load %s',specFileName);
+        end
     end
     guidata(hObject,handles);
 
@@ -947,7 +956,9 @@ function saveSpecBtn_Callback(hObject, ~, handles)
 % --- Executes on button press in loadTracksBtn.
 function loadTracksBtn_Callback(hObject, ~, handles)
     if isfield(handles,'tracksFilePath')
-        [tracksFileName,tracksFilePath] = uigetfile([handles.tracksFilePath filesep '*.mat'],'Choose tracks file');        
+        [tracksFileName,tracksFilePath] = uigetfile([handles.tracksFilePath filesep '*.mat'],'Choose tracks file');    
+    elseif isfield(handles,'lastOpenPath')
+        [tracksFileName,tracksFilePath] = uigetfile([handles.lastOpenPath filesep '*.mat'],'Choose tracks file');    
     else
         [tracksFileName,tracksFilePath] = uigetfile('*.mat','Choose tracks file');
     end
@@ -961,6 +972,7 @@ function loadTracksBtn_Callback(hObject, ~, handles)
 
         handles.tracksFileName = tracksFileName;
         handles.tracksFilePath = tracksFilePath;
+        handles.lastOpenPath = tracksFilePath;
         handles.tracks = tracks;
   
         handles = refreshPlot(handles);

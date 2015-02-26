@@ -5,4 +5,4 @@ colormap('hot');
 caxis([0,1]);
 h = imagesc(T,F,Smag,'Parent',ax);
 set(ax, 'YDir', 'normal');
-ret = h;
+ret = 1;
