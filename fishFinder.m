@@ -1202,7 +1202,9 @@ function clearTracksBtn_Callback(hObject, ~, handles)
 function handles = clearTracks(handles) 
     if isfield(handles,'tracks')
         handles = rmfield(handles,'tracks');
-        handles = rmfield(handles,'tracksFileName');
+        if isfield(handles,'tracksFileName')
+            handles = rmfield(handles,'tracksFileName');
+        end
         set(handles.tracksFileTxt,'String','<None>');
         handles.undo.empty();
         handles.redo.empty();

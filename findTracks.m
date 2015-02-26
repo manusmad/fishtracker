@@ -49,7 +49,7 @@ for tstep = 1:nT
             nHarm = floor(F(end)/f1);
             harmIdx = false(length(locs),nHarm);
             for harm = 1:nHarm             
-                harmIdx(:,harm) = abs(F(locs)-harm*f1) <= harm*Fsep;
+                harmIdx(:,harm) = abs(F(locs)-harm*f1) <= Fsep;
             end
             
             if f1>minf1 && f1<maxf1 && nHarm>=3
