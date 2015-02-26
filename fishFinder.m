@@ -876,7 +876,7 @@ function loadSmrBtn_Callback(hObject, ~, handles)
                 handles = populateChannelList(handles);
                 handles = computeResolutions(handles);
             else
-                handles = writeLog(handles,'File %s not loaded, try clearing all stored data',smrFileName);
+                handles = writeLog(handles,'File %s not loaded',smrFileName);
             end
         catch
             handles = writeLog(handles,'Could not load %s (%.2f s)',smrFileName,runTime);
@@ -901,30 +901,35 @@ function loadSpecBtn_Callback(hObject, ~, handles)
 
             load(fullfile(specFilePath,specFileName),'spec');
             spec = hlp_deserialize(spec);
+            
+            % Verify that the loaded data conforms to the rest of the data
+            if compareMetaAll(handles,'spec',spec.meta)
+                set(handles.specFileTxt,'String',specFileName);
+                handles.specFileName = specFileName;
+                handles.specFilePath = specFilePath;
+                handles.lastOpenPath = specFilePath;
+                handles.spec = spec;
+                handles.meta = spec.meta;
 
-            set(handles.specFileTxt,'String',specFileName);
-            handles.specFileName = specFileName;
-            handles.specFilePath = specFilePath;
-            handles.lastOpenPath = specFilePath;
-            handles.spec = spec;
-            handles.meta = spec.meta;
+                handles.params.nFFT = spec.meta.nFFT;
+                set(handles.nFFTEdit,'String',num2str(spec.meta.nFFT));
+                handles.params.overlap = spec.meta.overlap;
+                set(handles.overlapEdit,'String',num2str(spec.meta.overlap));
+                handles.Smag = normSpecMag(spec.S);
 
-            handles.params.nFFT = spec.meta.nFFT;
-            set(handles.nFFTEdit,'String',num2str(spec.meta.nFFT));
-            handles.params.overlap = spec.meta.overlap;
-            set(handles.overlapEdit,'String',num2str(spec.meta.overlap));
-            handles.Smag = normSpecMag(spec.S);
+                handles = setRanges(handles,spec.F(1),spec.F(end),spec.T(1),spec.T(end));
+                handles = createSubplots(handles);
+                handles = populateChannelList(handles);
+                handles = computeResolutions(handles);
 
-            handles = setRanges(handles,spec.F(1),spec.F(end),spec.T(1),spec.T(end));
-            handles = createSubplots(handles);
-            handles = populateChannelList(handles);
-            handles = computeResolutions(handles);
+                runTime = toc;
+                progressbar(1);
 
-            runTime = toc;
-            progressbar(1);
-
-            handles = refreshPlot(handles);
-            handles = writeLog(handles,'Loaded spectrogram file %s (%.2f s)',specFileName,runTime);
+                handles = refreshPlot(handles);
+                handles = writeLog(handles,'Loaded spectrogram file %s (%.2f s)',specFileName,runTime);
+            else
+                handles = writeLog(handles,'File %s not loaded',specFileName);
+            end
         catch
             handles = writeLog(handles,'Could not load %s',specFileName);
         end
@@ -982,21 +987,25 @@ function loadTracksBtn_Callback(hObject, ~, handles)
             load(fullfile(tracksFilePath,tracksFileName),'tracks');
             runTime = toc;
             progressbar(1);
+            
+            if compareMetaAll(handles,'tracks',tracks.meta)
+                handles.tracksFileName = tracksFileName;
+                handles.tracksFilePath = tracksFilePath;
+                handles.lastOpenPath = tracksFilePath;
+                handles.tracks = tracks;
 
-            handles.tracksFileName = tracksFileName;
-            handles.tracksFilePath = tracksFilePath;
-            handles.lastOpenPath = tracksFilePath;
-            handles.tracks = tracks;
+                handles = refreshPlot(handles);
+                handles = populateTracksList(handles);
 
-            handles = refreshPlot(handles);
-            handles = populateTracksList(handles);
+                handles.undo.empty();
+                handles.redo.empty();
+                handles = setUndoVisibility(handles);
 
-            handles.undo.empty();
-            handles.redo.empty();
-            handles = setUndoVisibility(handles);
-
-            set(handles.tracksFileTxt,'String',tracksFileName);
-            handles = writeLog(handles,'Loaded data file %s (%.2f s)',tracksFileName,runTime);
+                set(handles.tracksFileTxt,'String',tracksFileName);
+                handles = writeLog(handles,'Loaded data file %s (%.2f s)',tracksFileName,runTime);
+            else
+                handles = writeLog(handles,'File %s not loaded',tracksFileName);
+            end
         catch
             handles = writeLog(handles,'Could not load %s (%.2f s)',tracksFileName,runTime);
         end
