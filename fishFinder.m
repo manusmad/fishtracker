@@ -22,7 +22,7 @@ function varargout = fishFinder(varargin)
 
 % Edit the above text to modify the response to help fishFinder
 
-% Last Modified by GUIDE v2.5 28-Jul-2014 22:20:43
+% Last Modified by GUIDE v2.5 26-Feb-2015 12:37:55
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -1202,9 +1202,7 @@ function clearTracksBtn_Callback(hObject, ~, handles)
 function handles = clearTracks(handles) 
     if isfield(handles,'tracks')
         handles = rmfield(handles,'tracks');
-        if isfield(handles,'tracksFileName')
-            handles = rmfield(handles,'tracksFileName');
-        end
+        handles = rmfield(handles,'tracksFileName');
         set(handles.tracksFileTxt,'String','<None>');
         handles.undo.empty();
         handles.redo.empty();
@@ -1673,6 +1671,56 @@ function constCheckBox_Callback(hObject, eventdata, handles)
 
 % Hint: get(hObject,'Value') returns toggle state of constCheckBox
 
+% --- Executes on button press in rangeRestoreBtn.
+function rangeRestoreBtn_Callback(hObject, ~, handles)
+    if isfield(handles,'spec')
+        handles = setRanges(handles,handles.spec.F(1),handles.spec.F(end),handles.spec.T(1),handles.spec.T(end));
+        handles = refreshPlot(handles);
+    end
+    guidata(hObject,handles);
+
+
+% --- Executes on selection change in tracksListBox.
+function tracksListBox_Callback(hObject, ~, handles)
+    handles = refreshPlot(handles);
+    guidata(hObject,handles);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% UNDO AND REDO FUNCTIONALITY %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Main undo function
+function handles = undo(handles)
+    if isfield(handles,'tracks')
+        if handles.undo.size()
+            handles.redo.push(handles.tracks);
+            handles.tracks = handles.undo.pop();           
+            handles = setUndoVisibility(handles);
+            handles = populateTracksList(handles);
+            handles = refreshPlot(handles);
+        else
+            handles = writeLog(handles,'Nothing to undo');
+        end
+    else
+        handles = writeLog(handles,'No tracks data found');
+    end
+
+% Main redo function
+function handles = redo(handles)
+    if isfield(handles,'tracks')
+        if handles.redo.size()
+            handles.undo.push(handles.tracks);
+            handles.tracks = handles.redo.pop();           
+            handles = setUndoVisibility(handles);
+            handles = populateTracksList(handles);
+            handles = refreshPlot(handles);
+        else
+            handles = writeLog(handles,'Nothing to redo');
+        end
+    else
+        handles = writeLog(handles,'No tracks data found');
+    end
+
 function handles = setUndoVisibility(handles)
     if handles.undo.size()
         set(handles.tracksUndoBtn,'Enable','on');
@@ -1693,53 +1741,13 @@ function handles = addUndo(handles)
 
 % --- Executes on button press in tracksUndoBtn.
 function tracksUndoBtn_Callback(hObject, ~, handles)
-    if isfield(handles,'tracks')
-        if handles.undo.size()
-            handles.redo.push(handles.tracks);
-            handles.tracks = handles.undo.pop();           
-            handles = setUndoVisibility(handles);
-            handles = populateTracksList(handles);
-            handles = refreshPlot(handles);
-        else
-            handles = writeLog(handles,'Nothing to undo');
-        end
-    else
-        handles = writeLog(handles,'No tracks data found');
-    end
-    
+    handles = undo(handles);
     guidata(hObject,handles);
 
 % --- Executes on button press in tracksRedoBtn.
 function tracksRedoBtn_Callback(hObject, ~, handles)
-    if isfield(handles,'tracks')
-        if handles.redo.size()
-            handles.undo.push(handles.tracks);
-            handles.tracks = handles.redo.pop();           
-            handles = setUndoVisibility(handles);
-            handles = populateTracksList(handles);
-            handles = refreshPlot(handles);
-        else
-            handles = writeLog(handles,'Nothing to redo');
-        end
-    else
-        handles = writeLog(handles,'No tracks data found');
-    end
-    
+    handles = redo(handles);
     guidata(hObject,handles);   
-
-% --- Executes on button press in rangeRestoreBtn.
-function rangeRestoreBtn_Callback(hObject, ~, handles)
-    if isfield(handles,'spec')
-        handles = setRanges(handles,handles.spec.F(1),handles.spec.F(end),handles.spec.T(1),handles.spec.T(end));
-        handles = refreshPlot(handles);
-    end
-    guidata(hObject,handles);
-
-
-% --- Executes on selection change in tracksListBox.
-function tracksListBox_Callback(hObject, ~, handles)
-    handles = refreshPlot(handles);
-    guidata(hObject,handles);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% CREATEFCNS AND OTHER NECESSARY BUT JUNK CODE %%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1841,3 +1849,10 @@ function tracksListBox_CreateFcn(hObject, ~, ~)
         set(hObject,'BackgroundColor','white');
     end
 
+% --- MAIN KEYPRESS FUNCTION FOR FIGURE WINDOW, ADD KEYBOARD SHORTCUTS HERE --- %
+function figure1_KeyReleaseFcn(hObject, eventdata, handles)
+    if strcmp(eventdata.Key,'z') && strcmp(eventdata.Modifier,'control')
+        handles = undo(handles);
+    elseif strcmp(eventdata.Key,'y') && strcmp(eventdata.Modifier,'control')
+        handles = redo(handles);
+    end
