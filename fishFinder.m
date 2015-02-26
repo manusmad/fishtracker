@@ -809,6 +809,7 @@ function loadElecBtn_Callback(hObject, ~, handles)
             handles = writeLog(handles,'Loaded data file %s (%.2f s)',elecFileName,runTime);
         catch
             handles = writeLog(handles,'Could not load %s (%.2f s)',elecFileName,runTime);
+            progressbar(1);
         end
     end
     guidata(hObject,handles);
@@ -880,6 +881,7 @@ function loadSmrBtn_Callback(hObject, ~, handles)
             end
         catch
             handles = writeLog(handles,'Could not load %s (%.2f s)',smrFileName,runTime);
+            progressbar(1);
         end      
     end
     guidata(hObject,handles);
@@ -930,6 +932,7 @@ function loadSpecBtn_Callback(hObject, ~, handles)
             end
         catch
             handles = writeLog(handles,'Could not load %s',specFileName);
+            progressbar(1);
         end
     end
     guidata(hObject,handles);
@@ -986,24 +989,20 @@ function loadTracksBtn_Callback(hObject, ~, handles)
             runTime = toc;
             progressbar(1);
             
-            if compareMetaAll(handles,'tracks',tracks.meta)
-                handles.tracksFileName = tracksFileName;
-                handles.tracksFilePath = tracksFilePath;
-                handles.lastOpenPath = tracksFilePath;
-                handles.tracks = tracks;
+            handles.tracksFileName = tracksFileName;
+            handles.tracksFilePath = tracksFilePath;
+            handles.lastOpenPath = tracksFilePath;
+            handles.tracks = tracks;
 
-                handles = refreshPlot(handles);
-                handles = populateTracksList(handles);
+            handles = refreshPlot(handles);
+            handles = populateTracksList(handles);
 
-                handles.undo.empty();
-                handles.redo.empty();
-                handles = setUndoVisibility(handles);
+            handles.undo.empty();
+            handles.redo.empty();
+            handles = setUndoVisibility(handles);
 
-                set(handles.tracksFileTxt,'String',tracksFileName);
-                handles = writeLog(handles,'Loaded data file %s (%.2f s)',tracksFileName,runTime);
-            else
-                handles = writeLog(handles,'File %s not loaded',tracksFileName);
-            end
+            set(handles.tracksFileTxt,'String',tracksFileName);
+            handles = writeLog(handles,'Loaded data file %s (%.2f s)',tracksFileName,runTime);  
         catch
             handles = writeLog(handles,'Could not load %s (%.2f s)',tracksFileName,runTime);
         end
@@ -1141,12 +1140,7 @@ function ret = compareMetaAll(handles,except,meta)
         ret2 = compareMeta(handles.spec.meta,meta);
     end
     
-    ret3 = 1;
-    if isfield(handles,'tracks') && ~strcmp(except,'tracks')
-        ret3 = compareMeta(handles.tracks.meta,meta);
-    end
-    
-    ret = ~any(~[ret1 ret2 ret3]);
+    ret = ~any(~[ret1 ret2]);
     if ~ret
         handles = writeLog(handles,'Data is not from the same source');
     end
@@ -1652,7 +1646,7 @@ function selectPointsBtn_Callback(hObject, ~, handles)
     guidata(hObject,handles);
 
 
-function subFigClickCallBack(hObject,eventdata,handles)
+function subFigClickCallBack(hObject,~,handles)
 
     % Find out which of the subfigures the click came through
     subIdx = find(ismember(handles.hSub,get(hObject,'Parent')));
@@ -1696,7 +1690,7 @@ function handles = addUndo(handles)
     handles = setUndoVisibility(handles);
 
 % --- Executes on button press in tracksUndoBtn.
-function tracksUndoBtn_Callback(hObject, eventdata, handles)
+function tracksUndoBtn_Callback(hObject, ~, handles)
     if isfield(handles,'tracks')
         if handles.undo.size()
             handles.redo.push(handles.tracks);
@@ -1714,7 +1708,7 @@ function tracksUndoBtn_Callback(hObject, eventdata, handles)
     guidata(hObject,handles);
 
 % --- Executes on button press in tracksRedoBtn.
-function tracksRedoBtn_Callback(hObject, eventdata, handles)
+function tracksRedoBtn_Callback(hObject, ~, handles)
     if isfield(handles,'tracks')
         if handles.redo.size()
             handles.undo.push(handles.tracks);
@@ -1750,7 +1744,7 @@ function tracksListBox_Callback(hObject, ~, handles)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % --- Executes during object creation, afte~ setting all properties.
-function prefixEdit_CreateFcn(hObject, ~, ~)
+function prefixEdit_CreateFcn(hObject, ~, ~) %#ok<*DEFNU>
     if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
         set(hObject,'BackgroundColor','white');
     end
