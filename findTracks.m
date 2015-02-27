@@ -184,6 +184,7 @@ end
 disp('Finding fish...');
 
 fish = [];
+stray = [];
 
 activeFish = [];
 activeConfMax = 20;
@@ -205,14 +206,13 @@ for tstep = 1:nT
         if ~isempty(activeFish)
             % Match with activeFish
             [R,C] = matchHungarian(activeFish,tCand,5);
-            currentFish = updateFishWithCandidate(activeFish(R),tCand(C));
-            activeFish(R) = currentFish;
+            activeFish(R) = updateFishWithCandidate(activeFish(R),tCand(C));
             activeFish(R) = increaseConfidence(activeFish(R));
             NR = find(~ismember(1:length(activeFish),R));
             activeFish(NR) = decreaseConfidence(activeFish(NR));
             
             % Add to fish list and eliminate those candidates
-            fish = [fish currentFish];
+            fish = [fish activeFish(R)];
             tCand(C) = [];
             
             % Discard bad active
@@ -231,6 +231,7 @@ for tstep = 1:nT
             NR = find(~ismember(1:length(strayFish),R));
             strayFish(NR) = decreaseConfidence(strayFish(NR));
 
+            stray = [stray strayFish(R)]; 
             tCand(C) = [];
         else
             strayFish = fishFromCandidate(tCand,nFish+1:nFish+length(tCand),zeros(1,length(tCand)));
@@ -251,10 +252,12 @@ for tstep = 1:nT
         % Integrate good strays into active
         goodIdx = find([strayFish.conf]>=strayConfMax);
         for g = 1:length(goodIdx)
-            idx = [strayFish.id]==strayFish(goodIdx(g)).id;
-            activeFish = [activeFish strayFish(idx)];
-            strayFish(idx) = [];
+            idx = [stray.id]==strayFish(goodIdx(g)).id;
+            fish = [fish stray(idx)];
+            stray(idx) = [];
         end
+        activeFish = [activeFish strayFish(goodIdx)];
+        strayFish(goodIdx) = [];
 
         % Discard bad strays
         badIdx = [strayFish.conf]<=strayConfMin;
