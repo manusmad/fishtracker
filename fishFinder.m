@@ -1412,6 +1412,22 @@ function joinTracksBtn_Callback(hObject, ~, handles)
     handles = joinTracksAction(handles);
     guidata(hObject,handles); 
 
+function handles = selectTrackAction(handles)
+        handles = writeLog(handles,'Click to select track (Right click to cancel)');
+        [time,freq] = MagnetGInput2(handles.hTracks,true);
+        
+        if ~isempty(time)
+            handles = populateTracksList(handles);
+            [handles,id] = matchTrack(handles,time,freq);
+            ids = unique([handles.tracks.id]);
+            val = find(ids==id,1);
+            set(handles.tracksListBox,'Value',val);
+            handles = refreshPlot(handles);
+            handles = writeLog(handles,'Track %d selected',id);
+        else
+            handles = writeLog(handles,'Select cancelled');
+        end
+
 function handles = splitTracksAction(handles)
     if isfield(handles,'tracks')    
         handles = tracksView(handles);
@@ -1426,7 +1442,7 @@ function handles = splitTracksAction(handles)
             [handles,~] = splitTrack(handles,id,time);
             
             handles = refreshPlot(handles);
-            handles = writeLog(handles,'Track for fish %d split at time %.2f',id,time);
+            handles = writeLog(handles,'Track %d split at time %.2f',id,time);
         else
             handles = writeLog(handles,'Split cancelled');
         end
@@ -1884,6 +1900,8 @@ function figure1_KeyReleaseFcn(hObject, eventdata, handles)
         handles = deleteTracksAction(handles);
     elseif strcmp(eventdata.Key,'c') && isempty(eventdata.Modifier)
         handles = cleanTracksAction(handles);
+    elseif strcmp(eventdata.Key,'x') && isempty(eventdata.Modifier)
+        handles = selectTrackAction(handles);
     end
 
     guidata(hObject,handles);

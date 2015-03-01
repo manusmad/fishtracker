@@ -28,7 +28,7 @@ for tstep = 1:nT
     for c = 1:nCh
         % Find peaks of all above third harmonic range
         %[pks,locs] = findpeaks(za(:,c),'SORTSTR','descend','MINPEAKHEIGHT',thresh/ratio13,'THRESHOLD',thresh/(ratio13*10));
-        [pks,locs] = findpeaks(za(:,c),'SORTSTR','descend','MINPEAKHEIGHT',thresh/ratio12,'THRESHOLD',thresh/(ratio12*10));
+        [pks,locs] = findpeaks(za(:,c),'SORTSTR','descend','MINPEAKHEIGHT',thresh/ratio12,'MINPEAKPROMINENCE',thresh/(ratio12*2));
         
         % Eliminate 60-cycle and harmonics
         elimIdx = zeros(size(pks));
