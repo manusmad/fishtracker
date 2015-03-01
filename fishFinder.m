@@ -1325,9 +1325,7 @@ function handles = tracksView(handles)
         viewChannelsPanel_SelectionChangeFcn(handles.viewChannelsPanel, fakeEvent, handles);
     end
     
-    
-% --- Executes on button press in deleteTracksBtn.
-function deleteTracksBtn_Callback(hObject, ~, handles)
+function handles = deleteTracksAction(handles)
     if isfield(handles,'tracks')    
         handles = tracksView(handles);
         handles = addUndo(handles);
@@ -1348,10 +1346,13 @@ function deleteTracksBtn_Callback(hObject, ~, handles)
     else
         handles = writeLog(handles,'No tracks to delete');
     end
+    
+% --- Executes on button press in deleteTracksBtn.
+function deleteTracksBtn_Callback(hObject, ~, handles)
+    handles = deleteTracksAction(handles);
     guidata(hObject,handles); 
 
-% --- Executes on button press in cleanTracksBtn.
-function cleanTracksBtn_Callback(hObject, ~, handles)
+function handles = cleanTracksAction(handles)
     if isfield(handles,'tracks')    
         handles = tracksView(handles);
         handles = addUndo(handles);
@@ -1363,11 +1364,13 @@ function cleanTracksBtn_Callback(hObject, ~, handles)
     else
         handles = writeLog(handles,'No tracks to clean');
     end
+
+% --- Executes on button press in cleanTracksBtn.
+function cleanTracksBtn_Callback(hObject, ~, handles)
+    handles = cleanTracksAction(handles);
     guidata(hObject,handles); 
 
-
-% --- Executes on button press in joinTracksBtn.
-function joinTracksBtn_Callback(hObject, ~, handles)
+function handles = joinTracksAction(handles)
     if isfield(handles,'tracks')    
         handles = tracksView(handles);
         handles = addUndo(handles);
@@ -1396,12 +1399,13 @@ function joinTracksBtn_Callback(hObject, ~, handles)
     else
         handles = writeLog(handles,'No tracks to join');
     end
+
+% --- Executes on button press in joinTracksBtn.
+function joinTracksBtn_Callback(hObject, ~, handles)
+    handles = joinTracksAction(handles);
     guidata(hObject,handles); 
 
-    
-    
-% --- Executes on button press in splitTracksBtn.
-function splitTracksBtn_Callback(hObject, ~, handles)
+function handles = splitTracksAction(handles)
     if isfield(handles,'tracks')    
         handles = tracksView(handles);
         handles = addUndo(handles);
@@ -1422,6 +1426,10 @@ function splitTracksBtn_Callback(hObject, ~, handles)
     else
         handles = writeLog(handles,'No tracks to split');
     end
+
+% --- Executes on button press in splitTracksBtn.
+function splitTracksBtn_Callback(hObject, ~, handles)
+    handles = splitTracksAction(handles);
     guidata(hObject,handles); 
     
  % --- Executes on button press in trackHighlightCheck.
@@ -1861,6 +1869,14 @@ function figure1_KeyReleaseFcn(hObject, eventdata, handles)
         handles = undo(handles);
     elseif strcmp(eventdata.Key,'y') && ~isempty(eventdata.Modifier) && strcmp(eventdata.Modifier,'control')
         handles = redo(handles);
+    elseif strcmp(eventdata.Key,'j') && isempty(eventdata.Modifier)
+        handles = joinTracksAction(handles);
+    elseif strcmp(eventdata.Key,'s') && isempty(eventdata.Modifier)
+        handles = splitTracksAction(handles);
+    elseif strcmp(eventdata.Key,'d') && isempty(eventdata.Modifier)
+        handles = deleteTracksAction(handles);
+    elseif strcmp(eventdata.Key,'c') && isempty(eventdata.Modifier)
+        handles = cleanTracksAction(handles);
     end
 
     guidata(hObject,handles);
