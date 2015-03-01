@@ -363,18 +363,32 @@ function handles = refreshPlot(handles)
             hold(handles.hSingle,'on');
 
             if isfield(handles,'spec')
+                nF = length(handles.spec.F);
+                % same params as in findtracks, could either make these arguments to findTracks, or have both files pull them from a common source.
+                minf1 = 200;
+                maxf1 = 800;
+                ratio12 = 8;
+                [~,minf1idx] = min(abs(handles.spec.F-minf1));
+                [~,maxf1idx] = min(abs(handles.spec.F-maxf1));
+                minf1 = handles.spec.F(minf1idx);
+                maxf1 = handles.spec.F(maxf1idx);
+                [~,minf2idx] = min(abs(handles.spec.F-2*minf1));
+                [~,maxf2idx] = min(abs(handles.spec.F-2*maxf1));
+                Sthresh = zeros(size(handles.Smag));
+                Sthresh(minf1idx:maxf1idx,:,:) = handles.Smag(minf1idx:maxf1idx,:,:)>handles.params.thresh & handles.Smag(minf2idx:2:maxf2idx,:,:)>(handles.params.thresh/ratio12);
+
                 if strcmp(handles.params.viewChannel,'Single')
                     chan = get(handles.channelListBox,'Value');
                     chan = chan(1);
                     cla(handles.hSingle);
-                    [plotFlag,handles.hSpec] = plotSpectrogram(handles.hSingle,handles.spec.T,handles.spec.F,handles.Smag(:,:,chan)>handles.params.thresh);
+                    [plotFlag,handles.hSpec] = plotSpectrogram(handles.hSingle,handles.spec.T,handles.spec.F,Sthresh(:,:,chan));
                 elseif strcmp(handles.params.viewChannel,'Mean')
                     cla(handles.hSingle);
-                    [plotFlag,handles.hSpec] = plotSpectrogram(handles.hSingle,handles.spec.T,handles.spec.F,mean(handles.Smag,3)>handles.params.thresh);
+                    [plotFlag,handles.hSpec] = plotSpectrogram(handles.hSingle,handles.spec.T,handles.spec.F,sum(Sthresh,3)>1);
                 elseif strcmp(handles.params.viewChannel,'All')
                     for k = 1:handles.meta.nCh      % For each channel
                         cla(handles.hSub(k));
-                        [plotFlag,handles.hSpec] = plotSpectrogram(handles.hSub(k),handles.spec.T,handles.spec.F,handles.Smag(:,:,k)>handles.params.thresh);
+                        [plotFlag,handles.hSpec] = plotSpectrogram(handles.hSub(k),handles.spec.T,handles.spec.F,Sthresh(:,:,k));
                     end
                     
                     % Indicate elected
