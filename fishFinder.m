@@ -155,10 +155,10 @@ function handles = populateTracksList(handles)
         ids = unique([handles.tracks.id]);
         handles.nTracks = length(ids);
         list = cell(handles.nTracks,1);
-        col = distinguishable_colors(handles.nTracks,{'r','k','y'});
+        col = distinguishable_colors(max(ids),{'r','k','y'});
         
         for k = 1:handles.nTracks
-            coltag = reshape(dec2hex(round(col(k,:)*255))',1,6);           
+            coltag = reshape(dec2hex(round(col(ids(k),:)*255))',1,6);           
             list{k} = sprintf('<html><body bgcolor="%s">Track %02d</body></html>',coltag,ids(k));
         end
         set(handles.tracksListBox,'String',list);
@@ -1268,8 +1268,8 @@ function [handles,matchid] = matchTrack(handles,time,freq)
     matchid = handles.tracks(idx).id;
 
 % Function to delete a track
-function handles = deleteTrack(handles,id)
-    handles.tracks([handles.tracks.id]==id) = [];
+function handles = deleteTrack(handles,ids)
+    handles.tracks(ismember([handles.tracks.id],ids)) = [];
     handles = populateTracksList(handles);
     % If all tracks are deleted, 
     if handles.nTracks==0
@@ -1330,18 +1330,25 @@ function handles = deleteTracksAction(handles)
         handles = tracksView(handles);
         handles = addUndo(handles);
         
-        handles = writeLog(handles,'Select track to delete (Right click to cancel)');
-        
-        [time,freq] = MagnetGInput2(handles.hTracks,true);
-        
-        if ~isempty(time)
-            [handles,id] = matchTrack(handles,time,freq);
-            handles = deleteTrack(handles,id);
-            
+        if handles.params.trackHighlight
+            selTracks = get(handles.tracksListBox,'Value');
+            ids = unique([handles.tracks.id]);
+            ids = ids(selTracks);
+            handles = deleteTrack(handles,ids);
             handles = refreshPlot(handles);
-            handles = writeLog(handles,'Track %d deleted',id);
+            handles = writeLog(handles,'Tracks deleted');
         else
-            handles = writeLog(handles,'Delete cancelled');
+            handles = writeLog(handles,'Select track to delete (Right click to cancel)');
+            [time,freq] = MagnetGInput2(handles.hTracks,true);
+        
+            if ~isempty(time)
+                [handles,id] = matchTrack(handles,time,freq);
+                handles = deleteTrack(handles,id);
+                handles = refreshPlot(handles);
+                handles = writeLog(handles,'Track %d deleted',id);
+            else
+                handles = writeLog(handles,'Delete cancelled');
+            end
         end
     else
         handles = writeLog(handles,'No tracks to delete');

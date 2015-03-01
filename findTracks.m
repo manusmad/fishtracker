@@ -10,7 +10,6 @@ progressbar('Finding Signatures...','Clustering Candidates...','Tracing Tracks..
 
 % Parameters
 ratio12 = 8;
-ratio13 = 20;
 dF = diff(F(1:2));
 Fsep = dF*2;
 minf1 = 200;
@@ -29,7 +28,7 @@ for tstep = 1:nT
     for c = 1:nCh
         % Find peaks of all above third harmonic range
         %[pks,locs] = findpeaks(za(:,c),'SORTSTR','descend','MINPEAKHEIGHT',thresh/ratio13,'THRESHOLD',thresh/(ratio13*10));
-        [pks,locs] = findpeaks(za(:,c),'SORTSTR','descend','MINPEAKHEIGHT',thresh/ratio13,'THRESHOLD',thresh/(ratio13*3));
+        [pks,locs] = findpeaks(za(:,c),'SORTSTR','descend','MINPEAKHEIGHT',thresh/ratio12,'THRESHOLD',thresh/(ratio12*10));
         
         % Eliminate 60-cycle and harmonics
         elimIdx = zeros(size(pks));
@@ -192,7 +191,7 @@ activeConfMin = 0;
 
 strayFish = [];
 strayConfMax = 10;
-strayConfMin = -1;
+strayConfMin = -5;
 
 nFish = 0;
 
@@ -263,6 +262,23 @@ for tstep = 1:nT
         badIdx = [strayFish.conf]<=strayConfMin;
         strayFish(badIdx) = [];
     end
+end
+
+% Before returning, re-assign and sort ids by mean frequency
+uId = unique([fish.id]);
+nId = length(uId);
+meanF = zeros(nId,1);
+
+for k = 1:nId
+    idx = [fish.id]==uId(k);
+    meanF(k) = mean([fish(idx).f1])
+end
+
+[~,fidx] = sort(meanF,'descend');
+fish2 = fish;
+for k = 1:nId
+    idx = [fish2.id]==uId(fidx(k));
+    [fish(idx).id] = deal(k);
 end
 
 progressbar(1);

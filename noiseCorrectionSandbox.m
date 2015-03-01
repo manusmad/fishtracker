@@ -7,16 +7,22 @@ end
 
 
 %%
-T = spec.T;
-Fidx = spec.F<1000;
+Tidx = spec.T>0;% & spec.T<70;
+T = spec.T(Tidx);
+Fidx = spec.F<1000;%spec.F>588 & 
 F = spec.F(Fidx);
-Smag = abs(spec.S(Fidx,:,1));
+S = spec.S(Fidx,Tidx,1);
+Smag = abs(S);
+entropy(abs(S))
 
 %%
 
-S2 = abs(fft2(spec.S(Fidx,:,1)));
-figure(1), imshow(S2/max(S2(:)));
-figure(2), imshow(Smag/max(Smag(:)));
+% S2 = fftshift(log(abs(fft2(Smag)).^2)+1);
+
+S2 = fft2(spec.S(Fidx,:,1));
+
+% figure(1), imshow(S2/max(S2(:)));
+% figure(2), imshow(Smag/max(Smag(:)));
 
 %%
 
@@ -33,4 +39,9 @@ nFF = length(FF);
 SS = fft(spec.S(Fidx,1,1));
 SSmag = abs(SS(1:nFF));
 plot(FF,SSmag);
+
+%%
+
+
+
 
