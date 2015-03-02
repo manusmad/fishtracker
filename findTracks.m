@@ -1,6 +1,7 @@
 function fish = findTracks(S,F,T,thresh)
 
-Smag = normSpecMag(S);
+normSmag = normSpecMag(S);
+Smag = abs(S);
 Sphs = angle(S);
 [~,nT,nCh] = size(S);
 
@@ -22,7 +23,7 @@ nSigs = 0;
 
 for tstep = 1:nT
     progressbar(tstep/nT,[],[]);
-    za = squeeze(Smag(:,tstep,:));
+    za = squeeze(normSmag(:,tstep,:));
     zp = squeeze(Sphs(:,tstep,:));
 
     for c = 1:nCh
@@ -69,15 +70,16 @@ for tstep = 1:nT
                     if  a1>=thresh && a2>=thresh/ratio12
                         nSigs = nSigs+1;
 
-                        sigs(nSigs).a1 = a1;
                         sigs(nSigs).f1 = F(f1locs(a1idx));
-                        sigs(nSigs).p1 = zp(f1locs(a1idx),c);
 
-                        sigs(nSigs).a2 = a2;
-                        sigs(nSigs).p2 = zp(f2locs(a2idx),c);
+                        sigs(nSigs).a1 = Smag(f1locs(a1idx),tstep,c);
+                        sigs(nSigs).p1 = Sphs(f1locs(a1idx),tstep,c);
 
-                        sigs(nSigs).a3 = a3;
-                        sigs(nSigs).p3 = zp(f3locs(a3idx),c);
+                        sigs(nSigs).a2 = Smag(f2locs(a2idx),tstep,c);
+                        sigs(nSigs).p2 = Sphs(f2locs(a2idx),tstep,c);
+
+                        sigs(nSigs).a3 = Smag(f3locs(a3idx),tstep,c);
+                        sigs(nSigs).p3 = Sphs(f3locs(a3idx),tstep,c);
 
                         sigs(nSigs).ch = c;
                         sigs(nSigs).t = T(tstep);                
@@ -93,15 +95,15 @@ for tstep = 1:nT
 end
 
 %% Plot all signatures
-% clf, hold on;
+% figure,clf, hold on;
 % colormap('hot');
 % caxis([0,1]);
 % 
-% imagesc(T,F,Smag(:,:,1));
+% imagesc(T,F,normSmag(:,:,1));
 % plot([sigs.t],[sigs.f1],'.g');
 % 
 % xlim([T(1),T(end)]);
-% ylim([500,maxf1]);
+% ylim([minf1,maxf1]);
 % set(gca, 'YDir', 'normal');
 % hold off;
 
@@ -124,57 +126,47 @@ for tstep = 1:nT
         % Find breaks in frequency and bin
         binIdx = find(diff([tsigs.f1])>Fsep);
         binIdx = [0 binIdx length(tsigs)];
-        nNewCand = length(binIdx)-1;
+        nBins = length(binIdx)-1;
         
-        for k = 1:nNewCand
+        for k = 1:nBins
             binSigs = tsigs(binIdx(k)+1:binIdx(k+1));
             
-            cand(nCand+k).t = T(tstep);
-            cand(nCand+k).f1 = mean([binSigs.f1]);
+            if unique([binSigs.ch]>0)
+                nCand = nCand+1;
+                cand(nCand).t = T(tstep);
+                cand(nCand).f1 = mode([binSigs.f1]);
 
-            [cand(nCand+k).a1,cand(nCand+k).a2,cand(nCand+k).a3,...
-            cand(nCand+k).p1,cand(nCand+k).p2,cand(nCand+k).p3] = deal(NaN(nCh,1));
- 
-            for c = 1:nCh
-                cidx = find([binSigs.ch] == c);
-                lc = length(cidx);
+                [~,f1idx] = min(abs(F-cand(nCand).f1));
+                [~,f2idx] = min(abs(F-cand(nCand).f1*2));
+                [~,f3idx] = min(abs(F-cand(nCand).f1*3));
                 
-                if lc>0
-                    if lc>1
-                        [~,midx] = max([binSigs(cidx).a1]);
-                        cidx = cidx(midx);
-                    end
-                    
-                    cand(nCand+k).a1(binSigs(cidx).ch) = binSigs(cidx).a1;
-                    cand(nCand+k).a2(binSigs(cidx).ch) = binSigs(cidx).a2;
-                    cand(nCand+k).a3(binSigs(cidx).ch) = binSigs(cidx).a3;
-                    
-                    cand(nCand+k).p1(binSigs(cidx).ch) = binSigs(cidx).p1;
-                    cand(nCand+k).p2(binSigs(cidx).ch) = binSigs(cidx).p2;
-                    cand(nCand+k).p3(binSigs(cidx).ch) = binSigs(cidx).p3;
-                end
+                cand(nCand).a1 = abs(squeeze(S(f1idx,tstep,:)));
+                cand(nCand).a2 = abs(squeeze(S(f2idx,tstep,:)));
+                cand(nCand).a3 = abs(squeeze(S(f3idx,tstep,:)));
+                
+                cand(nCand).p1 = angle(squeeze(S(f1idx,tstep,:)));
+                cand(nCand).p2 = angle(squeeze(S(f2idx,tstep,:)));
+                cand(nCand).p3 = angle(squeeze(S(f3idx,tstep,:)));
             end
-               
         end
-        nCand = nCand + nNewCand;
     else
         fprintf('No signatures at time %2.2f\n',T(tstep));
-    end
-                
+    end                
 end
 
+
 %% Plot all candidates
-% clf, hold on;
+% figure,clf, hold on;
 % colormap('hot');
 % caxis([0,1]);
 % 
-% imagesc(T,F,Smag(:,:,1));
+% imagesc(T,F,normSmag(:,:,1));
 % plot([sigs.t],[sigs.f1],'.g');
 % 
 % plot([cand.t],[cand.f1],'.m');
 % 
 % xlim([T(1),T(end)]);
-% ylim([500,maxf1]);
+% ylim([minf1,maxf1]);
 % set(gca, 'YDir', 'normal');
 % hold off;
 
@@ -204,7 +196,7 @@ for tstep = 1:nT
         % If there are active fish, match candidates with them
         if ~isempty(activeFish)
             % Match with activeFish
-            [R,C] = matchHungarian(activeFish,tCand,5);
+            [R,C] = matchHungarian(activeFish,tCand,5000);
             activeFish(R) = updateFishWithCandidate(activeFish(R),tCand(C));
             activeFish(R) = increaseConfidence(activeFish(R));
             NR = find(~ismember(1:length(activeFish),R));
@@ -223,7 +215,7 @@ for tstep = 1:nT
     if ~isempty(tCand)
         if ~isempty(strayFish)
             % Match with strays
-            [R,C] = matchHungarian(strayFish,tCand,5);
+            [R,C] = matchHungarian(strayFish,tCand,5000);
 
             strayFish(R) = updateFishWithCandidate(strayFish(R),tCand(C));
             strayFish(R) = increaseConfidence(strayFish(R));
@@ -263,33 +255,34 @@ for tstep = 1:nT
         strayFish(badIdx) = [];
     end
 end
-
-% Before returning, re-assign and sort ids by mean frequency
-uId = unique([fish.id]);
-nId = length(uId);
-meanF = zeros(nId,1);
-
-for k = 1:nId
-    idx = [fish.id]==uId(k);
-    meanF(k) = mean([fish(idx).f1])
-end
-
-[~,fidx] = sort(meanF,'descend');
-fish2 = fish;
-for k = 1:nId
-    idx = [fish2.id]==uId(fidx(k));
-    [fish(idx).id] = deal(k);
-end
-
 progressbar(1);
 
-% Plot all fish
-% clf, hold on;
+%% Before returning, re-assign and sort ids by mean frequency
+if ~isempty(fish)
+    uId = unique([fish.id]);
+    nId = length(uId);
+    meanF = zeros(nId,1);
+
+    for k = 1:nId
+        idx = [fish.id]==uId(k);
+        meanF(k) = mean([fish(idx).f1]);
+    end
+
+    [~,fidx] = sort(meanF,'descend');
+    fish2 = fish;
+    for k = 1:nId
+        idx = [fish2.id]==uId(fidx(k));
+        [fish(idx).id] = deal(k);
+    end
+end
+
+%% Plot all fish
+% figure,clf, hold on;
 % colormap('hot');
 % caxis([0,1]);
 % col = distinguishable_colors(nFish,[0,0,0]);
 % 
-% imagesc(T,F,Smag(:,:,1));
+% imagesc(T,F,normSmag(:,:,1));
 % 
 % % plot([fish.t],[fish.f1],'.m');
 % for f = 1:nFish
@@ -298,7 +291,7 @@ progressbar(1);
 % end
 % 
 % xlim([T(1),T(end)]);
-% ylim([500,maxf1]);
+% ylim([minf1,maxf1]);
 % set(gca, 'YDir', 'normal');
 % hold off;
 

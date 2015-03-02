@@ -573,10 +573,10 @@ function saveParamsBtn_Callback(hObject, ~, handles)
 function trackBtn_Callback(hObject, ~, handles)
     if isfield(handles,'spec')
         tic;
-        handles = tracksView(handles);
         handles.tracks = findTracks(handles.spec.S,handles.spec.F,handles.spec.T,handles.params.thresh);
         runTime = toc;
         
+        handles = tracksView(handles);
         handles = refreshPlot(handles);
         handles = populateTracksList(handles);
         set(handles.tracksFileTxt,'String',sprintf('Computed from spectrogram data'));
@@ -1327,6 +1327,7 @@ function handles = tracksView(handles)
            'OldValue', oldsel, ...
            'NewValue', newsel);
         viewModePanel_SelectionChangeFcn(handles.viewModePanel, fakeEvent, handles);
+        handles.params.viewMode = 'Normal';
     end
     
     if strcmp(handles.params.viewChannel,'All')
@@ -1337,6 +1338,7 @@ function handles = tracksView(handles)
            'OldValue', oldsel, ...
            'NewValue', newsel);
         viewChannelsPanel_SelectionChangeFcn(handles.viewChannelsPanel, fakeEvent, handles);
+        handles.params.viewChannel = 'All';
     end
     
 function handles = deleteTracksAction(handles)
