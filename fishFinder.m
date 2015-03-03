@@ -22,7 +22,7 @@ function varargout = fishFinder(varargin)
 
 % Edit the above text to modify the response to help fishFinder
 
-% Last Modified by GUIDE v2.5 02-Mar-2015 22:07:09
+% Last Modified by GUIDE v2.5 02-Mar-2015 22:55:23
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -1922,8 +1922,10 @@ function tracksListBox_CreateFcn(hObject, ~, ~)
     if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
         set(hObject,'BackgroundColor','white');
     end
-
-% --- MAIN KEYPRESS FUNCTION FOR FIGURE WINDOW, ADD KEYBOARD SHORTCUTS HERE --- %
+    
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% MAIN KEYPRESS FUNCTION FOR FIGURE WINDOW, ADD KEYBOARD SHORTCUTS HERE %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function figure1_KeyReleaseFcn(hObject, eventdata, handles)
     if strcmp(eventdata.Key,'z') && ~isempty(eventdata.Modifier) && strcmp(eventdata.Modifier,'control')
         handles = undo(handles);
@@ -1937,7 +1939,7 @@ function figure1_KeyReleaseFcn(hObject, eventdata, handles)
         handles = joinTracksAction(handles);
     elseif strcmp(eventdata.Key,'s') && isempty(eventdata.Modifier)
         handles = splitTracksAction(handles);
-    elseif strcmp(eventdata.Key,'d') && isempty(eventdata.Modifier)
+    elseif any(strcmp(eventdata.Key,{'d','delete'})) && isempty(eventdata.Modifier)
         handles = deleteTracksAction(handles);
     elseif strcmp(eventdata.Key,'c') && isempty(eventdata.Modifier)
         handles = cleanTracksAction(handles);
@@ -1945,4 +1947,9 @@ function figure1_KeyReleaseFcn(hObject, eventdata, handles)
         handles = selectTrackAction(handles);
     end
 
+    guidata(hObject,handles);
+
+% --- Executes on button press in trackSelectBtn.
+function trackSelectBtn_Callback(hObject, ~, handles)
+    handles = selectTrackAction(handles);
     guidata(hObject,handles);
