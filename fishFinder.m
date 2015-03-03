@@ -22,7 +22,7 @@ function varargout = fishFinder(varargin)
 
 % Edit the above text to modify the response to help fishFinder
 
-% Last Modified by GUIDE v2.5 26-Feb-2015 15:55:13
+% Last Modified by GUIDE v2.5 02-Mar-2015 22:07:09
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -104,11 +104,9 @@ function handles = initParams(handles)
     set(handles.rangeT2Edit,'String',num2str(handles.params.rangeT2));
     
     if strcmp(handles.params.viewMode,'Threshold')
-        set(handles.threshSlider,'Visible','on');
-        set(handles.threshEdit,'Visible','on');
+        set(handles.threshPanel,'Visible','on');
     else
-        set(handles.threshSlider,'Visible','off');
-        set(handles.threshEdit,'Visible','off');
+        set(handles.threshPanel,'Visible','off');
     end
     set(handles.threshSlider,'Value',handles.params.thresh);
     set(handles.threshEdit,'String',num2str(handles.params.thresh));
@@ -131,6 +129,9 @@ function handles = initParams(handles)
     
     handles = computeResolutions(handles);
     handles = setUndoVisibility(handles);
+    
+    uistack(handles.multiPlotPanel,'top');
+    
     
 % --- Outputs from this function are returned to the command line.
 function varargout = fishFinder_OutputFcn(~, ~, handles) 
@@ -188,7 +189,8 @@ function handles = createSubplots(handles)
             delete(handles.hSub);
             handles = rmfield(handles,'hSub');
         end
-        handles.hSub = zeros(nCh,1);
+%         handles.hSub = zeros(nCh,1);
+        handles.hSub = gobjects(nCh,1);
         
         n = ceil(sqrt(nCh));
         margin = 0.02;
@@ -363,7 +365,6 @@ function handles = refreshPlot(handles)
             hold(handles.hSingle,'on');
 
             if isfield(handles,'spec')
-                nF = length(handles.spec.F);
                 % same params as in findtracks, could either make these arguments to findTracks, or have both files pull them from a common source.
                 minf1 = 200;
                 maxf1 = 800;
@@ -704,12 +705,10 @@ function viewTracksCheck_Callback(hObject, ~, handles)
 function viewModePanel_SelectionChangeFcn(hObject, eventdata, handles)
     handles.params.viewMode = get(eventdata.NewValue,'String');
     if strcmp(handles.params.viewMode,'Threshold')
-        set(handles.threshSlider,'Visible','on');
-        set(handles.threshEdit,'Visible','on');
+        set(handles.threshPanel,'Visible','on');
         set(handles.viewChoosePanel,'Visible','off');
     else
-        set(handles.threshSlider,'Visible','off');
-        set(handles.threshEdit,'Visible','off');
+        set(handles.threshPanel,'Visible','off');
         set(handles.viewChoosePanel,'Visible','on');
     end
     
@@ -1906,7 +1905,11 @@ function tracksListBox_CreateFcn(hObject, ~, ~)
 function figure1_KeyReleaseFcn(hObject, eventdata, handles)
     if strcmp(eventdata.Key,'z') && ~isempty(eventdata.Modifier) && strcmp(eventdata.Modifier,'control')
         handles = undo(handles);
+    elseif strcmp(eventdata.Key,'u') && isempty(eventdata.Modifier)
+        handles = undo(handles);
     elseif strcmp(eventdata.Key,'y') && ~isempty(eventdata.Modifier) && strcmp(eventdata.Modifier,'control')
+        handles = redo(handles);
+    elseif strcmp(eventdata.Key,'r') && isempty(eventdata.Modifier)
         handles = redo(handles);
     elseif strcmp(eventdata.Key,'j') && isempty(eventdata.Modifier)
         handles = joinTracksAction(handles);
