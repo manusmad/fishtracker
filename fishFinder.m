@@ -22,7 +22,7 @@ function varargout = fishFinder(varargin)
 
 % Edit the above text to modify the response to help fishFinder
 
-% Last Modified by GUIDE v2.5 02-Mar-2015 22:55:23
+% Last Modified by GUIDE v2.5 03-Mar-2015 10:19:25
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -572,7 +572,7 @@ function loadParamsBtn_Callback(hObject, ~, handles)
 function saveParamsBtn_Callback(hObject, ~, handles)
     [paramsFileName,paramsFilePath] = uiputfile('./*.par');
 
-    params = handles.params;
+    params = handles.params; %#ok<NASGU>
     save(fullfile(paramsFilePath,paramsFileName),'params');
     writeLog(handles,'Saved params to %s',paramsFileName);
     guidata(hObject, handles);
@@ -697,7 +697,7 @@ function viewChannelsPanel_SelectionChangeFcn(hObject, eventdata, handles)
 
 
 % --- Executes on button press in viewSpectrogramCheck.
-function viewSpectrogramCheck_Callback(hObject, eventdata, handles)
+function viewSpectrogramCheck_Callback(hObject, ~, handles)
     handles.params.viewSpec = get(hObject,'Value');
     handles = refreshPlot(handles);
     guidata(hObject,handles);
@@ -786,7 +786,7 @@ function loadElecBtn_Callback(hObject, ~, handles)
             runTime = toc;
             progressbar(1);
 
-            if ~isfield(elec,'meta')
+            if ~isfield(elec,'meta') %#ok<NODEF>
                 elec2 = elec;
                 clear elec;
                 fnames = fieldnames(elec2);
@@ -849,7 +849,7 @@ function saveElecBtn_Callback(hObject, ~, handles)
         end
         
         if elecFileName
-            elec = handles.elec;
+            elec = handles.elec; %#ok<NASGU>
             tic;
             savefast(fullfile(elecFilePath,elecFileName),'elec');
             runTime = toc;
@@ -922,7 +922,7 @@ function loadSpecBtn_Callback(hObject, ~, handles)
             progressbar('Loading spectrogram data');
             tic;
             load(fullfile(specFilePath,specFileName),'spec');
-            spec = hlp_deserialize(spec);
+            spec = hlp_deserialize(spec); %#ok<NODEF>
             runTime = toc;
             progressbar(1);
             
@@ -974,7 +974,7 @@ function saveSpecBtn_Callback(hObject, ~, handles)
         if specFileName
             progressbar('Saving spectrogram data');
             tic;
-            spec = hlp_serialize(handles.spec);
+            spec = hlp_serialize(handles.spec); %#ok<NASGU>
             savefast(fullfile(specFilePath,specFileName),'spec');
             runTime = toc;
             progressbar(1);
@@ -1047,7 +1047,7 @@ function saveTracksBtn_Callback(hObject, ~, handles)
         if tracksFileName
             progressbar('Filling empty data...','Saving tracks data');
             handles.tracks = fillWithNaNs(handles.tracks,handles.spec.T,size(handles.spec.S,3));
-            tracks = handles.tracks;
+            tracks = handles.tracks; %#ok<NASGU>
             tic;
             meta = handles.meta;
             meta.F = handles.spec.F;
@@ -1273,15 +1273,12 @@ function [handles,id1] = joinTracks(handles,id1,time1,id2,time2)
         [handles,~] = splitTrack(handles,id12,time2,id1);
     else
         % Split both tracks at the clicked points
-        [handles,id12] = splitTrack(handles,id1,time1);
+        [handles,~] = splitTrack(handles,id1,time1);
         [handles,~] = splitTrack(handles,id2,time2,id1);
     end
     
     handles.tracks(idx1).id = id1;
     handles.tracks(idx2).id = id1;
-    
-%     handles = deleteTrack(handles,id12);
-%     handles = deleteTrack(handles,id2);
 
 % Function to find out which id the (time, freq) point belongs to
 function [handles,matchid] = matchTrack(handles,time,freq)
@@ -1753,10 +1750,14 @@ function rangeRestoreBtn_Callback(hObject, ~, handles)
     end
     guidata(hObject,handles);
 
-
 % --- Executes on selection change in tracksListBox.
 function tracksListBox_Callback(hObject, ~, handles)
     handles = refreshPlot(handles);
+    guidata(hObject,handles);
+    
+% --- Executes on button press in trackSelectBtn.
+function trackSelectBtn_Callback(hObject, ~, handles)
+    handles = selectTrackAction(handles);
     guidata(hObject,handles);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1926,7 +1927,7 @@ function tracksListBox_CreateFcn(hObject, ~, ~)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% MAIN KEYPRESS FUNCTION FOR FIGURE WINDOW, ADD KEYBOARD SHORTCUTS HERE %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function figure1_KeyReleaseFcn(hObject, eventdata, handles)
+function handles = manageKeyPresses(handles,eventdata)
     if strcmp(eventdata.Key,'z') && ~isempty(eventdata.Modifier) && strcmp(eventdata.Modifier,'control')
         handles = undo(handles);
     elseif strcmp(eventdata.Key,'u') && isempty(eventdata.Modifier)
@@ -1947,9 +1948,22 @@ function figure1_KeyReleaseFcn(hObject, eventdata, handles)
         handles = selectTrackAction(handles);
     end
 
+% --- Executes on key press with focus on channelListBox and none of its controls.
+function channelListBox_KeyPressFcn(hObject, eventdata, handles)
+    handles = manageKeyPresses(handles,eventdata);
     guidata(hObject,handles);
 
-% --- Executes on button press in trackSelectBtn.
-function trackSelectBtn_Callback(hObject, ~, handles)
-    handles = selectTrackAction(handles);
+% --- Executes on key press with focus on tracksListBox and none of its controls.
+function tracksListBox_KeyPressFcn(hObject, eventdata, handles)
+    handles = manageKeyPresses(handles,eventdata);
+    guidata(hObject,handles);
+
+% --- Executes on key press with focus on figure1 and none of its controls.
+function figure1_KeyPressFcn(hObject, eventdata, handles)
+    handles = manageKeyPresses(handles,eventdata);
+    guidata(hObject,handles);
+
+% --- Executes on key press with focus on log and none of its controls.
+function log_KeyPressFcn(hObject, eventdata, handles)
+    handles = manageKeyPresses(handles,eventdata);
     guidata(hObject,handles);
