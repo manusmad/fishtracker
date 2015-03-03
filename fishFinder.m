@@ -172,7 +172,7 @@ function handles = populateTracksList(handles)
         
         set(handles.nTracksTxt,'String',num2str(handles.nTracks));
     else
-        set(handles.channelListBox,'String','Tracks list');
+        set(handles.tracksListBox,'String','Tracks list');
         set(handles.nTracksTxt,'String','0');
     end
 
@@ -1697,23 +1697,15 @@ function selectPointsBtn_Callback(hObject, ~, handles)
     end
     guidata(hObject,handles);
 
-
+% To change focus when a subfigure is clicked in 'All' view
 function subFigClickCallBack(hObject,~,handles)
-
     % Find out which of the subfigures the click came through
-    subIdx = find(ismember(handles.hSub,get(hObject,'Parent')))
-    
-    
-%     % Indicate selected
-%                 chan = get(handles.channelListBox,'Value');
-%                 for k = 1:length(chan)
-%                     x = get(handles.hSub(chan(k)),'XLim');
-%                     y = get(handles.hSub(chan(k)),'YLim');
-%                     hold(handles.hSub(chan(k)),'on');
-%                     plot(handles.hSub(chan(k)),[x(1) x(2) x(2) x(1) x(1)],[y(1) y(1) y(2) y(2) y(1)],'-y','LineWidth',5);
-%                     hold(handles.hSub(chan(k)),'off');
-%                 end
-
+    subIdx = find(ismember(handles.hSub,get(hObject,'Parent')));
+    chan = get(handles.channelListBox,'Value');
+    if chan ~= subIdx
+        set(handles.channelListBox,'Value',subIdx);
+        handles = refreshPlot(handles);
+    end    
 
 % --- Executes on button press in constCheckBox.
 function constCheckBox_Callback(hObject, eventdata, handles)
