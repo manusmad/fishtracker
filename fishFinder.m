@@ -231,6 +231,7 @@ function specComputeBtn_Callback(hObject, ~, handles)
         runTime = toc;
         handles.spec = spec;
         handles = setRanges(handles,spec.F(1),spec.F(end),spec.T(1),spec.T(end));
+        handles = computeThreshold(handles);
         handles = refreshPlot(handles);
         set(handles.specFileTxt,'String',sprintf('Computed from electode data'));
         handles = writeLog(handles,'Spectrogram computed (%.2f s)',runTime);
@@ -351,6 +352,21 @@ function refreshPlotBtn_Callback(hObject, ~, handles)
     handles = writeLog(handles,'Plot refreshed');
     guidata(hObject,handles);
 
+function handles = computeThreshold(handles)
+    % Compute thresholded spectrogram whenever threshold value is changed.
+    % same params as in findtracks, could either make these arguments to findTracks, or have both files pull them from a common source.
+    minf1 = 200;
+    maxf1 = 800;
+    ratio12 = 8;
+    [~,minf1idx] = min(abs(handles.spec.F-minf1));
+    [~,maxf1idx] = min(abs(handles.spec.F-maxf1));
+    minf1 = handles.spec.F(minf1idx);
+    maxf1 = handles.spec.F(maxf1idx);
+    [~,minf2idx] = min(abs(handles.spec.F-2*minf1));
+    [~,maxf2idx] = min(abs(handles.spec.F-2*maxf1));
+    handles.Sthresh = zeros(size(handles.Smag));
+    handles.Sthresh(minf1idx:maxf1idx,:,:) = handles.Smag(minf1idx:maxf1idx,:,:)>handles.params.thresh & handles.Smag(minf2idx:2:maxf2idx,:,:)>(handles.params.thresh/ratio12);
+    
 function handles = refreshPlot(handles)
     plotFlag = 0;
     % Clear selections
@@ -365,31 +381,21 @@ function handles = refreshPlot(handles)
             hold(handles.hSingle,'on');
 
             if isfield(handles,'spec')
-                % same params as in findtracks, could either make these arguments to findTracks, or have both files pull them from a common source.
-                minf1 = 200;
-                maxf1 = 800;
-                ratio12 = 8;
-                [~,minf1idx] = min(abs(handles.spec.F-minf1));
-                [~,maxf1idx] = min(abs(handles.spec.F-maxf1));
-                minf1 = handles.spec.F(minf1idx);
-                maxf1 = handles.spec.F(maxf1idx);
-                [~,minf2idx] = min(abs(handles.spec.F-2*minf1));
-                [~,maxf2idx] = min(abs(handles.spec.F-2*maxf1));
-                Sthresh = zeros(size(handles.Smag));
-                Sthresh(minf1idx:maxf1idx,:,:) = handles.Smag(minf1idx:maxf1idx,:,:)>handles.params.thresh & handles.Smag(minf2idx:2:maxf2idx,:,:)>(handles.params.thresh/ratio12);
-
                 if strcmp(handles.params.viewChannel,'Single')
                     chan = get(handles.channelListBox,'Value');
                     chan = chan(1);
                     cla(handles.hSingle);
-                    [plotFlag,handles.hSpec] = plotSpectrogram(handles.hSingle,handles.spec.T,handles.spec.F,Sthresh(:,:,chan));
+                    [plotFlag,handles.hSpec] = plotSpectrogram(handles.hSingle,handles.spec.T,handles.spec.F,handles.Sthresh(:,:,chan));
                 elseif strcmp(handles.params.viewChannel,'Mean')
                     cla(handles.hSingle);
-                    [plotFlag,handles.hSpec] = plotSpectrogram(handles.hSingle,handles.spec.T,handles.spec.F,sum(Sthresh,3)>1);
+                    [plotFlag,handles.hSpec] = plotSpectrogram(handles.hSingle,handles.spec.T,handles.spec.F,sum(handles.Sthresh,3)>1);
                 elseif strcmp(handles.params.viewChannel,'All')
                     for k = 1:handles.meta.nCh      % For each channel
                         cla(handles.hSub(k));
-                        [plotFlag,handles.hSpec] = plotSpectrogram(handles.hSub(k),handles.spec.T,handles.spec.F,Sthresh(:,:,k));
+                        [plotFlag,handles.hSpec] = plotSpectrogram(handles.hSub(k),handles.spec.T,handles.spec.F,handles.Sthresh(:,:,k));
+                        
+                        % Set callback function for image clicking
+                        set(handles.hSpec,'ButtonDownFcn',{@subFigClickCallBack,handles});
                     end
                     
                     % Indicate elected
@@ -517,6 +523,7 @@ function handles = refreshPlot(handles)
 function threshSlider_Callback(hObject, ~, handles)
     handles.params.thresh = get(hObject,'Value');
     set(handles.threshEdit,'String',num2str(handles.params.thresh));
+    handles = computeThreshold(handles);
     handles = refreshPlot(handles);
     guidata(hObject,handles);
 
@@ -724,7 +731,8 @@ function threshEdit_Callback(hObject, ~, handles)
         handles.params.thresh = num;
         set(handles.threshSlider,'Value',num);
     end
-    
+    handles = computeThreshold(handles);
+    handles = refreshPlot(handles);
     guidata(hObject,handles);
 
 % --- Executes on button press in printPlotBtn.
@@ -937,7 +945,7 @@ function loadSpecBtn_Callback(hObject, ~, handles)
                 handles = createSubplots(handles);
                 handles = populateChannelList(handles);
                 handles = computeResolutions(handles);
-
+                handles = computeThreshold(handles);
                 handles = refreshPlot(handles);
                 handles = writeLog(handles,'Loaded spectrogram file %s (%.2f s)',specFileName,runTime);
             else
@@ -1719,7 +1727,14 @@ function subFigClickCallBack(hObject,~,handles)
         % Double click
         subIdx = find(ismember(handles.hSub,get(hObject,'Parent')));
         set(handles.channelListBox,'Value',subIdx);
-        handles = tracksView(handles);        
+        oldsel = get(handles.viewChannelsPanel, 'SelectedObject');
+        newsel = handles.viewSingleRadioBtn;
+        set(handles.viewChannelsPanel,'SelectedObject',newsel)
+        fakeEvent = struct('EventName', 'SelectionChanged', ...
+           'OldValue', oldsel, ...
+           'NewValue', newsel);
+        viewChannelsPanel_SelectionChangeFcn(handles.viewChannelsPanel, fakeEvent, handles);
+        handles.params.viewChannel = 'Single';   
     end
 
 % --- Executes on button press in constCheckBox.
