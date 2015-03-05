@@ -81,11 +81,10 @@ function nFFTEdit_Callback(hObject, ~, handles)
         warndlg('Input must be numerical');
     else
         handles.params.nFFT = num;
+        idx = find(strcmp(get(handles.specPresetPopup,'String'),'Custom'),1);
+        set(handles.specPresetPopup,'Value',idx);
+        handles = computeResolutions(handles);
     end
-    
-    handles = computeResolutions(handles);
-    idx = find(strcmp(get(handles.specPresetPopup,'String'),'Custom'),1);
-    set(handles.specPresetPopup,'Value',idx);
     guidata(hObject,handles);
     
 function log_Callback(hObject, ~, handles)
@@ -103,11 +102,10 @@ function overlapEdit_Callback(hObject, ~, handles)
         warndlg('Input must be numerical');
     else
         handles.params.overlap = num;
+        idx = find(strcmp(get(handles.specPresetPopup,'String'),'Custom'),1);
+        set(handles.specPresetPopup,'Value',idx);
+        handles = computeResolutions(handles);
     end
-    
-    idx = find(strcmp(get(handles.specPresetPopup,'String'),'Custom'),1);
-    set(handles.specPresetPopup,'Value',idx);
-    handles = computeResolutions(handles);
     guidata(hObject,handles);
 
 function rangeF1Edit_Callback(hObject, ~, handles)
