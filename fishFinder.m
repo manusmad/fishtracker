@@ -43,13 +43,11 @@ else
 end
 % End initialization code - DO NOT EDIT
 
-
 % --- Executes just before fishFinder is made visible.
 function fishFinder_OpeningFcn(hObject, ~, handles, varargin)
 % This function has no output args, see OutputFcn.
     % Choose default command line output for fishFinder
-    handles.output = hObject;
-    
+    handles.output = hObject;    
     clc;
     
     % Add all Mathworks folders
@@ -92,150 +90,14 @@ function fishFinder_OpeningFcn(hObject, ~, handles, varargin)
 
     guidata(hObject, handles);
   
-function handles = initParams(handles)
-    set(handles.prefixEdit,'String',handles.params.smrFilePrefix);
-    set(handles.nFFTEdit,'String',num2str(handles.params.nFFT));
-    set(handles.overlapEdit,'String',num2str(handles.params.overlap));
-    set(handles.fResValTxt,'String',num2str(handles.params.fRes));
-    set(handles.tResValTxt,'String',num2str(handles.params.tRes));
-    set(handles.rangeF1Edit,'String',num2str(handles.params.rangeF1));
-    set(handles.rangeF2Edit,'String',num2str(handles.params.rangeF2));
-    set(handles.rangeT1Edit,'String',num2str(handles.params.rangeT1));
-    set(handles.rangeT2Edit,'String',num2str(handles.params.rangeT2));
-    
-    if strcmp(handles.params.viewMode,'Threshold')
-        set(handles.threshPanel,'Visible','on');
-    else
-        set(handles.threshPanel,'Visible','off');
-    end
-    set(handles.threshSlider,'Value',handles.params.thresh);
-    set(handles.threshEdit,'String',num2str(handles.params.thresh));
-
-    
-    if strcmp(handles.params.viewChannel,'Single') || strcmp(handles.params.viewChannel,'Mean')
-        set(handles.singlePlotPanel,'Visible','on');
-        set(handles.multiPlotPanel,'Visible','off');
-    else
-        set(handles.singlePlotPanel,'Visible','off');
-        set(handles.multiPlotPanel,'Visible','on');
-    end
-    
-    set(handles.viewSpectrogramCheck,'Value',handles.params.viewSpec);
-    set(handles.viewTracksCheck,'Value',handles.params.viewTracks);
-    set(handles.trackHighlightCheck,'Value',handles.params.trackHighlight);
-    
-    idx = find(strcmp(get(handles.specPresetPopup,'String'),'Custom'),1);
-    set(handles.specPresetPopup,'Value',idx);
-    
-    handles = computeResolutions(handles);
-    handles = setUndoVisibility(handles);
-    
-    uistack(handles.multiPlotPanel,'top');
-    
-    
 % --- Outputs from this function are returned to the command line.
 function varargout = fishFinder_OutputFcn(~, ~, handles) 
 % Get default command line output from handles structure
 varargout{1} = handles.output;
 
-% --- Function to populate the channel list box and clear the enable
-% selections.
-function handles = populateChannelList(handles)
-    if isfield(handles,'meta')
-        list = cell(handles.meta.nCh,1);
-        for k = 1:handles.meta.nCh
-            list{k} = sprintf('%s %02d',handles.meta.chPrefix,handles.meta.chNum(k));
-        end
-        set(handles.channelListBox,'String',list);
-    else
-        set(handles.channelListBox,'String','Channel list');
-    end
-    
-function handles = populateTracksList(handles)
-    if isfield(handles,'tracks')
-        ids = unique([handles.tracks.id]);
-        handles.nTracks = length(ids);
-        list = cell(handles.nTracks,1);
-        col = distinguishable_colors(max(ids),{'r','k','y'});
-        
-        for k = 1:handles.nTracks
-            coltag = reshape(dec2hex(round(col(ids(k),:)*255))',1,6);           
-            list{k} = sprintf('<html><body bgcolor="%s">Track %02d</body></html>',coltag,ids(k));
-        end
-        set(handles.tracksListBox,'String',list);
-        set(handles.tracksListBox,'ListboxTop',handles.nTracks);
-        
-        selTrack = get(handles.tracksListBox,'Value');
-        if selTrack>handles.nTracks
-            set(handles.tracksListBox,'Value',handles.nTracks);
-        end
-        
-        set(handles.nTracksTxt,'String',num2str(handles.nTracks));
-    else
-        set(handles.tracksListBox,'String','Tracks list');
-        set(handles.nTracksTxt,'String','0');
-    end
-
-% Function to create appropriate subplots
-function handles = createSubplots(handles)
-    if isfield(handles,'meta')
-        nCh = handles.meta.nCh;
-    else
-        nCh=0;
-    end
-    
-    if nCh
-        if isfield(handles,'hSub')
-            delete(handles.hSub);
-            handles = rmfield(handles,'hSub');
-        end
-%         handles.hSub = zeros(nCh,1);
-        handles.hSub = gobjects(nCh,1);
-        
-        n = ceil(sqrt(nCh));
-        margin = 0.02;
-        w = (1 - (n+1)*margin)/n;
-        h = (1 - (n+1)*margin)/n;
-        
-        for k = 1:nCh
-            [r,c] = find(~(flipud(reshape(1:n^2,n,n)')-k),1);
-            handles.hSub(k) = axes('Parent',handles.multiPlotPanel,...
-                'Position',[c*margin + (c-1)*w, r*margin + (r-1)*h, w,h]);
-            if r~=1 || c~=1
-                set(handles.hSub(k),'XTick',[],'YTick',[]);
-            end
-        end        
-    end
-            
-% Function to set ranges based on edited values of F1,F2,T1,T2
-function handles = setRanges(handles,F1,F2,T1,T2)
-    handles.params.rangeF1 = F1;
-    handles.params.rangeF2 = F2;
-    handles.params.rangeT1 = T1;
-    handles.params.rangeT2 = T2;
-    
-    set(handles.rangeF1Edit,'String',num2str(F1));
-    set(handles.rangeF2Edit,'String',num2str(F2));
-    set(handles.rangeT1Edit,'String',num2str(T1));
-    set(handles.rangeT2Edit,'String',num2str(T2));
-
 % --- Executes on button press in specComputeBtn.
 function specComputeBtn_Callback(hObject, ~, handles)
-    if isfield(handles,'elec')
-        tic;
-        spec = specFullFile(handles.elec,handles.params.nFFT,handles.params.overlap);
-        spec.meta.nFFT = handles.params.nFFT;
-        spec.meta.overlap = handles.params.overlap;
-        handles.Smag = normSpecMag(spec.S);
-
-        runTime = toc;
-        handles.spec = spec;
-        handles = setRanges(handles,spec.F(1),spec.F(end),spec.T(1),spec.T(end));
-        handles = computeThreshold(handles);
-        handles = refreshPlot(handles);
-        set(handles.specFileTxt,'String',sprintf('Computed from electode data'));
-        handles = writeLog(handles,'Spectrogram computed (%.2f s)',runTime);
-    end
+    handles = specCompute(handles);
     guidata(hObject,handles);
 
 function nFFTEdit_Callback(hObject, ~, handles)
@@ -253,27 +115,6 @@ function nFFTEdit_Callback(hObject, ~, handles)
     set(handles.specPresetPopup,'Value',idx);
     guidata(hObject,handles);
     
-function handles = writeLog(handles,str,varargin)
-    logStr = get(handles.log,'String');
-    if ~iscell(logStr)
-        logStr = {logStr};
-    end
-    nLines = length(logStr);
-    if (nLines+1) >= get(handles.log,'Max');
-        logStr = logStr(2:end);
-    end
-
-    if ~isempty(varargin)
-        str = sprintf(str,varargin{:});
-    end
-    
-    logStr = [logStr ; str];
-    set(handles.log,'String',logStr);
-    
-     jhEdit = findjobj(handles.log);
-     jEdit = jhEdit.getComponent(0).getComponent(0);
-     jEdit.setCaretPosition(jEdit.getDocument.getLength);
-
 function log_Callback(hObject, ~, handles)
     jhEdit = findjobj(handles.log);
     jEdit = jhEdit.getComponent(0).getComponent(0);
@@ -352,173 +193,6 @@ function refreshPlotBtn_Callback(hObject, ~, handles)
     handles = writeLog(handles,'Plot refreshed');
     guidata(hObject,handles);
 
-function handles = computeThreshold(handles)
-    % Compute thresholded spectrogram whenever threshold value is changed.
-    % same params as in findtracks, could either make these arguments to findTracks, or have both files pull them from a common source.
-    minf1 = 200;
-    maxf1 = 800;
-    ratio12 = 8;
-    [~,minf1idx] = min(abs(handles.spec.F-minf1));
-    [~,maxf1idx] = min(abs(handles.spec.F-maxf1));
-    minf1 = handles.spec.F(minf1idx);
-    maxf1 = handles.spec.F(maxf1idx);
-    [~,minf2idx] = min(abs(handles.spec.F-2*minf1));
-    [~,maxf2idx] = min(abs(handles.spec.F-2*maxf1));
-    handles.Sthresh = zeros(size(handles.Smag));
-    handles.Sthresh(minf1idx:maxf1idx,:,:) = handles.Smag(minf1idx:maxf1idx,:,:)>handles.params.thresh & handles.Smag(minf2idx:2:maxf2idx,:,:)>(handles.params.thresh/ratio12);
-    
-function handles = refreshPlot(handles)
-    plotFlag = 0;
-    % Clear selections
-    if isfield(handles,'hPoly');
-        handles = rmfield(handles,'hPoly');
-    end
-    
-    if isfield(handles,'meta')
-        if strcmp(handles.params.viewMode,'Threshold')
-            axes(handles.hSingle);
-            cla(handles.hSingle);
-            hold(handles.hSingle,'on');
-
-            if isfield(handles,'spec')
-                if strcmp(handles.params.viewChannel,'Single')
-                    chan = get(handles.channelListBox,'Value');
-                    chan = chan(1);
-                    cla(handles.hSingle);
-                    [plotFlag,handles.hSpec] = plotSpectrogram(handles.hSingle,handles.spec.T,handles.spec.F,handles.Sthresh(:,:,chan));
-                elseif strcmp(handles.params.viewChannel,'Mean')
-                    cla(handles.hSingle);
-                    [plotFlag,handles.hSpec] = plotSpectrogram(handles.hSingle,handles.spec.T,handles.spec.F,sum(handles.Sthresh,3)>1);
-                elseif strcmp(handles.params.viewChannel,'All')
-                    for k = 1:handles.meta.nCh      % For each channel
-                        cla(handles.hSub(k));
-                        [plotFlag,handles.hSpec] = plotSpectrogram(handles.hSub(k),handles.spec.T,handles.spec.F,handles.Sthresh(:,:,k));
-                        
-                        % Set callback function for image clicking
-                        set(handles.hSpec,'ButtonDownFcn',{@subFigClickCallBack,handles});
-                    end
-                    
-                    % Indicate elected
-                    chan = get(handles.channelListBox,'Value');
-                    for k = 1:length(chan)
-                        x = get(handles.hSub(chan(k)),'XLim');
-                        y = get(handles.hSub(chan(k)),'YLim');
-                        hold(handles.hSub(chan(k)),'on');
-                        plot(handles.hSub(chan(k)),[x(1) x(2) x(2) x(1) x(1)],[y(1) y(1) y(2) y(2) y(1)],'-y','LineWidth',5);
-                        hold(handles.hSub(chan(k)),'off');
-                    end                    
-                end
-            end
-
-            axis(handles.hSingle,...
-                [handles.params.rangeT1,handles.params.rangeT2, ...
-                handles.params.rangeF1,handles.params.rangeF2]);
-            hold(handles.hSingle,'off');
-
-        elseif strcmp(handles.params.viewMode,'Normal')
-
-            % Single channel
-            if strcmp(handles.params.viewChannel,'Single')
-                cla(handles.hSingle);
-                hold(handles.hSingle,'on');
-
-                % Plot spectrogram
-                if handles.params.viewSpec && isfield(handles,'spec')
-                    chan = get(handles.channelListBox,'Value');
-                    chan = chan(1);
-                    [plotFlag,handles.hSpec] = plotSpectrogram(handles.hSingle,handles.spec.T,handles.spec.F,handles.Smag(:,:,chan));
-                end
-
-                % Plot tracks
-                if handles.params.viewTracks && isfield(handles,'tracks')
-                    if handles.params.trackHighlight
-                        selTracks = get(handles.tracksListBox,'Value');
-                    else
-                        selTracks = [];
-                    end
-                    [plotFlag,handles.hTracks] = plotTracks(handles.hSingle,handles.tracks,selTracks);
-                end
-
-                axis(handles.hSingle,...
-                    [handles.params.rangeT1,handles.params.rangeT2, ...
-                    handles.params.rangeF1,handles.params.rangeF2]);
-                hold(handles.hSingle,'off');
-
-            elseif strcmp(handles.params.viewChannel,'Mean')
-                cla(handles.hSingle);
-                hold(handles.hSingle,'on');
-
-                % Plot spectrogram
-                if handles.params.viewSpec && isfield(handles,'spec')
-                    [plotFlag,handles.hSpec] = plotSpectrogram(handles.hSingle,handles.spec.T,handles.spec.F,mean(handles.Smag,3));
-                end
-
-                % Plot tracks
-                if handles.params.viewTracks  && isfield(handles,'tracks')
-                    if handles.params.trackHighlight
-                        selTracks = get(handles.tracksListBox,'Value');
-                    else
-                        selTracks = [];
-                    end
-                    [plotFlag,handles.hTracks] = plotTracks(handles.hSingle,handles.tracks,selTracks);
-                end
-
-                axis(handles.hSingle,...
-                    [handles.params.rangeT1,handles.params.rangeT2, ...
-                    handles.params.rangeF1,handles.params.rangeF2]);
-                hold(handles.hSingle,'off');    
-
-            elseif strcmp(handles.params.viewChannel,'All')
-                for k = 1:handles.meta.nCh      % For each channel
-                    cla(handles.hSub(k));
-                    hold(handles.hSub(k),'on');
-
-                    % Plot spectrogram
-                    if handles.params.viewSpec && isfield(handles,'spec')
-                        [plotFlag,handles.hSpec] = plotSpectrogram(handles.hSub(k),handles.spec.T,handles.spec.F,handles.Smag(:,:,k));
-                        
-                        % Set callback function for image clicking
-                        set(handles.hSpec,'ButtonDownFcn',{@subFigClickCallBack,handles});
-                    end
-
-                    % Plot tracks
-                    if handles.params.viewTracks && isfield(handles,'tracks')
-                        if handles.params.trackHighlight
-                            selTracks = get(handles.tracksListBox,'Value');
-                        else
-                            selTracks = [];
-                        end
-                        [plotFlag,handles.hTracks] = plotTracks(handles.hSub(k),handles.tracks,selTracks);
-                    end
-
-                    axis(handles.hSub(k),...
-                    [handles.params.rangeT1,handles.params.rangeT2, ...
-                    handles.params.rangeF1,handles.params.rangeF2]);
-                    hold(handles.hSub(k),'off');
-                end
-                
-                % Indicate selected
-                chan = get(handles.channelListBox,'Value');
-                for k = 1:length(chan)
-                    x = get(handles.hSub(chan(k)),'XLim');
-                    y = get(handles.hSub(chan(k)),'YLim');
-                    hold(handles.hSub(chan(k)),'on');
-                    plot(handles.hSub(chan(k)),[x(1) x(2) x(2) x(1) x(1)],[y(1) y(1) y(2) y(2) y(1)],'-y','LineWidth',5);
-                    hold(handles.hSub(chan(k)),'off');
-                end
-            end
-        end
-    else
-        set(handles.singlePlotPanel,'Visible','on');
-        set(handles.multiPlotPanel,'Visible','off');
-        axes(handles.hSingle);
-        cla(handles.hSingle);
-    end
-    
-    if ~plotFlag
-        handles = writeLog(handles,'Nothing to refresh');
-    end
-      
 % --- Executes on slider movement.
 function threshSlider_Callback(hObject, ~, handles)
     handles.params.thresh = get(hObject,'Value');
@@ -597,104 +271,33 @@ function trackBtn_Callback(hObject, ~, handles)
 
 % --- Executes on button press in nFFTUpBtn.
 function nFFTUpBtn_Callback(hObject, ~, handles)
-    nfft = handles.params.nFFT;    
-    npow2 = 2^nextpow2(nfft);
-    if npow2 == nfft
-        nfft = nfft*2;
-    else
-        nfft = npow2;
-    end
-   
-    handles.params.nFFT = nfft;
-    set(handles.nFFTEdit,'String',num2str(nfft));
+    handles = nFFTUp(handles);
     handles = computeResolutions(handles);
     guidata(hObject, handles);
 
 % --- Executes on button press in nFFTDnBtn.
 function nFFTDnBtn_Callback(hObject, ~, handles)
-    nfft = handles.params.nFFT;
-    npow2 = 2^nextpow2(nfft);
-    if npow2 == nfft
-        nfft = nfft/2;
-    else
-        nfft = npow2/2;
-    end
-    
-    handles.params.nFFT = nfft;
-    set(handles.nFFTEdit,'String',num2str(nfft));
+    handles = nFFTDn(handles);
     handles = computeResolutions(handles);
     guidata(hObject, handles);
 
-
 % --- Executes on button press in overlapUpBtn.
 function overlapUpBtn_Callback(hObject, ~, handles)
-    overlap = handles.params.overlap;
-    overlap = 1/(1-overlap);
-    npow2 = 2^nextpow2(overlap);
-    
-    if npow2 == overlap
-        overlap = overlap*2;
-    else
-        overlap = npow2;
-    end
-    
-    overlap = 1 - 1/overlap;
-    handles.params.overlap = overlap;
-    set(handles.overlapEdit,'String',num2str(overlap));
+    handles = overlapUp(handles);
     handles = computeResolutions(handles);
     guidata(hObject, handles);
 
 % --- Executes on button press in overlapDnBtn.
 function overlapDnBtn_Callback(hObject, ~, handles)
-    overlap = handles.params.overlap;
-    overlap = 1/(1-overlap);
-    npow2 = 2^nextpow2(overlap);
-    
-    if npow2 == overlap
-        overlap = overlap/2;
-    else
-        overlap = npow2/2;
-    end
-    
-    overlap = 1 - 1/overlap;
-    handles.params.overlap = overlap;
-    set(handles.overlapEdit,'String',num2str(overlap));
+    handles = overlapDn(handles);
     handles = computeResolutions(handles);
     guidata(hObject, handles);
-
-function handles = computeResolutions(handles)
-    if isfield(handles,'meta')
-        nFFT = handles.params.nFFT;
-        overlap = handles.params.overlap;
-
-        nF = floor(handles.params.nFFT/2)+1;
-        Fres = handles.meta.Fs / (2*nF);
-        nT = fix((handles.meta.N-nFFT*overlap)/(nFFT*(1-overlap)));
-        Tres = handles.meta.int*handles.meta.N / nT;
-        
-        set(handles.fResValTxt,'String',sprintf('%.2f',Fres));
-        set(handles.tResValTxt,'String',sprintf('%.2f',Tres));
-    else
-        set(handles.fResValTxt,'String','[  ]');
-        set(handles.tResValTxt,'String','[  ]');
-    end    
     
 % --- Executes when selected object is changed in viewChannelsPanel.
 function viewChannelsPanel_SelectionChangeFcn(hObject, eventdata, handles)
-    viewChannel = get(eventdata.NewValue,'String');
-    
-    if strcmp(viewChannel,'Single') || strcmp(viewChannel,'Mean')
-        set(handles.singlePlotPanel,'Visible','on');
-        set(handles.multiPlotPanel,'Visible','off');
-    elseif strcmp(viewChannel,'All')
-        set(handles.singlePlotPanel,'Visible','off');
-        set(handles.multiPlotPanel,'Visible','on');
-    end
-     
-    handles.params.viewChannel = viewChannel;
-    handles = refreshPlot(handles);
+    handles.params.viewChannel = get(eventdata.NewValue,'String');
+    handles = viewChannelsChanged(handles);    
     guidata(hObject,handles);
-
 
 % --- Executes on button press in viewSpectrogramCheck.
 function viewSpectrogramCheck_Callback(hObject, ~, handles)
@@ -707,19 +310,11 @@ function viewTracksCheck_Callback(hObject, ~, handles)
     handles.params.viewTracks = get(hObject,'Value');
     handles = refreshPlot(handles);
     guidata(hObject,handles);
-
+    
 % --- Executes when selected object is changed in viewModePanel.
 function viewModePanel_SelectionChangeFcn(hObject, eventdata, handles)
     handles.params.viewMode = get(eventdata.NewValue,'String');
-    if strcmp(handles.params.viewMode,'Threshold')
-        set(handles.threshPanel,'Visible','on');
-        set(handles.viewChoosePanel,'Visible','off');
-    else
-        set(handles.threshPanel,'Visible','off');
-        set(handles.viewChoosePanel,'Visible','on');
-    end
-    
-    handles = refreshPlot(handles);
+    handles = viewModeChanged(handles);
     guidata(hObject,handles);
 
 function threshEdit_Callback(hObject, ~, handles)
@@ -737,133 +332,20 @@ function threshEdit_Callback(hObject, ~, handles)
 
 % --- Executes on button press in printPlotBtn.
 function printPlotBtn_Callback(hObject, ~, handles)
-    defFileName = [];
-    if isfield(handles,'specFileName')
-        [~,temp,~] = fileparts(handles.specFileName);
-        defFileName = [defFileName temp];
-    end
-    if isfield(handles,'tracksFileName')
-        [~,temp,~] = fileparts(handles.tracksFileName);
-        defFileName = [defFileName '_' temp];
-    end
-    
-    [fileName,pathName] = uiputfile([defFileName '.pdf']);
-    try
-        if strcmp(get(handles.singlePlotPanel,'Visible'),'on')
-            export_fig(handles.hSingle,fullfile(pathName,fileName));
-            handles = writeLog(handles,'Printed to %s',fileName);
-        else
-            for k = 1:length(handles.hSub)
-                export_fig(handles.hSub(k),fullfile(pathName,sprintf('%d_%s',k,fileName)));
-            end
-            handles = writeLog(handles,'Printed all to k_%s',fileName);
-        end
-    catch
-        handles = writeLog(handles,'Error printing to %s',fileName);
-    end
-    
+    handles = printPlot(handles);    
     guidata(hObject,handles);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% FILE HANDLING FUNCTIONS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
-
 % --- Executes on button press in loadElecBtn.
 function loadElecBtn_Callback(hObject, ~, handles)
-    if isfield(handles,'elecFilePath')
-        [elecFileName,elecFilePath] = uigetfile([handles.elecFilePath filesep '*.mat'],'Choose electrode data file');
-    elseif isfield(handles,'lastOpenPath')
-        [elecFileName,elecFilePath] = uigetfile([handles.lastOpenPath filesep '*.mat'],'Choose electrode data file');
-    else
-        [elecFileName,elecFilePath] = uigetfile('*.mat','Choose electrode data file');
-    end
-    
-    if elecFileName
-        try
-            progressbar('Loading electrode data');
-            tic;
-            load(fullfile(elecFilePath,elecFileName),'elec');
-            runTime = toc;
-            progressbar(1);
-
-            if ~isfield(elec,'meta') %#ok<NODEF>
-                elec2 = elec;
-                clear elec;
-                fnames = fieldnames(elec2);
-                for f = 1:length(fnames)
-                    if any(strcmp(fnames{f},{'data','t'}))
-                        elec.(fnames{f}) = elec2.(fnames{f});
-                    else
-                        elec.meta.(fnames{f}) = elec2.(fnames{f});
-                    end
-                end
-            end
-
-            if ~isfield(elec.meta,'nCh')
-                elec.meta.nCh = length(elec.data,2);
-            end
-            if ~isfield(elec.meta,'N')
-                elec.meta.N = length(elec.t);
-            end
-            if ~isfield(elec.meta,'chNum')
-                elec.meta.chNum = 1:elec.meta.nCh;
-            end
-            if ~isfield(elec.meta,'chPrefix')
-                elec.meta.chPrefix = 'Ch';
-            end
-            if ~isfield(elec.meta,'sourceFile')
-                elec.meta.sourceFile = elecFileName;
-            end
-
-            handles.elecFileName = elecFileName;
-            handles.elecFilePath = elecFilePath;
-            handles.lastOpenPath = elecFilePath;
-            handles.elec = elec;
-
-            handles.meta = elec.meta;
-            handles = setRanges(handles,0,elec.meta.Fs/2,elec.t(1),elec.t(end));
-            handles = createSubplots(handles);
-            handles = populateChannelList(handles);
-            handles = computeResolutions(handles);
-
-            set(handles.elecFileTxt,'String',elecFileName);
-            handles = writeLog(handles,'Loaded data file %s (%.2f s)',elecFileName,runTime);
-        catch
-            handles = writeLog(handles,'Could not load %s (%.2f s)',elecFileName,runTime);
-            progressbar(1);
-        end
-    end
+    handles = loadElec(handles);
     guidata(hObject,handles);
 
 % --- Executes on button press in saveElecBtn.
 function saveElecBtn_Callback(hObject, ~, handles)
-    if isfield(handles,'elec')
-        if isfield(handles,'elecFileName') && isfield(handles,'elecFilePath')
-            [elecFileName,elecFilePath] = uiputfile(fullfile(handles.elecFilePath,handles.elecFileName),'Save electrode data as...');
-        elseif isfield(handles,'elecFilePath')
-            [elecFileName,elecFilePath] = uiputfile([handles.elecFilePath filesep '*.mat'],'Save electrode data as...');
-        elseif isfield(handles,'lastOpenPath')
-            [elecFileName,elecFilePath] = uiputfile([handles.lastOpenPath filesep '*.mat'],'Save electrode data as...');
-        else
-            [elecFileName,elecFilePath] = uiputfile('*.mat','Save electrode data as...');
-        end
-        
-        if elecFileName
-            elec = handles.elec; %#ok<NASGU>
-            tic;
-            savefast(fullfile(elecFilePath,elecFileName),'elec');
-            runTime = toc;
-
-            handles = writeLog(handles,'Saved data file %s (%.2f s)',elecFileName,runTime);
-            set(handles.elecFileTxt,'String',elecFileName);
-
-            handles.elecFileName = elecFileName;
-            handles.elecFilePath = elecFilePath;
-            handles.lastOpenPath = elecFilePath;
-        end
-    else
-        handles = writeLog(handles,'No electrode data loaded');
-    end
+    handles = saveElec(handles);
     guidata(hObject,handles);
     
 % --- Executes on button press in loadSmrBtn.
@@ -1087,6 +569,7 @@ function deleteChannelsBtn_Callback(hObject, ~, handles)
     if isfield(handles,'spec')
         handles.spec.S(:,:,delidx) = [];
         handles.Smag(:,:,delidx) = [];
+        handles.Sthresh(:,:,delidx) = [];
         handles.spec.meta = handles.meta;
     end
     
@@ -1171,51 +654,10 @@ function clearElecBtn_Callback(hObject, ~, handles)
     handles = clearElec(handles);
     guidata(hObject,handles);
 
-function handles = clearElec(handles)
-    if isfield(handles,'elec')
-        handles = rmfield(handles,'elec');
-        if isfield(handles,'elecFileName')
-            handles = rmfield(handles,'elecFileName');
-        end
-        set(handles.elecFileTxt,'String','<None>');
-        handles = writeLog(handles,'Cleared electrode data');
-        
-        if isfield(handles,'spec')
-            handles.meta = handles.spec.meta;
-        else
-            handles = rmfield(handles,'meta');
-        end
-        
-        handles = populateChannelList(handles);
-    else
-        handles = writeLog(handles,'No electrode data to clear');
-    end
-
 % --- Executes on button press in clearSpecBtn.
 function clearSpecBtn_Callback(hObject, ~, handles)
     handles = clearSpec(handles);
     guidata(hObject,handles);
-
-function handles = clearSpec(handles)
-    if isfield(handles,'spec')
-        handles = rmfield(handles,'spec');
-        if isfield(handles,'specFileName')
-            handles = rmfield(handles,'specFileName');
-        end
-        set(handles.specFileTxt,'String','<None>');
-        handles = writeLog(handles,'Cleared spectrogram data');
-         
-        if isfield(handles,'elec')
-            handles.meta = handles.elec.meta;
-        else
-            handles = rmfield(handles,'meta');
-        end
-        
-        handles = populateChannelList(handles);
-    else
-        handles = writeLog(handles,'No spectrogram data to clear');
-    end
-    
 
 % --- Executes on button press in clearTracksBtn.
 function clearTracksBtn_Callback(hObject, ~, handles)
@@ -1224,24 +666,6 @@ function clearTracksBtn_Callback(hObject, ~, handles)
     handles = populateTracksList(handles);
     guidata(hObject,handles);
     
-function handles = clearTracks(handles) 
-    if isfield(handles,'tracks')
-        handles = rmfield(handles,'tracks');
-        if isfield(handles,'tracksFileName')
-            handles = rmfield(handles,'tracksFileName');
-        end
-        set(handles.tracksFileTxt,'String','<None>');
-        handles.undo.empty();
-        handles.redo.empty();
-        handles = setUndoVisibility(handles);
-        
-        handles = writeLog(handles,'Cleared tracks data');
-    else
-        handles = writeLog(handles,'No tracks data to clear');
-    end
-    
-    
-
 % --- Executes on button press in clearAllBtn.
 function clearAllBtn_Callback(hObject, ~, handles)
     handles = clearElec(handles);
@@ -1255,220 +679,21 @@ function clearAllBtn_Callback(hObject, ~, handles)
     
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% TRACK EDIT FUNCTIONS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% Function to join two tracks
-function [handles,id1] = joinTracks(handles,id1,time1,id2,time2)
-    if time1>time2
-        % Swap
-        temp = id2; id2 = id1; id1 = temp;
-        temp = time2; time2 = time1; time1 = temp;
-    end
-
-    idx1 = find([handles.tracks.id]==id1 & [handles.tracks.t]==time1,1);
-    idx2 = find([handles.tracks.id]==id2 & [handles.tracks.t]==time2,1);
-    
-    if id1 == id2
-        [handles,id12] = splitTrack(handles,id1,time1);
-        [handles,~] = splitTrack(handles,id12,time2,id1);
-    else
-        % Split both tracks at the clicked points
-        [handles,~] = splitTrack(handles,id1,time1);
-        [handles,~] = splitTrack(handles,id2,time2,id1);
-    end
-    
-    handles.tracks(idx1).id = id1;
-    handles.tracks(idx2).id = id1;
-
-% Function to find out which id the (time, freq) point belongs to
-function [handles,matchid] = matchTrack(handles,time,freq)
-    [~,idx] = min(pdist2([ [handles.tracks.t]' [handles.tracks.f1]' ],[time freq]));
-    matchid = handles.tracks(idx).id;
-
-% Function to delete a track
-function handles = deleteTrack(handles,ids)
-    handles.tracks(ismember([handles.tracks.id],ids)) = [];
-    handles = populateTracksList(handles);
-    % If all tracks are deleted, 
-    if handles.nTracks==0
-        handles = rmfield(handles,'tracks');
-    end
-    
-% Function to split track of fish given id and time to split
-function [handles,newId] = splitTrack(handles,id,time,newId)
-    if nargin<4
-        newId = max(unique([handles.tracks.id])) + 1;
-    end
-    
-    idx = [handles.tracks.id]==id & [handles.tracks.t]>time;
-    if any(idx)
-        [handles.tracks(idx).id] = deal(newId);
-    end   
-    handles = populateTracksList(handles);
-    
-% Function to 'clean' tracks, i.e. delete tracks of length<2
-function [handles,del] = cleanTracks(handles)
-    ids = unique([handles.tracks.id]);
-    del = 0;
-    for id = ids
-        track = handles.tracks([handles.tracks.id]==id);
-        lTrack = length(track);
-   
-        if lTrack<=10
-            handles = deleteTrack(handles,id);
-            del = del+1;
-        end
-    end
-    
-% Makes sure the view is optimal for tracks selection and deletion (Single
-% axis, normal view mode)
-function handles = tracksView(handles)
-    if ~strcmp(handles.params.viewMode,'Normal')
-        oldsel = get(handles.viewModePanel, 'SelectedObject');
-        newsel = handles.viewNormalRadioBtn;
-        set(handles.viewModePanel,'SelectedObject',newsel)
-        fakeEvent = struct('EventName', 'SelectionChanged', ...
-           'OldValue', oldsel, ...
-           'NewValue', newsel);
-        viewModePanel_SelectionChangeFcn(handles.viewModePanel, fakeEvent, handles);
-        handles.params.viewMode = 'Normal';
-    end
-    
-    if strcmp(handles.params.viewChannel,'All')
-        oldsel = get(handles.viewChannelsPanel, 'SelectedObject');
-        newsel = handles.viewSingleRadioBtn;
-        set(handles.viewChannelsPanel,'SelectedObject',newsel)
-        fakeEvent = struct('EventName', 'SelectionChanged', ...
-           'OldValue', oldsel, ...
-           'NewValue', newsel);
-        viewChannelsPanel_SelectionChangeFcn(handles.viewChannelsPanel, fakeEvent, handles);
-        handles.params.viewChannel = 'Single';
-    end
-    
-function handles = deleteTracksAction(handles)
-    if isfield(handles,'tracks')    
-        handles = tracksView(handles);
-        handles = addUndo(handles);
-        
-        if handles.params.trackHighlight
-            selTracks = get(handles.tracksListBox,'Value');
-            ids = unique([handles.tracks.id]);
-            ids = ids(selTracks);
-            handles = deleteTrack(handles,ids);
-            handles = refreshPlot(handles);
-            handles = writeLog(handles,'Tracks deleted');
-        else
-            handles = writeLog(handles,'Select track to delete (Right click to cancel)');
-            [time,freq] = MagnetGInput2(handles.hTracks,true);
-        
-            if ~isempty(time)
-                [handles,id] = matchTrack(handles,time,freq);
-                handles = deleteTrack(handles,id);
-                handles = refreshPlot(handles);
-                handles = writeLog(handles,'Track %d deleted',id);
-            else
-                handles = writeLog(handles,'Delete cancelled');
-            end
-        end
-    else
-        handles = writeLog(handles,'No tracks to delete');
-    end
-    
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 % --- Executes on button press in deleteTracksBtn.
 function deleteTracksBtn_Callback(hObject, ~, handles)
     handles = deleteTracksAction(handles);
     guidata(hObject,handles); 
-
-function handles = cleanTracksAction(handles)
-    if isfield(handles,'tracks')    
-        handles = tracksView(handles);
-        handles = addUndo(handles);
-        
-        [handles,del] = cleanTracks(handles);
-        
-        handles = refreshPlot(handles);
-        handles = writeLog(handles,'%d tracks cleaned',del);
-    else
-        handles = writeLog(handles,'No tracks to clean');
-    end
 
 % --- Executes on button press in cleanTracksBtn.
 function cleanTracksBtn_Callback(hObject, ~, handles)
     handles = cleanTracksAction(handles);
     guidata(hObject,handles); 
 
-function handles = joinTracksAction(handles)
-    if isfield(handles,'tracks')    
-        handles = tracksView(handles);
-        handles = addUndo(handles);
-        
-        handles = writeLog(handles,'Select track 1 (Right click to cancel)');
-        [time1,freq1] = MagnetGInput2(handles.hTracks,true);
-
-        if ~isempty(time1)
-            handles = writeLog(handles,'Select track 2 (Right click to cancel)');
-            [time2,freq2] = MagnetGInput2(handles.hTracks,true);
-            
-            if ~isempty(time2)
-                % Match tracks with fish
-                [handles,id1] = matchTrack(handles,time1,freq1);
-                [handles,id2] = matchTrack(handles,time2,freq2);
-                [handles,~] = joinTracks(handles,id1,time1,id2,time2);
-
-                handles = refreshPlot(handles);
-                handles = writeLog(handles,'Tracks joined');
-            else
-                handles = writeLog(handles,'Join cancelled');
-            end
-        else
-            handles = writeLog(handles,'Join cancelled');
-        end
-    else
-        handles = writeLog(handles,'No tracks to join');
-    end
-
 % --- Executes on button press in joinTracksBtn.
 function joinTracksBtn_Callback(hObject, ~, handles)
     handles = joinTracksAction(handles);
     guidata(hObject,handles); 
-
-function handles = selectTrackAction(handles)
-        handles = writeLog(handles,'Click to select track (Right click to cancel)');
-        [time,freq] = MagnetGInput2(handles.hTracks,true);
-        
-        if ~isempty(time)
-            handles = populateTracksList(handles);
-            [handles,id] = matchTrack(handles,time,freq);
-            ids = unique([handles.tracks.id]);
-            val = find(ids==id,1);
-            set(handles.tracksListBox,'Value',val);
-            handles = refreshPlot(handles);
-            handles = writeLog(handles,'Track %d selected',id);
-        else
-            handles = writeLog(handles,'Select cancelled');
-        end
-
-function handles = splitTracksAction(handles)
-    if isfield(handles,'tracks')    
-        handles = tracksView(handles);
-        handles = addUndo(handles);
-
-        handles = writeLog(handles,'Select track to split (Right click to cancel)');
-        
-        [time,freq] = MagnetGInput2(handles.hTracks,true);
-        
-        if ~isempty(time)
-            [handles,id] = matchTrack(handles,time,freq);
-            [handles,~] = splitTrack(handles,id,time);
-            
-            handles = refreshPlot(handles);
-            handles = writeLog(handles,'Track %d split at time %.2f',id,time);
-        else
-            handles = writeLog(handles,'Split cancelled');
-        end
-    else
-        handles = writeLog(handles,'No tracks to split');
-    end
 
 % --- Executes on button press in splitTracksBtn.
 function splitTracksBtn_Callback(hObject, ~, handles)
@@ -1481,258 +706,35 @@ function trackHighlightCheck_Callback(hObject, ~, handles)
     handles = refreshPlot(handles);
     guidata(hObject,handles);
 
-
 % --- Executes on button press in newLineBtn.
 function newLineBtn_Callback(hObject, ~, handles)
-    isConst = 1;
-   
-    if isfield(handles,'tracks')
-        handles = tracksView(handles);
-        handles = addUndo(handles);
-        
-        selTrack = get(handles.tracksListBox,'Value');
-        selTrack = selTrack(1);
-        
-        ids = unique([handles.tracks.id]);
-        id = ids(selTrack);
-        
-        while isConst
-            handles = writeLog(handles,'Select end points of line to add to track %d',id);
-            [time1,freq1] = MagnetGInput2(handles.hSpec,false);
-            if ~isInRange(handles,time1,freq1)
-                set(handles.constCheckBox,'Value',0);
-                break;
-            end
-            [time2,freq2] = MagnetGInput2(handles.hSpec,false);
-            if ~isInRange(handles,time2,freq2)
-                set(handles.constCheckBox,'Value',0);
-                break;
-            end
-
-            if ~isempty(time1) && ~isempty(freq1) && ~isempty(time2) && ~isempty(freq2)    
-                handles = addLine(handles,id,time1,freq1,time2,freq2);
-                handles = refreshPlot(handles);              
-                isConst = get(handles.constCheckBox,'Value');
-            else
-                handles = writeLog(handles,'No corresponding point found');
-            end
-        end
-    else
-        % Need to make a new track
-        handles = writeLog(handles,'No tracks data');
-    end
+     handles = newLine(handles);
     guidata(hObject,handles);
 
-function  handles = addLine(handles,id,time1,freq1,time2,freq2)
-    if time1 > time2
-        t = time2; time2=time1; time1=t;
-        f = freq2; freq2=freq1; freq1=f;
-    end
-    
-    tvec = handles.spec.T(handles.spec.T>=time1 & handles.spec.T<=time2);
-    N = length(tvec);
-    fvec = linspace(freq1,freq2,N);
-    [~,nearestIdx] = min(abs(repmat(handles.spec.F,1,N) - repmat(fvec,length(handles.spec.F),1)));
-    fvec = handles.spec.F(nearestIdx);
-    handles = addPoints(handles,id,tvec,fvec);
-    
-function handles = addPoints(handles,id,time,freq)
-    [~,tidx] = ismember(time,handles.spec.T);
-    [~,fidx] = ismember(freq,handles.spec.F);
-    
-    for k = 1:length(tidx)
-        % Cannot have two points at the same time with the same id
-        repeatIdx = [handles.tracks.t]==time(k) & [handles.tracks.id]==id;
-        handles.tracks(repeatIdx) = [];
-        
-        nF = length(handles.spec.F);
-        
-        [newTrackPt.t,newTrackPt.f1,newTrackPt.a1,newTrackPt.a2,newTrackPt.a3,...
-        newTrackPt.p1,newTrackPt.p2,newTrackPt.p3,newTrackPt.id] = deal(NaN);
-        
-        newTrackPt.t = time(k);
-        newTrackPt.f1 = freq(k);
-        newTrackPt.a1 = abs(handles.spec.S(fidx(k),tidx(k),:));
-        newTrackPt.p1 = angle(handles.spec.S(fidx(k),tidx(k),:));
-
-        if 2*fidx(k)<=nF
-            newTrackPt.a2 = abs(handles.spec.S(fidx(k)*2,tidx(k),:));
-            newTrackPt.p2 = angle(handles.spec.S(fidx(k)*2,tidx(k),:));
-        end
-        
-        if 3*fidx(k)<=nF
-            newTrackPt.a3 = abs(handles.spec.S(fidx(k)*3,tidx(k),:));
-            newTrackPt.p3 = angle(handles.spec.S(fidx(k)*3,tidx(k),:));
-        end
-        
-        newTrackPt.id = id;
-        newTrackPt.conf = -100;     % To enable detection later
-
-        handles.tracks = [handles.tracks newTrackPt];
-    end
-    
 % --- Executes on button press in newPointBtn.
 function newPointBtn_Callback(hObject, ~, handles)
-    isConst = 1;
-    if isfield(handles,'tracks')
-        handles = tracksView(handles);
-        handles = addUndo(handles);
-        
-        selTrack = get(handles.tracksListBox,'Value');
-        selTrack = selTrack(1);
-        
-        ids = unique([handles.tracks.id]);
-        id = ids(selTrack);
-
-        while isConst
-            handles = writeLog(handles,'Select point to add to track %d',id);
-            [time,freq] = MagnetGInput2(handles.hSpec,false);
-            if ~isInRange(handles,time,freq)
-                set(handles.constCheckBox,'Value',0);
-                break;
-            end
-
-            if ~isempty(time) && ~isempty(freq)     
-                handles = addPoints(handles,id,time,freq);
-                handles = refreshPlot(handles);
-            else
-                handles = writeLog(handles,'No corresponding point found');
-            end
-            isConst = get(handles.constCheckBox,'Value');
-        end
-    else
-        handles = writeLog(handles,'No tracks data');
-    end
+     handles = newPoint(handles);
     guidata(hObject,handles);
     
-function out = isInRange(handles,time,freq)
-    out = time>=handles.params.rangeT1 && time<= handles.params.rangeT2 && freq >= handles.params.rangeF1 && freq <= handles.params.rangeF2;       
-
 % --- Executes on button press in assignPointsBtn.
 function assignPointsBtn_Callback(hObject, ~, handles)
-    if isfield(handles,'tracks')
-        if isfield(handles,'hPoly');
-            handles = tracksView(handles);
-            handles = addUndo(handles);
-            
-            selTrack = get(handles.tracksListBox,'Value');
-            selTrack = selTrack(1);
-            ids = unique([handles.tracks.id]);
-            assignId = ids(selTrack);
-            
-            P = getPosition(handles.hPoly);
-            selectedIdx = inpolygon([handles.tracks.t]',[handles.tracks.f1]',P(:,1),P(:,2));
-           
-            % Cannot have repeated times in the track being assigned to
-            repeatIdx = [handles.tracks.id]==assignId & ~selectedIdx' & ismember([handles.tracks.t],[handles.tracks(selectedIdx).t]);
-           
-            % Cannot have repeated times in the selection
-            selectedIdx = find(selectedIdx);
-            [~,uniqueIdx,~] = unique([handles.tracks(selectedIdx).t]);
-            selectedIdx = selectedIdx(uniqueIdx);
-           
-            [handles.tracks(selectedIdx).id] = deal(assignId);
-            handles.tracks(repeatIdx) = [];
-            
-            handles = cleanTracks(handles);
-            handles = populateTracksList(handles);
-            handles = refreshPlot(handles);
-        else
-            handles = writeLog(handles,'No region selected');
-        end
-    else
-        handles = writeLog(handles,'No tracks data');
-    end
+    handles = assignPoints(handles);
     guidata(hObject,handles);
-
 
 % --- Executes on button press in deletePointsBtn.
 function deletePointsBtn_Callback(hObject, ~, handles)
-    if isfield(handles,'tracks')
-        if isfield(handles,'hPoly');
-            handles = tracksView(handles);
-            handles = addUndo(handles);
-            
-            P = getPosition(handles.hPoly);
-            selectedIdx = inpolygon([handles.tracks.t]',[handles.tracks.f1]',P(:,1),P(:,2));
-
-            handles.tracks(selectedIdx) = [];
-            
-            handles = cleanTracks(handles);
-            handles = populateTracksList(handles);
-            handles = refreshPlot(handles);
-        else
-            handles = writeLog(handles,'No region selected');
-        end
-    else
-        handles = writeLog(handles,'No tracks data');
-    end
+    handles = deletePoints(handles);
     guidata(hObject,handles);
 
 % --- Executes on button press in newTrackBtn.
 function newTrackBtn_Callback(hObject, ~, handles)
-    if isfield(handles,'spec')
-        handles = tracksView(handles);
-        newTrack = fillWithNaNs([],handles.spec.T,size(handles.spec.S,3));
-        if isfield(handles,'tracks')
-            handles = addUndo(handles);
-            newId = max([handles.tracks.id])+1;
-            [newTrack.id] = deal(newId);
-            handles.tracks = [handles.tracks newTrack];
-        else
-            [newTrack.id] = deal(1);
-            handles.tracks = newTrack;
-        end
-        
-        handles = refreshPlot(handles);
-        handles = populateTracksList(handles);
-    else
-        handles = writeLog(handles,'No spectrogram data available');
-    end
+    handles = newTrack(handles);
     guidata(hObject,handles);
-
 
 % --- Executes on button press in selectPointsBtn.
 function selectPointsBtn_Callback(hObject, ~, handles)
-    if isfield(handles,'tracks')
-        handles = tracksView(handles);
-        handles.hPoly = impoly(handles.hSingle);
-    else
-        handles = writeLog(handles,'No tracks data');
-    end
+    handles = selectPoints(handles);
     guidata(hObject,handles);
-
-% To change focus when a subfigure is clicked in 'All' view
-function subFigClickCallBack(hObject,~,handles)
-    persistent chk
-    if isempty(chk)
-        chk = 1;
-        pause(0.5); %Add a delay to distinguish single click from a double click
-        if chk == 1
-            % Single click
-            % Find out which of the subfigures the click came through
-            subIdx = find(ismember(handles.hSub,get(hObject,'Parent')));
-            chan = get(handles.channelListBox,'Value');
-            if chan ~= subIdx
-                set(handles.channelListBox,'Value',subIdx);
-                handles = refreshPlot(handles);
-            end  
-            chk = [];
-        end
-    else
-        chk = [];
-        % Double click
-        subIdx = find(ismember(handles.hSub,get(hObject,'Parent')));
-        set(handles.channelListBox,'Value',subIdx);
-        oldsel = get(handles.viewChannelsPanel, 'SelectedObject');
-        newsel = handles.viewSingleRadioBtn;
-        set(handles.viewChannelsPanel,'SelectedObject',newsel)
-        fakeEvent = struct('EventName', 'SelectionChanged', ...
-           'OldValue', oldsel, ...
-           'NewValue', newsel);
-        viewChannelsPanel_SelectionChangeFcn(handles.viewChannelsPanel, fakeEvent, handles);
-        handles.params.viewChannel = 'Single';   
-    end
 
 % --- Executes on button press in constCheckBox.
 function constCheckBox_Callback(hObject, eventdata, handles)
@@ -1763,57 +765,6 @@ function trackSelectBtn_Callback(hObject, ~, handles)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% UNDO AND REDO FUNCTIONALITY %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% Main undo function
-function handles = undo(handles)
-    if isfield(handles,'tracks')
-        if handles.undo.size()
-            handles.redo.push(handles.tracks);
-            handles.tracks = handles.undo.pop();           
-            handles = setUndoVisibility(handles);
-            handles = populateTracksList(handles);
-            handles = refreshPlot(handles);
-        else
-            handles = writeLog(handles,'Nothing to undo');
-        end
-    else
-        handles = writeLog(handles,'No tracks data found');
-    end
-
-% Main redo function
-function handles = redo(handles)
-    if isfield(handles,'tracks')
-        if handles.redo.size()
-            handles.undo.push(handles.tracks);
-            handles.tracks = handles.redo.pop();           
-            handles = setUndoVisibility(handles);
-            handles = populateTracksList(handles);
-            handles = refreshPlot(handles);
-        else
-            handles = writeLog(handles,'Nothing to redo');
-        end
-    else
-        handles = writeLog(handles,'No tracks data found');
-    end
-
-function handles = setUndoVisibility(handles)
-    if handles.undo.size()
-        set(handles.tracksUndoBtn,'Enable','on');
-    else
-        set(handles.tracksUndoBtn,'Enable','off');
-    end
-    
-    if handles.redo.size()
-        set(handles.tracksRedoBtn,'Enable','on');
-    else
-        set(handles.tracksRedoBtn,'Enable','off');
-    end
-    
-function handles = addUndo(handles)
-    handles.undo.push(handles.tracks);
-    handles.redo.empty();
-    handles = setUndoVisibility(handles);
-
 % --- Executes on button press in tracksUndoBtn.
 function tracksUndoBtn_Callback(hObject, ~, handles)
     handles = undo(handles);
@@ -1827,7 +778,6 @@ function tracksRedoBtn_Callback(hObject, ~, handles)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% CREATEFCNS AND OTHER NECESSARY BUT JUNK CODE %%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % --- Executes during object creation, afte~ setting all properties.
 function prefixEdit_CreateFcn(hObject, ~, ~) %#ok<*DEFNU>
     if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
@@ -1925,29 +875,8 @@ function tracksListBox_CreateFcn(hObject, ~, ~)
     end
     
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% MAIN KEYPRESS FUNCTION FOR FIGURE WINDOW, ADD KEYBOARD SHORTCUTS HERE %
+%%% KEYPRESS CALLBACKS FOR KEYBOARD SHORTCUTS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function handles = manageKeyPresses(handles,eventdata)
-    if strcmp(eventdata.Key,'z') && ~isempty(eventdata.Modifier) && strcmp(eventdata.Modifier,'control')
-        handles = undo(handles);
-    elseif strcmp(eventdata.Key,'u') && isempty(eventdata.Modifier)
-        handles = undo(handles);
-    elseif strcmp(eventdata.Key,'y') && ~isempty(eventdata.Modifier) && strcmp(eventdata.Modifier,'control')
-        handles = redo(handles);
-    elseif strcmp(eventdata.Key,'r') && isempty(eventdata.Modifier)
-        handles = redo(handles);
-    elseif strcmp(eventdata.Key,'j') && isempty(eventdata.Modifier)
-        handles = joinTracksAction(handles);
-    elseif strcmp(eventdata.Key,'s') && isempty(eventdata.Modifier)
-        handles = splitTracksAction(handles);
-    elseif any(strcmp(eventdata.Key,{'d','delete'})) && isempty(eventdata.Modifier)
-        handles = deleteTracksAction(handles);
-    elseif strcmp(eventdata.Key,'c') && isempty(eventdata.Modifier)
-        handles = cleanTracksAction(handles);
-    elseif strcmp(eventdata.Key,'x') && isempty(eventdata.Modifier)
-        handles = selectTrackAction(handles);
-    end
-
 % --- Executes on key press with focus on channelListBox and none of its controls.
 function channelListBox_KeyPressFcn(hObject, eventdata, handles)
     handles = manageKeyPresses(handles,eventdata);

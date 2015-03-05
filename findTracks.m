@@ -277,21 +277,21 @@ if ~isempty(fish)
 end
 
 %% Plot all fish
-% figure,clf, hold on;
-% colormap('hot');
-% caxis([0,1]);
-% col = distinguishable_colors(nFish,[0,0,0]);
-% 
-% imagesc(T,F,normSmag(:,:,1));
-% 
-% % plot([fish.t],[fish.f1],'.m');
-% for f = 1:nFish
-%     idx = [fish.id]==f;
-%     plot([fish(idx).t],[fish(idx).f1],'.','Color',col(f,:));
-% end
-% 
-% xlim([T(1),T(end)]);
-% ylim([minf1,maxf1]);
-% set(gca, 'YDir', 'normal');
-% hold off;
+figure,clf, hold on;
+colormap('hot');
+caxis([0,1]);
+col = distinguishable_colors(nFish,[0,0,0]);
+
+imagesc(T,F,normSmag(:,:,1));
+
+% plot([fish.t],[fish.f1],'.m');
+for f = 1:nFish
+    idx = [fish.id]==f;
+    plot([fish(idx).t],[fish(idx).f1],'.','Color',col(f,:));
+end
+
+xlim([T(1),T(end)]);
+ylim([minf1,maxf1]);
+set(gca, 'YDir', 'normal');
+hold off;
 
