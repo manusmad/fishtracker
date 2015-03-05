@@ -54,32 +54,6 @@ function fishFinder_OpeningFcn(hObject, ~, handles, varargin)
     addpath('addpath_recurse');
     addpath_recurse('.');
 
-    set(handles.log,'String',{''});
-    set(handles.threshSlider,'Min',0.0);
-    set(handles.threshSlider,'Max',1.0);
-      
-    % Undo and redo stacks
-    handles.undo = CStack();
-    handles.redo = CStack();
-  
-    % Parameter structure - All the global parameters which can be saved and
-    % loaded should go here, and should be set in the function setParams
-    handles.params.smrFilePrefix = 'Ch';
-    handles.params.nFFT = 32768;
-    handles.params.overlap = 0.75;
-    handles.params.fRes = 0.1;
-    handles.params.tRes = 0.1;
-    handles.params.rangeF1 = 0;
-    handles.params.rangeF2 = 100;
-    handles.params.rangeT1 = 0;
-    handles.params.rangeT2 = 1000;
-    handles.params.viewMode = 'Normal';
-    handles.params.viewChannel = 'Mean';
-    handles.params.viewSpec = 1;
-    handles.params.viewTracks = 1;
-    handles.params.thresh = 0.2;
-    handles.params.trackHighlight = 1;
-
     handles = initParams(handles);
   
     %handles = writeLog(handles,'Ready');
@@ -87,13 +61,12 @@ function fishFinder_OpeningFcn(hObject, ~, handles, varargin)
 %     jScrollPane = findjobj(handles.tracksListBox);
 %     jListbox = jScrollPane.getViewport.getComponent(0);
 %     set(jListbox, 'SelectionBackground',java.awt.Color.yellow); % option #1
-
     guidata(hObject, handles);
   
 % --- Outputs from this function are returned to the command line.
 function varargout = fishFinder_OutputFcn(~, ~, handles) 
-% Get default command line output from handles structure
-varargout{1} = handles.output;
+    % Get default command line output from handles structure
+    varargout{1} = handles.output;
 
 % --- Executes on button press in specComputeBtn.
 function specComputeBtn_Callback(hObject, ~, handles)
@@ -213,22 +186,10 @@ function prefixEdit_Callback(hObject, ~, handles)
 % --- Executes on selection change in specPresetPopup.
 function specPresetPopup_Callback(hObject, ~, handles)
     strList = get(hObject,'String');
-    newStr = strList{get(hObject,'Value')};
-    if strcmp(newStr,'Rough')
-        handles.params.nFFT = 16384;
-        handles.params.overlap = 0.5;
-    elseif strcmp(newStr,'Fine')
-        handles.params.nFFT = 32768;
-        handles.params.overlap = 0.875;
-    elseif strcmp(newStr,'Tank')
-        handles.params.nFFT = 16384;
-        handles.params.overlap = 0.9375;
-    end
-    
-    handles = writeLog(handles,'Preset "%s" loaded',newStr);
-    set(handles.nFFTEdit,'String',num2str(handles.params.nFFT));
-    set(handles.overlapEdit,'String',num2str(handles.params.overlap));
+    handles.specPreset = strList{get(hObject,'Value')};
+    handles = setSpecPreset(handles);
     handles = computeResolutions(handles);
+    handles = writeLog(handles,'Preset "%s" loaded',handles.specPreset);
     guidata(hObject,handles);
 
 % --- Executes on button press in loadParamsBtn.
