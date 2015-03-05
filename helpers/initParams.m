@@ -15,6 +15,8 @@ function handles = initParams(handles)
     handles.params.rangeF2 = 100;
     handles.params.rangeT1 = 0;
     handles.params.rangeT2 = 1000;
+    handles.params.viewMode = 'Normal';
+    handles.params.viewChannel = 'Mean';
     handles.params.viewSpec = 1;
     handles.params.viewTracks = 1;
     handles.params.thresh = 0.2;
@@ -36,6 +38,11 @@ function handles = initParams(handles)
     handles = setSpecPreset(handles);
     handles = computeResolutions(handles);
     handles = setUndoVisibility(handles);
-    handles = tracksView(handles);
+    
+    handles.
+    handles = viewModeChanged(handles);
+    
+    handles = viewChannelsChanged(handles);
+
     
     uistack(handles.multiPlotPanel,'top');
