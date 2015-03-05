@@ -339,63 +339,12 @@ function saveTracksBtn_Callback(hObject, ~, handles)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % --- Executes on button press in deleteChannelsBtn.
 function deleteChannelsBtn_Callback(hObject, ~, handles)
-    delidx = get(handles.channelListBox,'Value');
-    
-    handles.meta.chNum(delidx) = [];
-    handles.meta.nCh = handles.meta.nCh - length(delidx);
-    
-    if isfield(handles,'elec')
-        handles.elec.data(:,delidx) = [];
-        handles.elec.meta = handles.meta;
-    end
-    
-    if isfield(handles,'spec')
-        handles.spec.S(:,:,delidx) = [];
-        handles.Smag(:,:,delidx) = [];
-        handles.Sthresh(:,:,delidx) = [];
-        handles.spec.meta = handles.meta;
-    end
-    
-    set(handles.channelListBox,'Value',1);
-    handles = createSubplots(handles);
-    handles = populateChannelList(handles);
-    handles = refreshPlot(handles);
-    
-    if ~isempty(delidx)
-        handles = writeLog(handles,'Channel(s) deleted');
-    end
+    handles = deleteChannels(handles);
     guidata(hObject,handles);
 
 % --- Executes on button press in trimRangeBtn.
 function trimRangeBtn_Callback(hObject, ~, handles)
-    if isfield(handles,'elec')
-        elec = handles.elec;
-        tidx = elec.t>=handles.params.rangeT1 & elec.t<=handles.params.rangeT2;
-        elec.t = elec.t(tidx);
-        elec.data = elec.data(tidx,:);
-        elec.meta.N = length(elec.t);
-        
-        handles.elec = elec;
-        handles.meta = elec.meta;
-        handles = computeResolutions(handles);
-    end
-    
-    if isfield(handles,'spec')
-        spec = handles.spec;
-        tidx = spec.T>=handles.params.rangeT1 & spec.T<=handles.params.rangeT2;
-        fidx = spec.F>=handles.params.rangeF1 & spec.F<=handles.params.rangeF2;
-        
-        spec.T = spec.T(tidx);
-        spec.F = spec.F(fidx);
-        spec.S = spec.S(fidx,tidx,:);
-        spec.meta.N = (handles.params.rangeT2-handles.params.rangeT1)/spec.meta.int;
-        
-        handles.spec = spec;
-        handles.meta = spec.meta;
-        handles = computeResolutions(handles);
-        handles.Smag = normSpecMag(spec.S);
-    end
-       
+    handles = trimRange(handles);
     handles = writeLog(handles,'Range trimmed');
     guidata(hObject,handles);
     
