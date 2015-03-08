@@ -196,7 +196,7 @@ for tstep = 1:nT
         % If there are active fish, match candidates with them
         if ~isempty(activeFish)
             % Match with activeFish
-            [R,C] = matchHungarian(activeFish,tCand,10);
+            [R,C] = matchHungarian(activeFish,tCand,200);
             activeFish(R) = updateFishWithCandidate(activeFish(R),tCand(C));
             activeFish(R) = increaseConfidence(activeFish(R));
             NR = find(~ismember(1:length(activeFish),R));
@@ -215,7 +215,7 @@ for tstep = 1:nT
     if ~isempty(tCand)
         if ~isempty(strayFish)
             % Match with strays
-            [R,C] = matchHungarian(strayFish,tCand,10);
+            [R,C] = matchHungarian(strayFish,tCand,200);
 
             strayFish(R) = updateFishWithCandidate(strayFish(R),tCand(C));
             strayFish(R) = increaseConfidence(strayFish(R));
@@ -257,7 +257,7 @@ for tstep = 1:nT
 end
 progressbar(1);
 
-%% Before returning, re-assign and sort ids by mean frequency
+% Before returning, re-assign and sort ids by mean frequency
 if ~isempty(fish)
     uId = unique([fish.id]);
     nId = length(uId);
@@ -276,7 +276,7 @@ if ~isempty(fish)
     end
 end
 
-%% Plot all fish
+% Plot all fish
 figure,clf, hold on;
 colormap('hot');
 caxis([0,1]);
