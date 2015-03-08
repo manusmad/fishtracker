@@ -8,7 +8,7 @@ Sphs = angle(S);
 progressbar('Finding Signatures...','Clustering Candidates...','Tracing Tracks...');
 
 %% Find signatures (electrode-by-electrode fft peak analysis)
-
+tic;
 % Parameters
 ratio12 = 8;
 dF = diff(F(1:2));
@@ -16,17 +16,19 @@ Fsep = dF*2;
 minf1 = 200;
 maxf1 = 800;
 
-sigs = struct('ch',cell(1),'t',cell(1),'f1',cell(1),...
+sigs = cell(nT,1);
+parfor_progress(nT);
+parfor tstep = 1:nT    
+    tSigs = struct('ch',cell(1),'t',cell(1),'f1',cell(1),...
     'a1',cell(1),'a2',cell(1),...
     'p1',cell(1),'p2',cell(1));
-nSigs = 0;
-
-for tstep = 1:nT
-    progressbar(tstep/nT,[],[]);
+    nSigs = 0;
+    
     za = squeeze(normSmag(:,tstep,:));
+    zm = squeeze(Smag(:,tstep,:));
     zp = squeeze(Sphs(:,tstep,:));
-
-    for c = 1:nCh
+  
+    for c = 1:nCh       
         % Find peaks of all above third harmonic range
         %[pks,locs] = findpeaks(za(:,c),'SORTSTR','descend','MINPEAKHEIGHT',thresh/ratio13,'THRESHOLD',thresh/(ratio13*10));
         [pks,locs] = findpeaks(za(:,c),'SORTSTR','descend','MINPEAKHEIGHT',thresh/ratio12,'MINPEAKPROMINENCE',thresh/(ratio12*2));
@@ -70,30 +72,38 @@ for tstep = 1:nT
                     if  a1>=thresh && a2>=thresh/ratio12
                         nSigs = nSigs+1;
 
-                        sigs(nSigs).f1 = F(f1locs(a1idx));
+                        tSigs(nSigs).f1 = F(f1locs(a1idx));
 
-                        sigs(nSigs).a1 = Smag(f1locs(a1idx),tstep,c);
-                        sigs(nSigs).p1 = Sphs(f1locs(a1idx),tstep,c);
+                        tSigs(nSigs).a1 = zm(f1locs(a1idx),c);
+                        tSigs(nSigs).p1 = zp(f1locs(a1idx),c);
 
-                        sigs(nSigs).a2 = Smag(f2locs(a2idx),tstep,c);
-                        sigs(nSigs).p2 = Sphs(f2locs(a2idx),tstep,c);
+                        tSigs(nSigs).a2 = zm(f2locs(a2idx),c);
+                        tSigs(nSigs).p2 = zp(f2locs(a2idx),c);
 
-                        sigs(nSigs).a3 = Smag(f3locs(a3idx),tstep,c);
-                        sigs(nSigs).p3 = Sphs(f3locs(a3idx),tstep,c);
-
-                        sigs(nSigs).ch = c;
-                        sigs(nSigs).t = T(tstep);                
+                        tSigs(nSigs).a3 = zm(f3locs(a3idx),c);
+                        tSigs(nSigs).p3 = zp(f3locs(a3idx),c);
+% 
+                        tSigs(nSigs).ch = c;
+                        tSigs(nSigs).t = T(tstep);                
                     end
                 end
-            end    
+            end
             
             elimIdx = logical(sum(harmIdx,2));
             pks(elimIdx) = [];
             locs(elimIdx) = []; 
         end
     end
+    sigs{tstep} = tSigs;
+    parfor_progress;
 end
 
+sigs = [sigs{:}];
+nSigs = length(sigs);
+parfor_progress(0);
+progressbar(1,[],[]);
+
+toc;
 %% Plot all signatures
 % figure,clf, hold on;
 % colormap('hot');
@@ -109,50 +119,67 @@ end
 
 
 %% Find candidates
-cand = struct('t',cell(1),'f1',cell(1),...
+
+tic;
+cand = cell(nT,1);
+   
+parfor_progress(nT);
+parfor tstep = 1:nT
+    tCand = struct('t',cell(1),'f1',cell(1),...
         'a1',cell(1),'a2',cell(1),'a3',cell(1),...
         'p1',cell(1),'p2',cell(1),'p3',cell(1));
-nCand = 0;
+    nCand = 0;
+    zm = squeeze(Smag(:,tstep,:));
+    zp = squeeze(Sphs(:,tstep,:));
     
-for tstep = 1:nT
-    progressbar([],tstep/nT,[]);
-    tsigs = sigs([sigs.t]==T(tstep));
+%     progressbar([],tstep/nT,[]);
+    tSigs = sigs([sigs.t]==T(tstep));
 
-    if ~isempty([tsigs.f1])
+    if ~isempty([tSigs.f1])
         % Sort by frequency
-        [~,idx] = sort([tsigs.f1]);
-        tsigs = tsigs(idx);
+        [~,idx] = sort([tSigs.f1]);
+        tSigs = tSigs(idx);
         
         % Find breaks in frequency and bin
-        binIdx = find(diff([tsigs.f1])>Fsep);
-        binIdx = [0 binIdx length(tsigs)];
+        binIdx = find(diff([tSigs.f1])>Fsep);
+        binIdx = [0 binIdx length(tSigs)];
         nBins = length(binIdx)-1;
         
         for k = 1:nBins
-            binSigs = tsigs(binIdx(k)+1:binIdx(k+1));
+            binSigs = tSigs(binIdx(k)+1:binIdx(k+1));
             
             if unique([binSigs.ch]>0)
                 nCand = nCand+1;
-                cand(nCand).t = T(tstep);
-                cand(nCand).f1 = mode([binSigs.f1]);
+                tCand(nCand).t = T(tstep);
+                tCand(nCand).f1 = mode([binSigs.f1]);
 
-                [~,f1idx] = min(abs(F-cand(nCand).f1));
-                [~,f2idx] = min(abs(F-cand(nCand).f1*2));
-                [~,f3idx] = min(abs(F-cand(nCand).f1*3));
+                [~,f1idx] = min(abs(F-tCand(nCand).f1));
+                [~,f2idx] = min(abs(F-tCand(nCand).f1*2));
+                [~,f3idx] = min(abs(F-tCand(nCand).f1*3));
                 
-                cand(nCand).a1 = abs(squeeze(S(f1idx,tstep,:)));
-                cand(nCand).a2 = abs(squeeze(S(f2idx,tstep,:)));
-                cand(nCand).a3 = abs(squeeze(S(f3idx,tstep,:)));
+                tCand(nCand).a1 = squeeze(zm(f1idx,:))';
+                tCand(nCand).a2 = squeeze(zm(f2idx,:))';
+                tCand(nCand).a3 = squeeze(zm(f3idx,:))';
                 
-                cand(nCand).p1 = angle(squeeze(S(f1idx,tstep,:)));
-                cand(nCand).p2 = angle(squeeze(S(f2idx,tstep,:)));
-                cand(nCand).p3 = angle(squeeze(S(f3idx,tstep,:)));
+                tCand(nCand).p1 = squeeze(zp(f1idx,:))';
+                tCand(nCand).p2 = squeeze(zp(f2idx,:))';
+                tCand(nCand).p3 = squeeze(zp(f3idx,:))';
             end
         end
     else
         fprintf('No signatures at time %2.2f\n',T(tstep));
-    end                
+    end   
+    
+    cand{tstep} = tCand;
+    parfor_progress;
 end
+
+cand = [cand{:}];
+nCand = length(cand);
+
+parfor_progress(0);
+progressbar([],1,[]);
+toc;
 
 
 %% Plot all candidates
@@ -173,9 +200,12 @@ end
 
 %% Find fish (assign id to each candidate)
 disp('Finding fish...');
+tic;
 
 fish = [];
 stray = [];
+
+cand = computeComparisonVec(cand);
 
 activeFish = [];
 activeConfMax = 20;
@@ -255,7 +285,6 @@ for tstep = 1:nT
         strayFish(badIdx) = [];
     end
 end
-progressbar(1);
 
 % Before returning, re-assign and sort ids by mean frequency
 if ~isempty(fish)
@@ -276,22 +305,25 @@ if ~isempty(fish)
     end
 end
 
-% Plot all fish
-figure,clf, hold on;
-colormap('hot');
-caxis([0,1]);
-col = distinguishable_colors(nFish,[0,0,0]);
+toc;
+progressbar(1);
 
-imagesc(T,F,normSmag(:,:,1));
-
-% plot([fish.t],[fish.f1],'.m');
-for f = 1:nFish
-    idx = [fish.id]==f;
-    plot([fish(idx).t],[fish(idx).f1],'.','Color',col(f,:));
-end
-
-xlim([T(1),T(end)]);
-ylim([minf1,maxf1]);
-set(gca, 'YDir', 'normal');
-hold off;
+%% Plot all fish
+% figure,clf, hold on;
+% colormap('hot');
+% caxis([0,1]);
+% col = distinguishable_colors(nFish,[0,0,0]);
+% 
+% imagesc(T,F,normSmag(:,:,1));
+% 
+% % plot([fish.t],[fish.f1],'.m');
+% for f = 1:nFish
+%     idx = [fish.id]==f;
+%     plot([fish(idx).t],[fish(idx).f1],'.','Color',col(f,:));
+% end
+% 
+% xlim([T(1),T(end)]);
+% ylim([minf1,maxf1]);
+% set(gca, 'YDir', 'normal');
+% hold off;
 

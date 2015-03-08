@@ -4,9 +4,6 @@ function elec = loadSmrFile(dataFolder,smrFile,prefix)
 % smrFile = 'machete_2.smr';
 % prefix = 'Ch';
 
-% Add SON library path
-addpath('./SONlib/');
-
 % Open Spike2 file
 fid = fopen(fullfile(dataFolder,smrFile));
 C = SONChanList(fid);
@@ -33,7 +30,6 @@ for k = 1:nCh
         N = length(estr(k).values);
     end
 end
-rmpath('./SONlib/');
 
 int = estr(1).header.sampleinterval;
 elec.meta.int = int;
