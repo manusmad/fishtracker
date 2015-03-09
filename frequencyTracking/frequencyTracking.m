@@ -53,6 +53,7 @@ function frequencyTracking_OpeningFcn(hObject, ~, handles, varargin)
     % Add all Mathworks folders
     addpath('../packages/addpath_recurse');
     addpath_recurse('../packages');
+    addpath_recurse('.');
 
     handles = initParams(handles);
     set(handles.log,'String','Ready');  

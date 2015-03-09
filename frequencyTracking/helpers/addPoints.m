@@ -1,34 +1,47 @@
 function handles = addPoints(handles,id,time,freq)
     [~,tidx] = ismember(time,handles.spec.T);
-    [~,fidx] = ismember(freq,handles.spec.F);
+    [~,f1idx] = ismember(freq,handles.spec.F);
+    [~,f2idx] = ismember(freq*2,handles.spec.F);
+    [~,f3idx] = ismember(freq*3,handles.spec.F);
     
     for k = 1:length(tidx)
         % Cannot have two points at the same time with the same id
         repeatIdx = [handles.tracks.t]==time(k) & [handles.tracks.id]==id;
         handles.tracks(repeatIdx) = [];
-        
-        nF = length(handles.spec.F);
-        
+                
         [newTrackPt.t,newTrackPt.f1,newTrackPt.a1,newTrackPt.a2,newTrackPt.a3,...
         newTrackPt.p1,newTrackPt.p2,newTrackPt.p3,newTrackPt.id] = deal(NaN);
         
         newTrackPt.t = time(k);
         newTrackPt.f1 = freq(k);
-        newTrackPt.a1 = abs(handles.spec.S(fidx(k),tidx(k),:));
-        newTrackPt.p1 = angle(handles.spec.S(fidx(k),tidx(k),:));
-
-        if 2*fidx(k)<=nF
-            newTrackPt.a2 = abs(handles.spec.S(fidx(k)*2,tidx(k),:));
-            newTrackPt.p2 = angle(handles.spec.S(fidx(k)*2,tidx(k),:));
+        
+        if f1idx(k)
+            newTrackPt.a1 = squeeze(abs(handles.spec.S(f1idx(k),tidx(k),:)));
+            newTrackPt.p1 = squeeze(angle(handles.spec.S(f1idx(k),tidx(k),:)));
+        else
+            newTrackPt.a1 = NaN;
+            newTrackPt.p1 = NaN;
+        end
+            
+        if f2idx(k)
+            newTrackPt.a2 = squeeze(abs(handles.spec.S(f2idx(k),tidx(k),:)));
+            newTrackPt.p2 = squeeze(angle(handles.spec.S(f2idx(k),tidx(k),:)));
+        else
+            newTrackPt.a2 = NaN;
+            newTrackPt.p2 = NaN;
         end
         
-        if 3*fidx(k)<=nF
-            newTrackPt.a3 = abs(handles.spec.S(fidx(k)*3,tidx(k),:));
-            newTrackPt.p3 = angle(handles.spec.S(fidx(k)*3,tidx(k),:));
+        if f3idx(k)
+            newTrackPt.a3 = squeeze(abs(handles.spec.S(f3idx(k),tidx(k),:)));
+            newTrackPt.p3 = squeeze(angle(handles.spec.S(f3idx(k),tidx(k),:)));
+        else
+            newTrackPt.a3 = NaN;
+            newTrackPt.p3 = NaN;
         end
         
         newTrackPt.id = id;
         newTrackPt.conf = -100;     % To enable detection later
+        newTrackPt = computeComparisonVec(newTrackPt);
 
         handles.tracks = [handles.tracks newTrackPt];
     end

@@ -12,6 +12,7 @@ if isempty(nCh)
     nCh = length(tracks(1).a1);
 end
 [track0.a1,track0.a2,track0.a3,track0.p1,track0.p2,track0.p3] = deal(NaN(nCh,1));
+track0 = computeComparisonVec(track0);
 
 addpath('progressbar');
 % If first argument is empty, return a tracks array with all NaN fields
