@@ -1,35 +1,35 @@
-function varargout = fishFinder(varargin)
-% FISHFINDER MATLAB code for fishFinder.fig
-%      FISHFINDER, by itself, creates a new FISHFINDER or raises the existing
+function varargout = frequencyTracking(varargin)
+% FREQUENCYTRACKING MATLAB code for frequencyTracking.fig
+%      FREQUENCYTRACKING, by itself, creates a new FREQUENCYTRACKING or raises the existing
 %      singleton*.
 %
-%      H = FISHFINDER returns the handle to a new FISHFINDER or the handle to
+%      H = FREQUENCYTRACKING returns the handle to a new FREQUENCYTRACKING or the handle to
 %      the existing singleton*.
 %
-%      FISHFINDER('CALLBACK',hObject,eventData,handles,...) calls the local
-%      function named CALLBACK in FISHFINDER.M with the given input arguments.
+%      FREQUENCYTRACKING('CALLBACK',hObject,eventData,handles,...) calls the local
+%      function named CALLBACK in FREQUENCYTRACKING.M with the given input arguments.
 %
-%      FISHFINDER('Property','Value',...) creates a new FISHFINDER or raises the
+%      FREQUENCYTRACKING('Property','Value',...) creates a new FREQUENCYTRACKING or raises the
 %      existing singleton*.  Starting from the left, property value pairs are
-%      applied to the GUI before fishFinder_OpeningFcn gets called.  An
+%      applied to the GUI before frequencyTracking_OpeningFcn gets called.  An
 %      unrecognized property name or invalid value makes property application
-%      stop.  All inputs are passed to fishFinder_OpeningFcn via varargin.
+%      stop.  All inputs are passed to frequencyTracking_OpeningFcn via varargin.
 %
 %      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
 %      instance to run (singleton)".
 %
 % See also: GUIDE, GUIDATA, GUIHANDLES
 
-% Edit the above text to modify the response to help fishFinder
+% Edit the above text to modify the response to help frequencyTracking
 
-% Last Modified by GUIDE v2.5 03-Mar-2015 10:19:25
+% Last Modified by GUIDE v2.5 09-Mar-2015 14:02:19
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @fishFinder_OpeningFcn, ...
-                   'gui_OutputFcn',  @fishFinder_OutputFcn, ...
+                   'gui_OpeningFcn', @frequencyTracking_OpeningFcn, ...
+                   'gui_OutputFcn',  @frequencyTracking_OutputFcn, ...
                    'gui_LayoutFcn',  [] , ...
                    'gui_Callback',   []);
 if nargin && ischar(varargin{1})
@@ -43,16 +43,16 @@ else
 end
 % End initialization code - DO NOT EDIT
 
-% --- Executes just before fishFinder is made visible.
-function fishFinder_OpeningFcn(hObject, ~, handles, varargin)
+% --- Executes just before frequencyTracking is made visible.
+function frequencyTracking_OpeningFcn(hObject, ~, handles, varargin)
 % This function has no output args, see OutputFcn.
-    % Choose default command line output for fishFinder
+    % Choose default command line output for frequencyTracking
     handles.output = hObject;    
     clc;
     
     % Add all Mathworks folders
-    addpath('addpath_recurse');
-    addpath_recurse('.');
+    addpath('../addpath_recurse');
+    addpath_recurse('..');
 
     handles = initParams(handles);
     set(handles.log,'String','Ready');  
@@ -64,7 +64,7 @@ function fishFinder_OpeningFcn(hObject, ~, handles, varargin)
     guidata(hObject, handles);
   
 % --- Outputs from this function are returned to the command line.
-function varargout = fishFinder_OutputFcn(~, ~, handles) 
+function varargout = frequencyTracking_OutputFcn(~, ~, handles) 
     % Get default command line output from handles structure
     varargout{1} = handles.output;
 
