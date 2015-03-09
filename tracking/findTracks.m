@@ -206,7 +206,7 @@ fish = [];
 stray = [];
 
 cand = computeComparisonVec(cand);
-thresh = (nCh*0.1+10)/(T(2)-T(1));  % nCh/dT is for a1s, 5/dT for f1, 5/dt for ratio
+thresh = (nCh*0.1+11)/(T(2)-T(1));  % nCh*0.1/dT is for a1s, 10/dT for f1, 2/dT 
 
 activeFish = [];
 activeConfMax = 20;
@@ -309,22 +309,22 @@ end
 toc;
 progressbar(1);
 
-% Plot all fish
-figure,clf, hold on;
-colormap('hot');
-caxis([0,1]);
-col = distinguishable_colors(nFish,[0,0,0]);
-
-imagesc(T,F,normSmag(:,:,1));
-
-% plot([fish.t],[fish.f1],'.m');
-for f = 1:nFish
-    idx = [fish.id]==f;
-    plot([fish(idx).t],[fish(idx).f1],'.','Color',col(f,:));
-end
-
-xlim([T(1),T(end)]);
-ylim([minf1,maxf1]);
-set(gca, 'YDir', 'normal');
-hold off;
+%% Plot all fish
+% figure,clf, hold on;
+% colormap('hot');
+% caxis([0,1]);
+% col = distinguishable_colors(nFish,[0,0,0]);
+% 
+% imagesc(T,F,normSmag(:,:,1));
+% 
+% % plot([fish.t],[fish.f1],'.m');
+% for f = 1:nFish
+%     idx = [fish.id]==f;
+%     plot([fish(idx).t],[fish(idx).f1],'.','Color',col(f,:));
+% end
+% 
+% xlim([T(1),T(end)]);
+% ylim([minf1,maxf1]);
+% set(gca, 'YDir', 'normal');
+% hold off;
 

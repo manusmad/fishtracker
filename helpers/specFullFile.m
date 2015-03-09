@@ -15,6 +15,9 @@ for k = 1:elec.meta.nCh;
     [spec.S(:,:,k),spec.F,spec.T] = spectrogram(elec.data(:,k), nFFT, windadv, nFFT, elec.meta.Fs);     
 end
 
+% Change times to correspond to elec times
+spec.T = spec.T + elec.t(1);
+
 % This can be changed
 cutoffLow = 200; %(Hz)
 cutoffHigh = 2500; %(Hz)
