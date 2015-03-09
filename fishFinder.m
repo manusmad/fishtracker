@@ -55,8 +55,8 @@ function fishFinder_OpeningFcn(hObject, ~, handles, varargin)
     addpath_recurse('.');
 
     handles = initParams(handles);
-  
-    %handles = writeLog(handles,'Ready');
+    set(handles.log,'String','Ready');  
+
      % Set selection highlight color in tracksListBox
 %     jScrollPane = findjobj(handles.tracksListBox);
 %     jListbox = jScrollPane.getViewport.getComponent(0);
@@ -256,6 +256,7 @@ function overlapDnBtn_Callback(hObject, ~, handles)
 function viewChannelsPanel_SelectionChangeFcn(hObject, eventdata, handles)
     handles.params.viewChannel = get(eventdata.NewValue,'String');
     handles = viewChannelsChanged(handles);    
+    handles = refreshPlot(handles);    
     guidata(hObject,handles);
 
 % --- Executes on button press in viewSpectrogramCheck.
@@ -274,6 +275,7 @@ function viewTracksCheck_Callback(hObject, ~, handles)
 function viewModePanel_SelectionChangeFcn(hObject, eventdata, handles)
     handles.params.viewMode = get(eventdata.NewValue,'String');
     handles = viewModeChanged(handles);
+    handles = refreshPlot(handles);
     guidata(hObject,handles);
 
 function threshEdit_Callback(hObject, ~, handles)
@@ -354,13 +356,13 @@ function clearElecBtn_Callback(hObject, ~, handles)
 % --- Executes on button press in clearSpecBtn.
 function clearSpecBtn_Callback(hObject, ~, handles)
     handles = clearSpec(handles);
+    handles = refreshPlot(handles);
     guidata(hObject,handles);
 
 % --- Executes on button press in clearTracksBtn.
 function clearTracksBtn_Callback(hObject, ~, handles)
     handles = clearTracks(handles);
     handles = refreshPlot(handles);
-    handles = populateTracksList(handles);
     guidata(hObject,handles);
     
 % --- Executes on button press in clearAllBtn.
@@ -369,8 +371,6 @@ function clearAllBtn_Callback(hObject, ~, handles)
     handles = clearSpec(handles);
     handles = clearTracks(handles);
     handles = refreshPlot(handles);
-    handles = populateChannelList(handles);
-    handles = populateTracksList(handles);
     guidata(hObject,handles);
  
     

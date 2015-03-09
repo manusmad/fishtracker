@@ -7,6 +7,4 @@ function handles = viewChannelsChanged(handles)
         set(handles.singlePlotPanel,'Visible','off');
         set(handles.multiPlotPanel,'Visible','on');
     end
-
     handles.params.viewChannel = viewChannel;
-    handles = refreshPlot(handles);

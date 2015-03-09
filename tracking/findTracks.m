@@ -206,6 +206,7 @@ fish = [];
 stray = [];
 
 cand = computeComparisonVec(cand);
+thresh = (nCh*0.1+10)/(T(2)-T(1));  % nCh/dT is for a1s, 5/dT for f1, 5/dt for ratio
 
 activeFish = [];
 activeConfMax = 20;
@@ -226,7 +227,7 @@ for tstep = 1:nT
         % If there are active fish, match candidates with them
         if ~isempty(activeFish)
             % Match with activeFish
-            [R,C] = matchHungarian(activeFish,tCand,200);
+            [R,C] = matchHungarian(activeFish,tCand,thresh);
             activeFish(R) = updateFishWithCandidate(activeFish(R),tCand(C));
             activeFish(R) = increaseConfidence(activeFish(R));
             NR = find(~ismember(1:length(activeFish),R));
@@ -245,7 +246,7 @@ for tstep = 1:nT
     if ~isempty(tCand)
         if ~isempty(strayFish)
             % Match with strays
-            [R,C] = matchHungarian(strayFish,tCand,200);
+            [R,C] = matchHungarian(strayFish,tCand,thresh);
 
             strayFish(R) = updateFishWithCandidate(strayFish(R),tCand(C));
             strayFish(R) = increaseConfidence(strayFish(R));
@@ -308,22 +309,22 @@ end
 toc;
 progressbar(1);
 
-%% Plot all fish
-% figure,clf, hold on;
-% colormap('hot');
-% caxis([0,1]);
-% col = distinguishable_colors(nFish,[0,0,0]);
-% 
-% imagesc(T,F,normSmag(:,:,1));
-% 
-% % plot([fish.t],[fish.f1],'.m');
-% for f = 1:nFish
-%     idx = [fish.id]==f;
-%     plot([fish(idx).t],[fish(idx).f1],'.','Color',col(f,:));
-% end
-% 
-% xlim([T(1),T(end)]);
-% ylim([minf1,maxf1]);
-% set(gca, 'YDir', 'normal');
-% hold off;
+% Plot all fish
+figure,clf, hold on;
+colormap('hot');
+caxis([0,1]);
+col = distinguishable_colors(nFish,[0,0,0]);
+
+imagesc(T,F,normSmag(:,:,1));
+
+% plot([fish.t],[fish.f1],'.m');
+for f = 1:nFish
+    idx = [fish.id]==f;
+    plot([fish(idx).t],[fish(idx).f1],'.','Color',col(f,:));
+end
+
+xlim([T(1),T(end)]);
+ylim([minf1,maxf1]);
+set(gca, 'YDir', 'normal');
+hold off;
 

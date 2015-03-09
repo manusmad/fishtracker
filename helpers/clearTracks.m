@@ -8,7 +8,8 @@ function handles = clearTracks(handles)
         handles.undo.empty();
         handles.redo.empty();
         handles = setUndoVisibility(handles);
-        
+        handles = populateTracksList(handles);
+
         handles = writeLog(handles,'Cleared tracks data');
     else
         handles = writeLog(handles,'No tracks data to clear');

@@ -6,4 +6,3 @@ function handles = viewModeChanged(handles)
         set(handles.threshPanel,'Visible','off');
         set(handles.viewChoosePanel,'Visible','on');
     end
-    handles = refreshPlot(handles);

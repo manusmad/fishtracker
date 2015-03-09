@@ -19,6 +19,7 @@ function handles = populateTracksList(handles)
         
         set(handles.nTracksTxt,'String',num2str(handles.nTracks));
     else
+        set(handles.tracksListBox,'ListboxTop',1);
         set(handles.tracksListBox,'String','Tracks list');
         set(handles.nTracksTxt,'String','0');
     end
