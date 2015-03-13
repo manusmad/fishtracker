@@ -37,6 +37,7 @@ elec.meta.Fs = 1/int;
 elec.meta.nCh = nCh;
 elec.meta.N = N;
 elec.meta.chNum = arrayfun(@(x) str2double(x.ch),M);
+elec.meta.chNumOrig = elec.meta.chNum;
 elec.meta.chPrefix = prefix;
 elec.meta.sourceFile = smrFile;
 

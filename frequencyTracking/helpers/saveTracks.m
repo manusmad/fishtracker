@@ -12,7 +12,7 @@ function handles = saveTracks(handles)
 
         if tracksFileName
             progressbar('Filling empty data...','Saving tracks data');
-            handles.tracks = fillWithNaNs(handles.tracks,handles.spec.T,size(handles.spec.S,3));
+            handles.tracks = fillWithNaNs(handles.tracks,handles.spec.T,handles.spec.meta.chNum,handles.meta.chNumOrig);
             tracks = handles.tracks; %#ok<NASGU>
             tic;
             meta = handles.meta;

@@ -37,6 +37,9 @@ function handles = loadElec(handles)
             if ~isfield(elec.meta,'chNum')
                 elec.meta.chNum = 1:elec.meta.nCh;
             end
+            if ~isfield(elec.meta,'chNumOrig')
+                elec.meta.chNumOrig = 1:elec.meta.nCh;
+            end
             if ~isfield(elec.meta,'chPrefix')
                 elec.meta.chPrefix = 'Ch';
             end
