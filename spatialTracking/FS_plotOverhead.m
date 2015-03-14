@@ -1,7 +1,22 @@
-function FS_plotOverhead(type, gridCoord, tankCoord, xMean, yMean, thMean,nFish)
+function FS_plotOverhead(handles)
 
-fishfig = figure();
+type = handles.dataType;
+gridCoord = handles.gridCoord;
+tankCoord = handles.tankCoord;
+xMean = handles.xMean;
+yMean = handles.yMean;
+thMean = handles.thMean;
+nFish = handles.nFish;
+vidParams = handles.vidParams; 
+stepNo = handles.sNo;
+
+axes(handles.ax_overhead)
+cla
 colrs = distinguishable_colors(nFish);
+fW = 3;
+fL = 20;
+
+fID = 1;
 
 plot(tankCoord(:,1),tankCoord(:,2),'ob'),hold on;
 plot(tankCoord(:,1),tankCoord(:,2),'+b');
@@ -40,6 +55,8 @@ set(gca,'YDir','reverse');
 %  axis off
 set(gca,'xcolor','w','ycolor','w','xtick',[],'ytick',[])
 end
-    
+ 
+
+plot_ellipse(fW,fL,xMean(fID,stepNo),yMean(fID,stepNo),rad2deg(thMean(fID,stepNo)-pi/2),'r');
     
     

@@ -1,6 +1,8 @@
-function FS_plotHeat(handles,amp, gridCoord)
+function FS_plotHeat(handles)
 
-clc
+amp         = handles.ampAll(1,:,handles.sNo);
+gridCoord   = handles.gridCoord;
+
 divNo = 100;
 
 xRange = max(gridCoord(:,1))- min(gridCoord(:,1));
@@ -10,6 +12,7 @@ yVec = min(gridCoord(:,2)):(max(gridCoord(:,2))- min(gridCoord(:,2)))/divNo:max(
 [xq, yq] = meshgrid(xVec, yVec);
 vq = griddata(gridCoord(:,1),gridCoord(:,2),amp,xq,yq);
 vq = flipdim(vq ,1);
+
 axes(handles.ax_heatmap); cla
 
 imagesc(vq); hold on
@@ -20,4 +23,3 @@ plot(imGridCoord(:,1),imGridCoord(:,2),'+w');
 
 set (gca, 'xtick', [],'ytick', []);
 axis tight
-display('Done!')

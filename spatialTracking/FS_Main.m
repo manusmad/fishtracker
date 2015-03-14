@@ -1,18 +1,18 @@
-function handles = FS_Main(nPart, ~, handles)
+function [handles, dataFileName] = FS_Main(nPart, handles)
 % clc;
 
-type = 'tank';
+dataType = 'tank';
+wildTag = get(handles.Wild,'Value');
 if get(handles.Wild,'Value')
-    wildTag = get(handles.Wild,'Value');
-    type = 'wild';
+    dataType = 'wild';
 end
 
-if ~strcmp(type, 'sim')
+if ~strcmp(dataType, 'sim')
     tankCoord = handles.tankCoord;
     gridCoord = handles.gridCoord;
 end
 
-if strcmp(type,'sim')
+if strcmp(dataType,'sim')
     tLength = 1001;
     load x; 
     trajList{1} = x(:,1:tLength);
@@ -87,7 +87,7 @@ end
 
 %% Particle filter
 tInt  = mean(diff(fishTime));
-nTime = length(fishTime);
+nTime = length(fishTime)
 [nx,sys] = FS_processEq(handles.motion);
 nIter = 1;
 nGen = 2;
@@ -154,6 +154,8 @@ for id = 1:nFish
             
             a = ([fishHist(find([fishHist.id] == fishID(id))).a1]);
         amp = ([fishHist(find([fishHist.id] == fishID(id))).a1]).*sign(cos(p2));
+        freqCell{id} = [[fishHist(find([fishHist.id] == fishID(id))).t]' ... 
+            [fishHist(find([fishHist.id] == fishID(id))).f1]']; 
         clear p2 p1
     elseif strcmp(dataFormat,'old')
         fish = idFish(fishHist,id);
@@ -180,7 +182,7 @@ for id = 1:nFish
 
             % Particle filter    
             [pf.x, xh, pf.w] = FS_filter(pf, sys, amp(handles.elecTrunc,t1),...
-                handles.motion, handles.gridCoord(handles.elecTrunc,:), handles.tankCoord, tInt);
+                handles.motion, handles.gridCoord(:,:), handles.tankCoord, tInt);
     %         [xh,~]=FS_Optim(xP,amp(handles.elecTrunc,t1),handles.gridCoord);
 
             xPart(id,t1,:,:) = squeeze(pf.x)';
@@ -196,7 +198,7 @@ for id = 1:nFish
             for t = 1:nTime 
                 for genLoop = 1:nGen
                     % Particle filter 
-                    if ~strcmp(type, 'sim')
+                    if ~strcmp(dataType, 'sim')
                         [pf.x, xh, pf.w, pf.idxDesc,yk,ahk] = FS_filter(pf, sys, amp(:,t),...
                             handles.motion, handles.gridCoord(:,:), handles.tankCoord, tInt);
                     else
@@ -213,6 +215,7 @@ for id = 1:nFish
             xFishIter(id,iterLoop,:,:) = xFish(id,:,:);
         end
     end
+    ampAll(id,:,:) = amp;
 end
 
 %% Save all data
@@ -242,10 +245,10 @@ if get(handles.Wild,'Value')
         end
     end
     
-    save(dataFileName,'rConv','xMean', 'xStd', 'yMean', 'yStd','thMean', 'thStd', 'ampMean','xPart', 'xFishIter','xFish', 'xAmp', 'xWeight', 'xIdxDesc', 'fishHist','fishTime','wildTag','tankCoord','gridCoord','-v7.3');   
-    FS_plotOverhead(type, gridCoord, tankCoord, xMean, yMean, thMean,nFish)    
+    save(dataFileName,'rConv','xMean', 'xStd', 'yMean', 'yStd','thMean', 'thStd', 'ampMean','xPart', 'xFishIter','xFish', 'xAmp', 'xWeight', 'xIdxDesc', 'fishHist','fishTime','wildTag','tankCoord','gridCoord','dataType','nFish','ampAll','freqCell','-v7.3');   
+    FS_plotOverhead(dataType, gridCoord, tankCoord, xMean, yMean, thMean,nFish,0)    
     
-elseif strcmp(type,'sim')   
+elseif strcmp(dataType,'sim')   
     cHullPart = 200;
     for fID = 1:nFish
         for i = 1:nTime
@@ -267,7 +270,7 @@ elseif strcmp(type,'sim')
 %            rConv(fID,i) = sqrt(V/pi);
         end
     end
-    FS_plotOverhead(type, gridCoord, tankCoord, xMean, yMean, thMean,nFish)
+    FS_plotOverhead(dataType, gridCoord, tankCoord, xMean, yMean, thMean,nFish,0)
     %%
     
 %     meanErr(zDist) = mean(sqrt((xMean-trajList{fishID}(1,:)).^2 + (yMean-trajList{fishID}(2,:)).^2));
@@ -366,8 +369,8 @@ else
 
     %%
 
-    save(dataFileName,'xError','yError','dCenElec', 'xMSE', 'yMSE','rConv','xMean', 'xStd', 'yMean', 'yStd','thMean', 'thStd', 'ampMean', 'xPart', 'xFishIter','xFish', 'xAmp', 'xWeight', 'xIdxDesc', 'fishHist','fishTime','vidParams','wildTag','tankCoord','gridCoord','ampActNormed','-v7.3');
-    FS_plotOverhead(type, handles.gridCoord, handles.tankCoord, xMean, yMean, thMean,nFish)
+    save(dataFileName,'xError','yError','dCenElec', 'xMSE', 'yMSE','rConv','xMean', 'xStd', 'yMean', 'yStd','thMean', 'thStd', 'ampMean', 'xPart', 'xFishIter','xFish', 'xAmp', 'xWeight', 'xIdxDesc', 'fishHist','fishTime','vidParams','wildTag','tankCoord','gridCoord','ampActNormed','dataType','ampAll','nFish','freqCell','timeIdx','-v7.3');
+%     FS_plotOverhead(handles,type, handles.gridCoord, handles.tankCoord, xMean, yMean, thMean,nFish, vidParams)
 %%
 %{
 colMat = distinguishable_colors(nFish);

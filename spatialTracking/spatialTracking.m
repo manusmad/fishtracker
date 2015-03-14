@@ -22,7 +22,7 @@ function varargout = spatialTracking(varargin)
 
 % Edit the above text to modify the response to help spatialTracking
 
-% Last Modified by GUIDE v2.5 12-Mar-2015 08:35:27
+% Last Modified by GUIDE v2.5 13-Mar-2015 09:39:33
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -104,7 +104,7 @@ function push_load_Callback(hObject, eventdata, handles)
 
 handles.dir_path        = get(handles.data_path, 'String');
 if ~get(handles.Wild,'Value')
-    handles.vdata_path  = [handles.dir_path(end-5:end) 'clips'];
+    handles.vdata_path  = [handles.dir_path(1:end-6) 'clips'];
 end
 
 dir_struct                  = dir(handles.dir_path);
@@ -173,21 +173,124 @@ function push_track_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+particles           = str2double(get(handles.particles,'String'));
 
+index_selected      = get(handles.elecFiles,'Value');
+file_list           = get(handles.elecFiles,'String');
+filename            = file_list{index_selected};
+handles.elecFile    = filename;
+clipsname = [filename([1:end-11]),'_tubes',filename([end-3:end])];
+
+try
+    handles.elecTracked = open(fullfile(handles.dir_path, filesep,filename));
+catch ex
+    errordlg(ex.getReport('basic'),'File Type Error','modal')
+end
+
+if ~get(handles.Wild,'Value')
+    try
+        handles.vidTracked = open(fullfile(handles.vdata_path, filesep,clipsname));
+    catch ex
+        errordlg(ex.getReport('basic'),'File Type Error','modal')
+    end
+end
+handles.motion = 'random';
+if ~get(handles.Wild,'Value')
+    handles.scaleFact   = 6;
+
+    gridTemp            = (handles.vidTracked.gridcen-repmat(handles.vidTracked.gridcen(5,:),9,1))/handles.scaleFact;
+    handles.gridCoord   = [gridTemp(:,1) -gridTemp(:,2)];
+    tankTemp            = (handles.vidTracked.tankcen-repmat(handles.vidTracked.gridcen(5,:),4,1))/handles.scaleFact;
+    handles.tankCoord   = [tankTemp(1:2,:);tankTemp(4:-1:3,:);tankTemp(1,:)];
+else
+    [xD,yD]             = FS_testGridSim(get(handles.Wild,'Value'));
+    handles.gridCoord   = [xD yD];
+    bndry               = 200;
+    handles.tankCoord   = [-bndry -bndry;bndry -bndry;bndry bndry;-bndry bndry;-bndry -bndry];
+end
+
+
+% [handles, dataFileName] = FS_Main(particles, handles);
+% load(dataFileName)
+load(['/Users/ravi/Documents/My Folder/Projects/Grid/grid/FishOnStickDay1/tracks/141111_005','_tracks_particle.mat']);
+
+
+handles.dataType    = dataType;
+handles.gridCoord   = gridCoord;
+handles.tankCoord   = tankCoord; 
+handles.xMean       = xMean;
+handles.yMean       = yMean;
+handles.thMean      = thMean;
+handles.nFish       = nFish;
+handles.vidParams   = vidParams;
+handles.sNo         = 1;
+handles.ampAll      = ampAll;
+handles.freqCell    = freqCell;
+
+
+if get(handles.Wild,'Value')
+   timeIdx = '';
+   vidParams = '';
+else 
+    handles.timeIdx = timeIdx;
+end
+
+FS_plotOverhead(handles)
+FS_plotHeat(handles)
+FS_plotFreqTrack(handles)
+
+if ~get(handles.Wild,'Value')
+    handles.nSteps = vidParams.nFrames;
+else
+    handles.nSteps = length(fishTime);
+    handles.timeIdx = 1:handles.nSteps;
+end
+
+set(handles.totalStep, 'String',['of ' num2str(handles.nSteps)])
+set(handles.stepNo, 'String',num2str(1))
+set(handles.stepSlider,'Value',0)
+set(handles.dataName,'String', filename);
+% set(handles.fishList,'String',fishList,'Value',1)
+% handles.FishId = get(handles.fishList,'Value');
+
+% set(handles.enableVFish,'Value',1);
+% set(handles.enableEFish,'Value',1);
+
+% handles.showVF = get(handles.enableVFish,'Value');
+% handles.showEF = get(handles.enableEFish,'Value');
+%%
+display(['Done loading']);    
+guidata(hObject, handles);
 
 % --- Executes on slider movement.
-function slider1_Callback(hObject, eventdata, handles)
-% hObject    handle to slider1 (see GCBO)
+function stepSlider_Callback(hObject, eventdata, handles)
+% hObject    handle to stepSlider (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
 
+stepScale = get(handles.stepSlider,'Value');
+curr_step      = floor(stepScale*(handles.nSteps));
+if ~curr_step 
+    curr_step = 1;
+end
+
+handles.sNo = curr_step;
+
+FS_plotOverhead(handles)
+FS_plotHeat(handles)
+FS_plotFreqTrack(handles)
+
+set(handles.stepNo,'String',num2str(curr_step));
+% handles.showVF = get(handles.enableVFish,'Value');
+% handles.showEF = get(handles.enableEFish,'Value');
+guidata(hObject, handles);
 
 % --- Executes during object creation, after setting all properties.
-function slider1_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to slider1 (see GCBO)
+function stepSlider_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to stepSlider (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -195,3 +298,173 @@ function slider1_CreateFcn(hObject, eventdata, handles)
 if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
+
+
+% --- Executes on button press in playPause.
+function playPause_Callback(hObject, eventdata, handles)
+% hObject    handle to playPause (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+k          = 0;
+stepNo    = str2double(get(handles.stepNo,'String'));
+
+while (get(handles.playPause,'Value') == 1 && strcmp(get(handles.playPause,'String'),'Play') ...
+        || (get(handles.playPause,'Value') == 0 && strcmp(get(handles.playPause,'String'),'Pause')))
+    
+    tMult      = str2double(get(handles.pSpeed,'String'));
+    
+    set(handles.stepNo,'String',num2str(stepNo));    
+    handles.sNo = stepNo;
+    
+    FS_plotOverhead(handles)
+    FS_plotHeat(handles)
+    FS_plotFreqTrack(handles)
+    
+%     handles.frameIdx = floor(stepNo/handles.nSkip)+1;
+    
+    stepScale = (stepNo-1)/handles.nSteps;
+    set(handles.stepSlider,'Value',stepScale);
+    
+%     stepScale = get(handles.stepSlider,'Value');
+%     stepNo      = 1 + floor(stepScale*(handles.nSteps));
+    
+    if (stepNo+tMult*1) < handles.nSteps
+        stepNo = stepNo+tMult*1;    
+    else
+        break
+    end
+    
+    if k == 0
+%         set(handles.stepSlider,'Value',stepScale);
+        set(handles.playPause,'Value',0);
+        set(handles.playPause,'String','Pause');
+        k = 1;
+        guidata(hObject, handles);
+    end
+end
+set(handles.playPause,'Value', 0);
+set(handles.playPause,'String', 'Play');
+guidata(hObject, handles);
+
+
+function stepNo_Callback(hObject, eventdata, handles)
+% hObject    handle to stepNo (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of stepNo as text
+%        str2double(get(hObject,'String')) returns contents of stepNo as a double
+stepNo = str2double(get(handles.stepNo,'String'));
+    
+handles.sNo = stepNo;
+
+FS_plotOverhead(handles)
+FS_plotHeat(handles)
+FS_plotFreqTrack(handles)
+    
+stepScale = stepNo/handles.nSteps;
+
+if stepScale < 0
+    stepScale = 0;
+elseif stepScale > 1
+    stepScale = 1;
+end
+
+set(handles.stepSlider,'Value',stepScale);
+    
+%     handles.showVF = get(handles.enableVFish,'Value');
+%     handles.showEF = get(handles.enableEFish,'Value');
+guidata(hObject, handles);
+
+% --- Executes during object creation, after setting all properties.
+function stepNo_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to stepNo (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function pSpeed_Callback(hObject, eventdata, handles)
+% hObject    handle to pSpeed (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of pSpeed as text
+%        str2double(get(hObject,'String')) returns contents of pSpeed as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function pSpeed_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to pSpeed (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in prevPush.
+function prevPush_Callback(hObject, eventdata, handles)
+% hObject    handle to prevPush (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+% handles.showVF = get(handles.enableVFish,'Value');
+% handles.showEF = get(handles.enableEFish,'Value');
+
+stepNo    = str2double(get(handles.stepNo,'String'));
+tMult      = str2double(get(handles.pSpeed,'String'));
+    
+if (stepNo-tMult*1) > 1
+    stepNo = stepNo-tMult*1;    
+else
+    stepNo = 1;
+end    
+set(handles.stepNo,'String',num2str(stepNo));    
+
+handles.sNo = stepNo;
+
+FS_plotOverhead(handles)
+FS_plotHeat(handles)
+FS_plotFreqTrack(handles)
+
+stepScale = (stepNo-1)/handles.nSteps;
+set(handles.stepSlider,'Value',stepScale);
+
+guidata(hObject, handles);
+
+% --- Executes on button press in nextPush.
+function nextPush_Callback(hObject, eventdata, handles)
+% hObject    handle to nextPush (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+% handles.showVF = get(handles.enableVFish,'Value');
+% handles.showEF = get(handles.enableEFish,'Value');
+
+stepNo    = str2double(get(handles.stepNo,'String'));
+tMult      = str2double(get(handles.pSpeed,'String'));
+    
+if (stepNo+tMult*1) < handles.nSteps
+    stepNo = stepNo+tMult*1;    
+else
+    stepNo = handles.nSteps;
+end
+set(handles.stepNo,'String',num2str(stepNo));
+handles.sNo = stepNo;
+
+FS_plotOverhead(handles)
+FS_plotHeat(handles)
+FS_plotFreqTrack(handles)
+    
+stepScale = (stepNo-1)/handles.nSteps;
+set(handles.stepSlider,'Value',stepScale);
+guidata(hObject, handles);
