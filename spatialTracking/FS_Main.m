@@ -246,7 +246,6 @@ if get(handles.Wild,'Value')
     end
     
     save(dataFileName,'rConv','xMean', 'xStd', 'yMean', 'yStd','thMean', 'thStd', 'ampMean','xPart', 'xFishIter','xFish', 'xAmp', 'xWeight', 'xIdxDesc', 'fishHist','fishTime','wildTag','tankCoord','gridCoord','dataType','nFish','ampAll','freqCell','-v7.3');   
-    FS_plotOverhead(dataType, gridCoord, tankCoord, xMean, yMean, thMean,nFish,0)    
     
 elseif strcmp(dataType,'sim')   
     cHullPart = 200;
@@ -270,7 +269,6 @@ elseif strcmp(dataType,'sim')
 %            rConv(fID,i) = sqrt(V/pi);
         end
     end
-    FS_plotOverhead(dataType, gridCoord, tankCoord, xMean, yMean, thMean,nFish,0)
     %%
     
 %     meanErr(zDist) = mean(sqrt((xMean-trajList{fishID}(1,:)).^2 + (yMean-trajList{fishID}(2,:)).^2));
@@ -286,6 +284,9 @@ else
 
     xFishIter(:,:,:,1) = xFishIter(:,:,:,1)*handles.scaleFact + cenElec(1);
     xFishIter(:,:,:,2) = -xFishIter(:,:,:,2)*handles.scaleFact + cenElec(2);
+    
+    gridCoord = gridCoord*handles.scaleFact + repmat(cenElec,size(gridCoord,1),1);
+    tankCoord = tankCoord*handles.scaleFact + repmat(cenElec,size(tankCoord,1),1);
 
     [~,dataFileName,~] = fileparts(handles.elecFile);
     dataFileName = fullfile(handles.dir_path,[dataFileName '_particle.mat']);

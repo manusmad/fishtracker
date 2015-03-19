@@ -22,7 +22,7 @@ function varargout = spatialTracking(varargin)
 
 % Edit the above text to modify the response to help spatialTracking
 
-% Last Modified by GUIDE v2.5 13-Mar-2015 09:39:33
+% Last Modified by GUIDE v2.5 16-Mar-2015 00:32:19
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -210,9 +210,9 @@ else
 end
 
 
-% [handles, dataFileName] = FS_Main(particles, handles);
-% load(dataFileName)
-load(['/Users/ravi/Documents/My Folder/Projects/Grid/grid/FishOnStickDay1/tracks/141111_005','_tracks_particle.mat']);
+[handles, dataFileName] = FS_Main(particles, handles);
+load(dataFileName)
+% load(['/Users/ravi/Documents/My Folder/Projects/Grid/grid/FishOnStickDay1/tracks/141111_005','_tracks_particle.mat']);
 
 
 handles.dataType    = dataType;
@@ -222,10 +222,18 @@ handles.xMean       = xMean;
 handles.yMean       = yMean;
 handles.thMean      = thMean;
 handles.nFish       = nFish;
-handles.vidParams   = vidParams;
+
 handles.sNo         = 1;
 handles.ampAll      = ampAll;
 handles.freqCell    = freqCell;
+handles.showTrack   = get(handles.trackOverlay,'Value');
+handles.showPosition = get(handles.estPosition,'Value');
+handles.showAngle   = get(handles.estAngle,'Value');
+
+if exist('vidParams')
+    set(handles.plotVidFish,'Visible','on');
+    handles.showVid = get(handles.plotVidFish,'Value');
+end
 
 
 if get(handles.Wild,'Value')
@@ -234,6 +242,7 @@ if get(handles.Wild,'Value')
 else 
     handles.timeIdx = timeIdx;
 end
+handles.vidParams   = vidParams;
 
 FS_plotOverhead(handles)
 FS_plotHeat(handles)
@@ -250,6 +259,10 @@ set(handles.totalStep, 'String',['of ' num2str(handles.nSteps)])
 set(handles.stepNo, 'String',num2str(1))
 set(handles.stepSlider,'Value',0)
 set(handles.dataName,'String', filename);
+fishList = mat2cell(1:nFish);
+set(handles.elecFishList,'String',fishList,'Value',1)
+set(handles.elecFishList,'Max',nFish,'Min',0);
+
 % set(handles.fishList,'String',fishList,'Value',1)
 % handles.FishId = get(handles.fishList,'Value');
 
@@ -467,4 +480,110 @@ FS_plotFreqTrack(handles)
     
 stepScale = (stepNo-1)/handles.nSteps;
 set(handles.stepSlider,'Value',stepScale);
+guidata(hObject, handles);
+
+
+% --- Executes on selection change in elecFishList.
+function elecFishList_Callback(hObject, eventdata, handles)
+% hObject    handle to elecFishList (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns elecFishList contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from elecFishList
+
+
+% --- Executes during object creation, after setting all properties.
+function elecFishList_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to elecFishList (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: listbox controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in plotAllFish.
+function plotAllFish_Callback(hObject, eventdata, handles)
+% hObject    handle to plotAllFish (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of plotAllFish
+
+
+% --- Executes on button press in plotVidFish.
+function plotVidFish_Callback(hObject, eventdata, handles)
+% hObject    handle to plotVidFish (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of plotVidFish
+handles.showVid = get(handles.plotVidFish,'Value');
+
+FS_plotOverhead(handles)
+guidata(hObject, handles);
+% --- Executes on button press in saveFig.
+function saveFig_Callback(hObject, eventdata, handles)
+% hObject    handle to saveFig (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in saveVideo.
+function saveVideo_Callback(hObject, eventdata, handles)
+% hObject    handle to saveVideo (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in timeOverlay.
+function timeOverlay_Callback(hObject, eventdata, handles)
+% hObject    handle to timeOverlay (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of timeOverlay
+
+
+% --- Executes on button press in trackOverlay.
+function trackOverlay_Callback(hObject, eventdata, handles)
+% hObject    handle to trackOverlay (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of trackOverlay
+handles.showTrack = get(handles.trackOverlay,'Value');
+
+FS_plotOverhead(handles)
+
+guidata(hObject, handles);
+
+% --- Executes on button press in estPosition.
+function estPosition_Callback(hObject, eventdata, handles)
+% hObject    handle to estPosition (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of estPosition
+handles.showPosition = get(handles.estPosition,'Value');
+
+FS_plotOverhead(handles)
+
+guidata(hObject, handles);
+
+% --- Executes on button press in estAngle.
+function estAngle_Callback(hObject, eventdata, handles)
+% hObject    handle to estAngle (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of estAngle
+handles.showAngle = get(handles.estAngle,'Value');
+
+FS_plotOverhead(handles)
+
 guidata(hObject, handles);

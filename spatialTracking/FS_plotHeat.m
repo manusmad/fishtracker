@@ -1,8 +1,13 @@
 function FS_plotHeat(handles)
 
-amp         = handles.ampAll(1,:,handles.sNo);
-gridCoord   = handles.gridCoord;
+amp = zeros(1,size(squeeze(handles.ampAll(1,:,handles.sNo)),2));
+for i = 1:handles.nFish
+    if sum(isnan(squeeze(handles.ampAll(i,:,handles.sNo)))) == 0
+       amp = amp + squeeze(handles.ampAll(i,:,handles.sNo));
+    end   
+end
 
+gridCoord   = handles.gridCoord;
 divNo = 100;
 
 xRange = max(gridCoord(:,1))- min(gridCoord(:,1));
