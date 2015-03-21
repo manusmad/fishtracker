@@ -1,7 +1,11 @@
 function FS_plotHeat(handles)
 
+fishSelect  = handles.fishSelect; 
+numFish     = length(fishSelect);
+
 amp = zeros(1,size(squeeze(handles.ampAll(1,:,handles.sNo)),2));
-for i = 1:handles.nFish
+for fID = 1:numFish
+    i = fishSelect(fID);
     if sum(isnan(squeeze(handles.ampAll(i,:,handles.sNo)))) == 0
        amp = amp + squeeze(handles.ampAll(i,:,handles.sNo));
     end   

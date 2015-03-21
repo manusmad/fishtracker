@@ -1,5 +1,8 @@
 function FS_plotFreqTrack(handles)
 
+fishSelect  = handles.fishSelect; 
+numFish     = length(fishSelect);
+
 freqCell    = handles.freqCell;
 nFish       = handles.nFish;
 stepNo      = handles.sNo;
@@ -8,7 +11,8 @@ axes(handles.ax_freqTrack)
 cla
 colrs = distinguishable_colors(nFish); 
 
-for i = 1:length(freqCell)
+for fID = 1:numFish
+    i = fishSelect(fID);
     plot(freqCell{i}(:,1),freqCell{i}(:,2),'Color',colrs(i,:));hold on
 end
 axis tight
