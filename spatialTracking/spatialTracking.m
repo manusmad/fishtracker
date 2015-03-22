@@ -55,6 +55,11 @@ function spatialTracking_OpeningFcn(hObject, eventdata, handles, varargin)
 % Choose default command line output for spatialTracking
 handles.output = hObject;
 
+    % Add all Mathworks folders
+    addpath('../packages/addpath_recurse');
+    addpath_recurse('../packages');
+    addpath_recurse('.');
+    
 % Update handles structure
 guidata(hObject, handles);
 
