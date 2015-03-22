@@ -12,6 +12,7 @@ stepNo      = handles.sNo;
 fishSelect  = handles.fishSelect; 
 xPart       = handles.xPart;
 xWeight     = handles.xWeight;
+nPart       = handles.nPart;
 
 numFish     = length(fishSelect); 
 
@@ -115,6 +116,18 @@ if handles.showHull == 1
         partXY = squeeze(xPart(fID,stepNo,convIdx,1:2));
         k = convhull(partXY(:,1),partXY(:,2));
         plot(partXY(k,1),partXY(k,2),'Color',colrs(fID,:))
+    end
+end
+
+if handles.showParticles == 1
+    t= 0:pi/10:2*pi;
+    for i = 1:numFish
+        fID = fishSelect(i);
+        xPatch = repmat(sin(t)',1,nPart)+repmat(reshape(xPart(fID,stepNo,:,1),1,nPart),length(t),1);
+        yPatch = repmat(cos(t)',1,nPart)+repmat(reshape(xPart(fID,stepNo,:,2),1,nPart),length(t),1);  
+        pb=patch(xPatch,yPatch,colrs(fID,:),'EdgeColor','none');
+        alpha(pb,0.08);
+        hold on;
     end
 end
     

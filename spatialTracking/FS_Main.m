@@ -220,8 +220,9 @@ end
 
 %% Save all data
 if get(handles.Wild,'Value')
-    [~,dataFileName,~] = fileparts(handles.elecFile);
-    dataFileName = fullfile(handles.dir_path,[dataFileName '_particle.mat']);
+%     [~,dataFileName,~] = fileparts(handles.elecFile);
+%     dataFileName = fullfile(handles.dir_path,[dataFileName '_temp.mat']);
+    dataFileName = fullfile(handles.dir_path,'temp.mat');
     
     cHullPart = 200;
     for fID = 1:nFish
@@ -288,8 +289,9 @@ else
     gridCoord = gridCoord*handles.scaleFact + repmat(cenElec,size(gridCoord,1),1);
     tankCoord = tankCoord*handles.scaleFact + repmat(cenElec,size(tankCoord,1),1);
 
-    [~,dataFileName,~] = fileparts(handles.elecFile);
-    dataFileName = fullfile(handles.dir_path,[dataFileName '_particle.mat']);
+%     [~,dataFileName,~] = fileparts(handles.elecFile);
+%     dataFileName = fullfile(handles.dir_path,[dataFileName '_temp.mat']);
+    dataFileName = fullfile(handles.dir_path,'temp.mat');
     vidParams = handles.vidTracked;
 
     nanIdx = find((cellfun('isempty', vidParams.tubecen)));

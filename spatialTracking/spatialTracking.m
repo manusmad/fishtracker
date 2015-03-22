@@ -22,7 +22,7 @@ function varargout = spatialTracking(varargin)
 
 % Edit the above text to modify the response to help spatialTracking
 
-% Last Modified by GUIDE v2.5 21-Mar-2015 16:37:16
+% Last Modified by GUIDE v2.5 21-Mar-2015 21:11:34
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -218,13 +218,18 @@ if get(handles.rawRadio,'Value')
     end
 
     [handles, dataFileName] = FS_Main(particles, handles);
+    handles.tempFileName    = dataFileName;
     load(dataFileName)
+    set(handles.saveTrackData,'Enable','on');
+    set(handles.figSaveText,'String',['Finished Tracking!' ' at ' datestr(now)]);
 else
     load(fullfile(handles.dir_path, filesep,filename));
     if wildTag
         set(handles.Wild,'Value',1);
         set(handles.Tank,'Value',0);
     end
+    set(handles.saveTrackData,'Enable','off');
+    set(handles.figSaveText,'String',['Finished Loading!' ' at ' datestr(now)]);
 end
 
 handles.dataType    = dataType;
@@ -236,23 +241,25 @@ handles.thMean      = thMean;
 handles.nFish       = nFish;
 handles.fishTime    = fishTime;
 handles.xPart       = xPart;
+handles.nPart       = size(xPart,3);
 handles.xWeight     = xWeight;
 
 handles.sNo         = 1;
 handles.ampAll      = ampAll;
 handles.freqCell    = freqCell;
-handles.showPosition = get(handles.estPosition,'Value');
-handles.showAngle   = get(handles.estAngle,'Value');
-handles.showTime = get(handles.timeOverlay,'Value');
-handles.showAllFish = get(handles.plotAllFish,'Value');
-handles.showHull = get(handles.plotHull,'Value');
+handles.showPosition    = get(handles.estPosition,'Value');
+handles.showAngle       = get(handles.estAngle,'Value');
+handles.showTime        = get(handles.timeOverlay,'Value');
+handles.showAllFish     = get(handles.plotAllFish,'Value');
+handles.showHull        = get(handles.plotHull,'Value');
+handles.showParticles   = get(handles.plotParticles,'Value');
 
-if exist('vidParams')
-    set(handles.plotVidFish,'Visible','on');
+if ~get(handles.Wild,'Value')
+    set(handles.plotVidFish,'Enable','on');
     handles.showVid = get(handles.plotVidFish,'Value');
+else
+    set(handles.plotVidFish,'Enable','off');
 end
-
-
 if get(handles.Wild,'Value')
    timeIdx = '';
    vidParams = '';
@@ -275,6 +282,7 @@ set(handles.stepSlider,'Value',0)
 
 set(handles.dataName,'String', ['Dataset: ' filename]);
 set(handles.numFish,'String', ['Number of Fish: ' num2str(nFish)]);
+set(handles.vidFPS,'String', num2str(1/mean(diff(handles.fishTime))));
 
 
 handles.fishList = mat2cell(1:nFish);
@@ -298,20 +306,10 @@ elseif get(handles.trackNone,'Value')
     handles.showTrack = 3;
 end 
 
-
 FS_plotOverhead(handles)
 FS_plotHeat(handles)
 FS_plotFreqTrack(handles)
 
-% set(handles.fishList,'String',fishList,'Value',1)
-% handles.FishId = get(handles.fishList,'Value');
-
-% set(handles.enableVFish,'Value',1);
-% set(handles.enableEFish,'Value',1);
-
-% handles.showVF = get(handles.enableVFish,'Value');
-% handles.showEF = get(handles.enableEFish,'Value');
-%%
 display(['Done loading']);    
 guidata(hObject, handles);
 
@@ -635,7 +633,8 @@ else
     set(handles.figSaveText,'String',['Saving ' fName ' at ' datestr(now)]);
 
     writerObj = VideoWriter(writeFileName,'MPEG-4');
-    writerObj.FrameRate = 1/mean(diff(handles.fishTime));
+    
+    writerObj.FrameRate = str2num(get(handles.vidFPS,'String'));
     open(writerObj);
 
     frameCount = 0;
@@ -803,3 +802,54 @@ function vidStopStep_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+% --- Executes on button press in saveTrackData.
+function saveTrackData_Callback(hObject, eventdata, handles)
+% hObject    handle to saveTrackData (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+[~,fName,~] = fileparts(handles.elecFile);
+dataFileName = fullfile(handles.dir_path,[fName '_particle.mat']);
+
+movefile(handles.tempFileName,dataFileName);
+set(handles.figSaveText,'String',['Saved ' fName '_particle.mat at' datestr(now)]); 
+
+guidata(hObject, handles);
+
+function vidFPS_Callback(hObject, eventdata, handles)
+% hObject    handle to vidFPS (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of vidFPS as text
+%        str2double(get(hObject,'String')) returns contents of vidFPS as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function vidFPS_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to vidFPS (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in plotParticles.
+function plotParticles_Callback(hObject, eventdata, handles)
+% hObject    handle to plotParticles (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of plotParticles
+
+handles.showParticles   = get(handles.plotParticles,'Value');
+
+FS_plotOverhead(handles)
+
+guidata(hObject, handles);
