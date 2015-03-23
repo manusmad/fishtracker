@@ -27,7 +27,6 @@ track0 = computeComparisonVec(track0);
 % http://www.mathworks.com/matlabcentral/answers/48942-insert-element-in-vector
 insert = @(x, a, n)cat(1,  x(1:n-1), a, x(n:end));
 
-addpath('progressbar');
 % If first argument is empty, return a tracks array with all NaN fields
 if isempty(tracks)
     tracks = repmat(track0,size(T));
@@ -77,7 +76,4 @@ else
             tracks(k).p3 = insert(tracks(k).p3,NaN,d);
         end
     end
-end    
-
-rmpath('progressbar');
-
+end
