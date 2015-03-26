@@ -22,7 +22,7 @@ function varargout = spatialTracking(varargin)
 
 % Edit the above text to modify the response to help spatialTracking
 
-% Last Modified by GUIDE v2.5 21-Mar-2015 21:11:34
+% Last Modified by GUIDE v2.5 25-Mar-2015 15:08:07
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -858,3 +858,26 @@ handles.showParticles   = get(handles.plotParticles,'Value');
 FS_plotOverhead(handles)
 
 guidata(hObject, handles);
+
+
+
+function limEdit_Callback(hObject, eventdata, handles)
+% hObject    handle to limEdit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of limEdit as text
+%        str2double(get(hObject,'String')) returns contents of limEdit as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function limEdit_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to limEdit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
