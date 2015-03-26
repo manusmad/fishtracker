@@ -1,7 +1,7 @@
 function handles = newTrack(handles)
     if isfield(handles,'spec')
             handles = tracksView(handles);
-            newTrack = fillWithNaNs([],handles.spec.T,size(handles.spec.S,3));
+            newTrack = fillWithNaNs([],handles.spec.T,handles.spec.meta.chNum,handles.meta.chNumOrig);
             if isfield(handles,'tracks')
                 handles = addUndo(handles);
                 newId = max([handles.tracks.id])+1;

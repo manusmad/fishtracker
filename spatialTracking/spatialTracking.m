@@ -290,7 +290,7 @@ set(handles.numFish,'String', ['Number of Fish: ' num2str(nFish)]);
 set(handles.vidFPS,'String', num2str(1/mean(diff(handles.fishTime))));
 
 
-handles.fishList = mat2cell(1:nFish);
+handles.fishList = cellfun(@num2str,num2cell(1:nFish),'uniformoutput',0);
 set(handles.elecFishList,'String',handles.fishList,'Value',1)
 set(handles.elecFishList,'Max',nFish,'Min',0);
 set(handles.vidStartStep,'String',num2str(1));
