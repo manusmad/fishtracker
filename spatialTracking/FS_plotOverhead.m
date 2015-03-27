@@ -40,8 +40,10 @@ if strcmp(type,'wild')
             scatter(xMean(fishLoop,1:stepNo,1),yMean(fishLoop,1:stepNo,1),10,colrs(fishLoop,:),'fill');
         end
     end
-     xlim([-200,200]);
-            ylim([-200,200]);    
+
+    xlim([-handles.bndry,handles.bndry]);
+    ylim([-handles.bndry,handles.bndry]);  
+    
     % set(gca,'YDir','reverse');
     %  axis off
 elseif  strcmp(type,'sim')
@@ -62,8 +64,8 @@ elseif  strcmp(type,'sim')
         end
     end
 
-     xlim([-80,80]);
-            ylim([-80,80]);    
+    xlim([-handles.bndry,handles.bndry]);
+    ylim([-handles.bndry,handles.bndry]);   
     % set(gca,'YDir','reverse');
     %  axis off
 else
@@ -84,13 +86,16 @@ else
             scatter(xMean(fishLoop,1:stepNo,1),yMean(fishLoop,1:stepNo,1),10,colrs(fishLoop,:),'fill');
         end
     end
-    xlim([vidParams.tankcen(1,1),vidParams.tankcen(2,1)]);
-        ylim([vidParams.tankcen(1,2),vidParams.tankcen(4,2)]);    
+%     xlim([vidParams.tankcen(1,1),vidParams.tankcen(2,1)]);
+%         ylim([vidParams.tankcen(1,2),vidParams.tankcen(4,2)]);    
+    xlim([-handles.bndry,handles.bndry]);
+    ylim([-handles.bndry,handles.bndry]); 
     set(gca,'YDir','reverse');
     %  axis off
 end
  
 set(gca,'xcolor','w','ycolor','w','xtick',[],'ytick',[])
+
 if handles.showPosition == 1
     for i = 1:numFish
         fID = fishSelect(i);

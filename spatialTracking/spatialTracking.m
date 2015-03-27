@@ -22,7 +22,7 @@ function varargout = spatialTracking(varargin)
 
 % Edit the above text to modify the response to help spatialTracking
 
-% Last Modified by GUIDE v2.5 25-Mar-2015 15:08:07
+% Last Modified by GUIDE v2.5 26-Mar-2015 22:44:45
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -56,9 +56,17 @@ function spatialTracking_OpeningFcn(hObject, eventdata, handles, varargin)
 handles.output = hObject;
 
     % Add all Mathworks folders
-    addpath('../packages/addpath_recurse');
-    addpath_recurse('../packages');
-    addpath_recurse('.');
+addpath('../packages/addpath_recurse');
+addpath_recurse('../packages');
+addpath_recurse('.');
+
+lastFoldAddr = fullfile(fileparts(which('spatialTracking.m')),'lastFold.mat');
+
+if exist(lastFoldAddr,'file') == 2
+    load(lastFoldAddr);
+    set(handles.data_path,'String',folder_name);
+    set(handles.data_path,'ToolTipString',['Dataset Directory: ' folder_name]);
+end
     
 % Update handles structure
 guidata(hObject, handles);
@@ -185,6 +193,7 @@ function push_track_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 particles           = str2double(get(handles.particles,'String'));
+numIter             = str2double(get(handles.numIter,'String'));
 
 index_selected      = get(handles.elecFiles,'Value');
 file_list           = get(handles.elecFiles,'String');
@@ -222,7 +231,7 @@ if get(handles.rawRadio,'Value')
         handles.tankCoord   = [-bndry -bndry;bndry -bndry;bndry bndry;-bndry bndry;-bndry -bndry];
     end
 
-    [handles, dataFileName] = FS_Main(particles, handles);
+    [handles, dataFileName] = FS_Main(particles,numIter, handles);
     handles.tempFileName    = dataFileName;
     load(dataFileName)
     set(handles.saveTrackData,'Enable','on');
@@ -293,6 +302,19 @@ set(handles.vidFPS,'String', num2str(1/mean(diff(handles.fishTime))));
 handles.fishList = cellfun(@num2str,num2cell(1:nFish),'uniformoutput',0);
 set(handles.elecFishList,'String',handles.fishList,'Value',1)
 set(handles.elecFishList,'Max',nFish,'Min',0);
+colrs = distinguishable_colors(nFish);
+
+
+ids = 1:nFish;
+list = cell(handles.nFish,1);
+col = distinguishable_colors(max(ids));
+
+for k = 1:handles.nFish
+    coltag = reshape(dec2hex(round(col(ids(k),:)*255))',1,6);           
+    list{k} = sprintf('<html><body bgcolor="%s">Fish %02d</body></html>',coltag,ids(k));
+end
+set(handles.elecFishList,'String',list);
+        
 set(handles.vidStartStep,'String',num2str(1));
 set(handles.vidStopStep,'String',num2str(handles.nSteps));
 
@@ -310,6 +332,23 @@ elseif get(handles.trackNone,'Value')
 elseif get(handles.trackNone,'Value')
     handles.showTrack = 3;
 end 
+
+if get(handles.limDefault,'Value')
+    if get(handles.Wild,'Value')
+        handles.bndry = 200;
+    else
+        handles.bndry = 80;
+    end
+elseif get(handles.limMax,'Value')
+        handles.bndry = max([max(max(abs(xMean))) max(max(abs(yMean)))]);
+elseif get(handles.limManual,'Value')
+    handles.limScale = get(handles.limEdit,'Value');
+    if get(handles.Wild,'Value')
+        handles.bndry = handles.limScale*200;
+    else
+        handles.bndry = handles.limScale*80;
+    end
+end
 
 FS_plotOverhead(handles)
 FS_plotHeat(handles)
@@ -881,3 +920,97 @@ function limEdit_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+% --- If Enable == 'on', executes on mouse press in 5 pixel border.
+% --- Otherwise, executes on mouse press in 5 pixel border or over data_path.
+function data_path_ButtonDownFcn(hObject, eventdata, handles)
+% hObject    handle to data_path (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+
+% --- Executes on key press with focus on data_path and none of its controls.
+function data_path_KeyPressFcn(hObject, eventdata, handles)
+% hObject    handle to data_path (see GCBO)
+% eventdata  structure with the following fields (see UICONTROL)
+%	Key: name of the key that was pressed, in lower case
+%	Character: character interpretation of the key(s) that was pressed
+%	Modifier: name(s) of the modifier key(s) (i.e., control, shift) pressed
+% handles    structure with handles and user data (see GUIDATA)
+folder_name = uigetdir;
+set(handles.data_path,'String',folder_name);
+set(handles.data_path,'ToolTipString',['Dataset Directory: ' folder_name]);
+
+guidata(hObject, handles);
+
+
+% --- Executes on button press in selDir.
+function selDir_Callback(hObject, eventdata, handles)
+% hObject    handle to selDir (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+folder_name = uigetdir;
+set(handles.data_path,'String',folder_name);
+set(handles.data_path,'ToolTipString',['Dataset Directory: ' folder_name]);
+
+lastFoldAddr = fullfile(fileparts(which('spatialTracking.m')),'lastFold');
+save(lastFoldAddr,'folder_name');
+
+exist lastFoldAddr var
+
+guidata(hObject, handles);
+
+
+
+function numIter_Callback(hObject, eventdata, handles)
+% hObject    handle to numIter (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of numIter as text
+%        str2double(get(hObject,'String')) returns contents of numIter as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function numIter_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to numIter (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes when selected object is changed in uipanel17.
+function uipanel17_SelectionChangeFcn(hObject, eventdata, handles)
+% hObject    handle to the selected object in uipanel17 
+% eventdata  structure with the following fields (see UIBUTTONGROUP)
+%	EventName: string 'SelectionChanged' (read only)
+%	OldValue: handle of the previously selected object or empty if none was selected
+%	NewValue: handle of the currently selected object
+% handles    structure with handles and user data (see GUIDATA)
+if get(handles.limDefault,'Value')
+    if get(handles.Wild,'Value')
+        handles.bndry = 200;
+    else
+        handles.bndry = 80;
+    end
+elseif get(handles.limMax,'Value')
+        handles.bndry = max([max(max(abs(handles.xMean))) max(max(abs(handles.yMean)))]);
+elseif get(handles.limManual,'Value')
+    handles.limScale = str2double(get(handles.limEdit,'String'));
+    if get(handles.Wild,'Value')
+        handles.bndry = handles.limScale*200;
+    else
+        handles.bndry = handles.limScale*80;
+    end
+end
+
+FS_plotOverhead(handles)
+
+guidata(hObject, handles);

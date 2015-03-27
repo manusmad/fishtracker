@@ -1,5 +1,6 @@
-function [handles, dataFileName] = FS_Main(nPart, handles)
+function [handles, dataFileName] = FS_Main(nPart, nIter,handles)
 % clc;
+progressbar(0)
 
 dataType = 'tank';
 wildTag = get(handles.Wild,'Value');
@@ -89,7 +90,7 @@ end
 tInt  = mean(diff(fishTime));
 nTime = length(fishTime)
 [nx,sys] = FS_processEq(handles.motion);
-nIter = 1;
+% nIter = 1;
 nGen = 2;
 
 % Cycles
@@ -194,8 +195,10 @@ for id = 1:nFish
         end
     elseif strcmp(handles.motion,'random')
         for iterLoop = 1:nIter
+          
             display(['Iteration: ' num2str(iterLoop) ' of ' num2str(nIter)]);
             for t = 1:nTime 
+                progressbar(((id-1)*nIter*nTime + (iterLoop-1)*nTime + t)/(1.1*nFish*nIter*nTime))
                 for genLoop = 1:nGen
                     % Particle filter 
                     if ~strcmp(dataType, 'sim')
@@ -398,5 +401,5 @@ end
 
 
 end
-
+progressbar(1)
 display('Done!')
