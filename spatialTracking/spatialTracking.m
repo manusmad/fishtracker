@@ -22,7 +22,7 @@ function varargout = spatialTracking(varargin)
 
 % Edit the above text to modify the response to help spatialTracking
 
-% Last Modified by GUIDE v2.5 26-Mar-2015 22:44:45
+% Last Modified by GUIDE v2.5 27-Mar-2015 00:01:11
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -580,13 +580,14 @@ function elecFishList_Callback(hObject, eventdata, handles)
 %        contents{get(hObject,'Value')} returns selected item from elecFishList
 
 
-C = get(handles.elecFishList,{'string','value'});
-handles.fishSelect = C{2};
-
 if ~handles.showAllFish
+    C = get(handles.elecFishList,{'string','value'});
+    handles.fishSelect = C{2};
     FS_plotOverhead(handles)
     FS_plotHeat(handles)
     FS_plotFreqTrack(handles)
+else
+    handles.fishSelect = 1:handles.nFish;
 end
 
 guidata(hObject, handles);
@@ -857,8 +858,14 @@ function saveTrackData_Callback(hObject, eventdata, handles)
 [~,fName,~] = fileparts(handles.elecFile);
 dataFileName = fullfile(handles.dir_path,[fName '_particle.mat']);
 
-movefile(handles.tempFileName,dataFileName);
-set(handles.figSaveText,'String',['Saved ' fName '_particle.mat at' datestr(now)]); 
+[FileName,PathName,~] = uiputfile('*.mat','Save tracked data as ..',dataFileName);
+
+if FileName ~= 0
+    userFileName = fullfile(PathName, FileName);
+    movefile(handles.tempFileName,userFileName);
+    set(handles.figSaveText,'String',['Saved ' fName '_particle.mat at' datestr(now)]);
+    set(handles.saveTrackData,'Enable','off');
+end
 
 guidata(hObject, handles);
 
@@ -952,8 +959,10 @@ function selDir_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 folder_name = uigetdir;
-set(handles.data_path,'String',folder_name);
-set(handles.data_path,'ToolTipString',['Dataset Directory: ' folder_name]);
+if folder_name ~= 0
+    set(handles.data_path,'String',folder_name);
+    set(handles.data_path,'ToolTipString',['Dataset Directory: ' folder_name]);
+end
 
 lastFoldAddr = fullfile(fileparts(which('spatialTracking.m')),'lastFold');
 save(lastFoldAddr,'folder_name');
