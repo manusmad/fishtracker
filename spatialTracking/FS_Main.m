@@ -88,7 +88,7 @@ end
 
 %% Particle filter
 tInt  = mean(diff(fishTime));
-nTime = length(fishTime)
+nTime = length(fishTime);
 [nx,sys] = FS_processEq(handles.motion);
 % nIter = 1;
 nGen = 2;

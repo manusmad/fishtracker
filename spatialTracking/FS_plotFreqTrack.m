@@ -13,7 +13,7 @@ colrs = distinguishable_colors(nFish);
 
 for fID = 1:numFish
     i = fishSelect(fID);
-    plot(freqCell{i}(:,1),freqCell{i}(:,2),'Color',colrs(i,:));hold on
+    plot(freqCell{i}(:,1),freqCell{i}(:,2),'Color',colrs(i,:),'LineWidth',1.5);hold on
 end
 axis tight
 line([freqCell{i}(stepNo,1),freqCell{i}(stepNo,1)],ylim,'Color', 'k');
