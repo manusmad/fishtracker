@@ -21,10 +21,10 @@ cla
 colrs = distinguishable_colors(nFish);
 
 
-plot(tankCoord(:,1),tankCoord(:,2),'ob'),hold on;
-plot(tankCoord(:,1),tankCoord(:,2),'+b');
-plot(gridCoord(:,1),gridCoord(:,2),'ok');
-plot(gridCoord(:,1),gridCoord(:,2),'+k');
+plot(tankCoord(:,1),tankCoord(:,2),'ob','LineWidth',1.01),hold on;
+plot(tankCoord(:,1),tankCoord(:,2),'+b','LineWidth',1.01);
+plot(gridCoord(:,1),gridCoord(:,2),'ok','LineWidth',1.01);
+plot(gridCoord(:,1),gridCoord(:,2),'+k','LineWidth',1.01);
 
 if strcmp(type,'wild')
     fW = 1.5;
@@ -96,14 +96,32 @@ end
  
 set(gca,'xcolor','w','ycolor','w','xtick',[],'ytick',[])
 
+amp = zeros(1,size(squeeze(handles.ampAll(1,:,handles.sNo)),2));
+for fID = 1:numFish
+    i = fishSelect(fID);
+    if sum(isnan(squeeze(handles.ampAll(i,:,handles.sNo)))) == 0
+       amp = amp + squeeze(handles.ampAll(i,:,handles.sNo));
+    end   
+end
+
 if handles.showPosition == 1
     for i = 1:numFish
         fID = fishSelect(i);
-        if handles.showAngle == 1
-            plot_ellipse(fW,fL,xMean(fID,stepNo),yMean(fID,stepNo),rad2deg(thMean(fID,stepNo)-pi/2),colrs(fID,:));
-        else
+        if sum(~isnan(squeeze(handles.ampAll(fID,:,handles.sNo))))
             scatter(xMean(fID,stepNo),yMean(fID,stepNo),100,colrs(fID,:),'filled')
+        else
+            scatter(xMean(fID,stepNo),yMean(fID,stepNo),100,colrs(fID,:))
+        end       
+    end
+elseif handles.showAngle == 1
+    for i = 1:numFish
+        fID = fishSelect(i);
+        if sum(~isnan(squeeze(handles.ampAll(fID,:,handles.sNo))))
+            colrsMat = [colrs(fID,:);colrs(fID,:)];
+        else
+            colrsMat = [1 1 1;colrs(fID,:)];
         end
+        plot_ellipse(fW,fL,xMean(fID,stepNo),yMean(fID,stepNo),rad2deg(thMean(fID,stepNo)-pi/2),colrsMat);
     end
 end
 

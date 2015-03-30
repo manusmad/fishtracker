@@ -22,7 +22,7 @@ function varargout = spatialTracking(varargin)
 
 % Edit the above text to modify the response to help spatialTracking
 
-% Last Modified by GUIDE v2.5 27-Mar-2015 00:01:11
+% Last Modified by GUIDE v2.5 30-Mar-2015 14:59:23
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -115,7 +115,11 @@ function push_load_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-handles.dir_path        = get(handles.data_path, 'String');
+handles.dir_path  = get(handles.data_path, 'String');
+folder_name       = handles.dir_path;
+lastFoldAddr      = fullfile(fileparts(which('spatialTracking.m')),'lastFold');
+save(lastFoldAddr,'folder_name');
+
 if ~get(handles.Wild,'Value')
     handles.vdata_path  = [handles.dir_path(1:end-6) 'clips'];
 end
@@ -261,6 +265,7 @@ handles.xWeight     = xWeight;
 handles.sNo         = 1;
 handles.ampAll      = ampAll;
 handles.freqCell    = freqCell;
+handles.showNone        = get(handles.estNone,'Value');
 handles.showPosition    = get(handles.estPosition,'Value');
 handles.showAngle       = get(handles.estAngle,'Value');
 handles.showTime        = get(handles.timeOverlay,'Value');
@@ -650,9 +655,15 @@ else
     fName = [handles.elecFile(1:end-13) '_' num2str(handles.sNo) '.pdf'];
     pdfName = fullfile(handles.dir_path, fName);
 end
-export_fig(handles.ax_overhead,pdfName);
 
-set(handles.figSaveText,'String',['Saved ' fName ' at ' datestr(now)]);
+[FileName,PathName,~] = uiputfile('*.pdf','Save overhead plot as ..',pdfName);
+
+if FileName ~= 0
+    userFileName = fullfile(PathName, FileName);
+    export_fig(handles.ax_overhead,userFileName);
+    set(handles.figSaveText,'String',['Saved ' FileName ' at ' datestr(now)]);
+end
+
 guidata(hObject, handles);
 
 % --- Executes on button press in saveVideo.
@@ -675,42 +686,48 @@ else
         writeFileName = fullfile(handles.dir_path, fName);
     end
 
-    set(handles.figSaveText,'String',['Saving ' fName ' at ' datestr(now)]);
+    [FileName,PathName,~] = uiputfile('*.mp4','Save video as ..',writeFileName);
 
-    writerObj = VideoWriter(writeFileName,'MPEG-4');
-    
-    writerObj.FrameRate = str2num(get(handles.vidFPS,'String'));
-    open(writerObj);
+    if FileName ~= 0
+        userFileName = fullfile(PathName, FileName);
 
-    frameCount = 0;
-    set(handles.ax_progBar,'Visible','on');
-    
-    for i = stepStart:stepStop
-        handles.sNo = i;
+        set(handles.figSaveText,'String',['Saving ' FileName ' at ' datestr(now)]);
 
-        FS_plotOverhead(handles)
-        FS_plotHeat(handles)
-        FS_plotFreqTrack(handles)
+        writerObj = VideoWriter(userFileName,'MPEG-4');
 
-        set(handles.stepNo,'String',num2str(i));
-        set(handles.timeText,'String',['Time: ' num2str(handles.fishTime(i)) 's of ' num2str(handles.fishTime(end)) 's']);
-        stepScale = (i-1)/handles.nSteps;
-        set(handles.stepSlider,'Value',stepScale);
+        writerObj.FrameRate = str2num(get(handles.vidFPS,'String'));
+        open(writerObj);
 
-        f = getframe(handles.ax_overhead);
-        writeVideo(writerObj,f);
-        
-        frameCount = frameCount + 1;
-        progPerc = frameCount/(stepStop-stepStart);
-        axes(handles.ax_progBar); cla
-        rectangle('Position',[0,0,progPerc,1],'EdgeColor','b','FaceColor','b')
-        xlim([0 1]); ylim([0 1]);
+        frameCount = 0;
+        set(handles.ax_progBar,'Visible','on');
+
+        for i = stepStart:stepStop
+            handles.sNo = i;
+
+            FS_plotOverhead(handles)
+            FS_plotHeat(handles)
+            FS_plotFreqTrack(handles)
+
+            set(handles.stepNo,'String',num2str(i));
+            set(handles.timeText,'String',['Time: ' num2str(handles.fishTime(i)) 's of ' num2str(handles.fishTime(end)) 's']);
+            stepScale = (i-1)/handles.nSteps;
+            set(handles.stepSlider,'Value',stepScale);
+
+            f = getframe(handles.ax_overhead);
+            writeVideo(writerObj,f);
+
+            frameCount = frameCount + 1;
+            progPerc = frameCount/(stepStop-stepStart);
+            axes(handles.ax_progBar); cla
+            rectangle('Position',[0,0,progPerc,1],'EdgeColor','b','FaceColor','b')
+            xlim([0 1]); ylim([0 1]);
+        end
+
+        close(writerObj);
+        cla
+        set(handles.ax_progBar,'Visible','off');
+        set(handles.figSaveText,'String',['Saved ' fName ' at ' datestr(now)]);
     end
-
-    close(writerObj);
-    cla
-    set(handles.ax_progBar,'Visible','off');
-    set(handles.figSaveText,'String',['Saved ' fName ' at ' datestr(now)]);
 end
 guidata(hObject, handles);
 
@@ -967,7 +984,7 @@ end
 lastFoldAddr = fullfile(fileparts(which('spatialTracking.m')),'lastFold');
 save(lastFoldAddr,'folder_name');
 
-exist lastFoldAddr var
+% exist lastFoldAddr var
 
 guidata(hObject, handles);
 
@@ -1023,3 +1040,27 @@ end
 FS_plotOverhead(handles)
 
 guidata(hObject, handles);
+
+
+% --- Executes when selected object is changed in uipanel19.
+function uipanel19_SelectionChangeFcn(hObject, eventdata, handles)
+% hObject    handle to the selected object in uipanel19 
+% eventdata  structure with the following fields (see UIBUTTONGROUP)
+%	EventName: string 'SelectionChanged' (read only)
+%	OldValue: handle of the previously selected object or empty if none was selected
+%	NewValue: handle of the currently selected object
+% handles    structure with handles and user data (see GUIDATA)
+handles.showNone        = get(handles.estNone,'Value');
+handles.showPosition    = get(handles.estPosition,'Value');
+handles.showAngle       = get(handles.estAngle,'Value');
+
+FS_plotOverhead(handles)
+
+guidata(hObject, handles);
+
+
+% --- Executes during object creation, after setting all properties.
+function saveFig_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to saveFig (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
