@@ -10,7 +10,7 @@ function z = FS_ObsvModel(X, gridcoord, tankcoord, motion)
 xD = gridcoord(:,1);
 yD = gridcoord(:,2);
 
-tankDepth = (tankcoord(2,1)-tankcoord(1,1))/20;
+% tankDepth = (tankcoord(2,1)-tankcoord(1,1))/20;
 
 N = length(xD);
         

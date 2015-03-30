@@ -31,8 +31,8 @@ function [particles,w] = FS_initParticles(Ns, nx, motion,tankCoord)
 
 
 % gen_x0 = @(rw,clmn) [normrnd(repmat(init_mean,1,clmn), repmat(init_u, 1, clmn), rw, clmn); ones(1,clmn)];  
- 
-tankDepth = (tankCoord(2,1)-tankCoord(1,1))/6;
+%  
+% tankDepth = (tankCoord(2,1)-tankCoord(1,1))/6;
 
 particles = zeros(nx,Ns);
 if strcmp(motion,'random')
