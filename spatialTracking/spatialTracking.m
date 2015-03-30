@@ -203,7 +203,7 @@ clipsname = [filename([1:end-11]),'_tubes',filename([end-3:end])];
 
 handles.motion = 'random';
 try
-    handles.elecTracked = open(fullfile(handles.dir_path, filesep,filename));
+    handles.elecTracked = open(fullfile(handles.dir_path,filename));
 catch ex
     errordlg(ex.getReport('basic'),'File Type Error','modal')
 end
@@ -211,13 +211,11 @@ end
 if get(handles.rawRadio,'Value')
     if ~get(handles.Wild,'Value') 
         try
-            handles.vidTracked = open(fullfile(handles.vdata_path, filesep,clipsname));
+            handles.vidTracked = open(fullfile(handles.vdata_path,clipsname));
         catch ex
             errordlg(ex.getReport('basic'),'File Type Error','modal')
         end
-    end
-
-    if ~get(handles.Wild,'Value')
+    
         handles.scaleFact   = 6;
 
         gridTemp            = (handles.vidTracked.gridcen-repmat(handles.vidTracked.gridcen(5,:),9,1))/handles.scaleFact;

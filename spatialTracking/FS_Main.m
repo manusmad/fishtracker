@@ -1,90 +1,60 @@
 function [handles, dataFileName] = FS_Main(nPart, nIter,handles)
-% clc;
 progressbar(0)
 
-dataType = 'tank';
 wildTag = get(handles.Wild,'Value');
-if get(handles.Wild,'Value')
+if wildTag
     dataType = 'wild';
+else
+    dataType = 'tank';
 end
 
-if ~strcmp(dataType, 'sim')
-    tankCoord = handles.tankCoord;
-    gridCoord = handles.gridCoord;
-end
+tankCoord = handles.tankCoord;
+gridCoord = handles.gridCoord;
+fishHist    = handles.elecTracked.tracks;
+fishID      = unique([fishHist.id]);
+nFish       = length(fishID);
+nCh         = size(fishHist(1).a1,1);
+fishTime    = sort(unique([fishHist.t]),'ascend');
+[~,sortIdx] = sort([fishHist.t],'ascend');
+fishHist    = fishHist(sortIdx);
 
-if strcmp(dataType,'sim')
-    tLength = 1001;
-    load x; 
-    trajList{1} = x(:,1:tLength);
-%     trajList{1}(1:2,:) = .8*(trajList{1}(1:2,:) - repmat([40;20],1,tLength));
-    clear x
-    load y; 
-    trajList{2} = y(:,1:tLength);
-    clear y
-    load z;
-    trajList{3} = z(:,1:tLength);
-    trajList{3}(1:2,:) = .8*(trajList{3}(1:2,:) - repmat([20;40],1,tLength));
-    clear z
-    
-    [xD,yD] = FS_testGridSim();
-    gridCoord = [xD yD];
-    tankCoord = [-80 80; 80 80; 80 -80; -80 -80; -80 80];
-    motion = 'random';   
-    fishID = 1;
-    for idLoop = 1:1
-        for time = 1:tLength
-            X = trajList{fishID}(:,time);
-            fishcen(time,:,idLoop) = X(1:2);
-            fishTheta(time,idLoop) = X(3);
-            fishHist{time}(idLoop).id = idLoop;
-            fishHist{time}(idLoop).a1 = FS_AmpSimGen(X,motion,gridCoord,zDist);
-%             fishHist{time}(idLoop).a1 = nan(9,1);
-            fishHist{time}(idLoop).p1 = zeros(9,1);
-        end
-    end
-    totalTime = 500;
-    fishTime = 0:totalTime/(tLength-1):totalTime;
-            nFish = 1;
-        if nFish > 0
-            fish1 = idFish(fishHist,1);
-            nCh = size([fish1.a1],1);
-        end
-end
-  
-dataFormat = 'old';
-
-dataFormat = 'new';
-if strcmp(dataFormat,'old')
-    fishHist    = handles.elecTracked.fish;
-    fishTime    = handles.elecTracked.time; 
-
-    if ~isempty(fishHist(end))
-        fishHist = fishHist(1:end-1);
-        fishTime = fishTime(1:length(fishHist));
-    end
-
-    nFish = 0;
-    for t = 1:length(fishTime)
-        if ~isempty(fishHist{t})
-            nFish = max([nFish,fishHist{t}.id]);
-        end
-    end
-
-    if nFish > 0
-        fish1 = idFish(fishHist,1);
-        nCh = size([fish1.a1],1);
-    end
-
-elseif strcmp(dataFormat,'new')
-    fishHist    = handles.elecTracked.tracks;
-    fishID      = unique([fishHist.id]);
-    nFish       = length(fishID);
-    nCh         = size(fishHist(1).a1,1);
-    fishTime    = sort(unique([fishHist.t]),'ascend');
-    [~,sortIdx] = sort([fishHist.t],'ascend');
-    fishHist    = fishHist(sortIdx);
-end
+%% FOR TESTING ONLY
+% tLength = 1001;
+% load x; 
+% trajList{1} = x(:,1:tLength);
+% %     trajList{1}(1:2,:) = .8*(trajList{1}(1:2,:) - repmat([40;20],1,tLength));
+% clear x
+% load y; 
+% trajList{2} = y(:,1:tLength);
+% clear y
+% load z;
+% trajList{3} = z(:,1:tLength);
+% trajList{3}(1:2,:) = .8*(trajList{3}(1:2,:) - repmat([20;40],1,tLength));
+% clear z
+% 
+% [xD,yD] = FS_testGridSim();
+% gridCoord = [xD yD];
+% tankCoord = [-80 80; 80 80; 80 -80; -80 -80; -80 80];
+% motion = 'random';   
+% fishID = 1;
+% for idLoop = 1:1
+%     for time = 1:tLength
+%         X = trajList{fishID}(:,time);
+%         fishcen(time,:,idLoop) = X(1:2);
+%         fishTheta(time,idLoop) = X(3);
+%         fishHist{time}(idLoop).id = idLoop;
+%         fishHist{time}(idLoop).a1 = FS_AmpSimGen(X,motion,gridCoord,zDist);
+% %             fishHist{time}(idLoop).a1 = nan(9,1);
+%         fishHist{time}(idLoop).p1 = zeros(9,1);
+%     end
+% end
+% totalTime = 500;
+% fishTime = 0:totalTime/(tLength-1):totalTime;
+% nFish = 1;
+% if nFish > 0
+%     fish1 = idFish(fishHist,1);
+%     nCh = size([fish1.a1],1);
+% end
 
 %% Particle filter
 tInt  = mean(diff(fishTime));
@@ -107,65 +77,44 @@ xWeight  = zeros(nFish,nTime,nPart);
 xIdxDesc = zeros(nFish,nTime,nPart);
 xFishIter = zeros(nFish,nIter,nTime,nx);
 
-angThresh   = 0;
+angThresh = 0;
 
 for id = 1:nFish
-    display(strcat('Fish ', num2str(id),' of ',num2str(nFish)));
-    
-    if strcmp(dataFormat,'new')
-        
-        p1 = [fishHist(find([fishHist.id] == fishID(id))).p1];
-        for i = 1:size(p1,2)
-            if sum(isnan(p1(:,i))) >= (nCh - 4) 
-                p2(:,i) = p1(:,i);               
-                continue
-            end
-            
-            nanMat          = find(isnan(p1(:,i)));
-            p1Nan           = p1(nanMat,i);
-            defMat          = find(~isnan(p1(:,i)));
-            p1Def           = p1(defMat,i);
+    display(sprintf('\nFish %d of %d',id,nFish));
+         
+    p1 = [fishHist([fishHist.id] == fishID(id)).p1];
+    for i = 1:nTime
+        p2 = p1(:,i);
+        if sum(isnan(p1(:,i))) < (nCh - 4)                           
+            nanVec          = isnan(p1(:,i));
+            p1Def           = p1(~nanVec,i);
             clustVec        = circ_clust(p1Def',2);
-            
+
             c1Idx       = find(clustVec==1);
-            c1          = p1Def(find(clustVec==1));
+            c1          = p1Def(c1Idx);
             c1Med       = circ_median(c1);
 
             c2Idx       = find(clustVec==2);
-            c2          = p1Def(find(clustVec==2));
+            c2          = p1Def(c2Idx);
             c2Med       = circ_median(c2);
-%             rad2deg(circ_dist(c1Med,c2Med))
+
+            p2 = zeros(nCh,1);
             if abs(rad2deg(circ_dist(c1Med,c2Med))) >= angThresh
                 p1Def(c1Idx) = 0;
                 p1Def(c2Idx) = pi;
-                
-                p2(defMat,i) = p1Def;
-                p2(nanMat,i) = p1Nan;
             else
                 p1Def(:)     = 0;
-                p2(defMat,i) = p1Def;
-                p2(nanMat,i) = p1Nan;
             end
-            
-        end
-%         amp = ([fishHist(find([fishHist.id] == fishID(id))).a1]).*sign(cos(p1));
-%         amp = ([fishHist(find([fishHist.id] == id)).a1]).*p1;
-            col = distinguishable_colors(9);
-
-            
-            a = ([fishHist(find([fishHist.id] == fishID(id))).a1]);
-        amp = ([fishHist(find([fishHist.id] == fishID(id))).a1]).*sign(cos(p2));
-        freqCell{id} = [[fishHist(find([fishHist.id] == fishID(id))).t]' ... 
-            [fishHist(find([fishHist.id] == fishID(id))).f1]']; 
-        clear p2 p1
-    elseif strcmp(dataFormat,'old')
-        fish = idFish(fishHist,id);
-        
-        a = [fish.a1];
-        col = distinguishable_colors(9);
-        amp = [fish.a1].*sign(cos([fish.p1]));
+            p2(~nanVec) = p1Def;
+            p2(nanVec) = NaN;
+        end 
+        p1(:,i) = p2;            
     end
 
+    amp = ([fishHist([fishHist.id] == fishID(id)).a1]).*sign(cos(p1));
+    freqCell{id} = [[fishHist([fishHist.id] == fishID(id)).t]' ... 
+    [fishHist([fishHist.id] == fishID(id)).f1]']; 
+    
     % Make maximum amplitude positive
     [~,Midx] = max(abs(amp));
     for c = 1:size(amp,2)
@@ -195,19 +144,13 @@ for id = 1:nFish
         end
     elseif strcmp(handles.motion,'random')
         for iterLoop = 1:nIter
-          
-            display(['Iteration: ' num2str(iterLoop) ' of ' num2str(nIter)]);
+            display(sprintf('\nIteration %d of %d',iterLoop,nIter));
             for t = 1:nTime 
                 progressbar(((id-1)*nIter*nTime + (iterLoop-1)*nTime + t)/(1.1*nFish*nIter*nTime))
                 for genLoop = 1:nGen
-                    % Particle filter 
-                    if ~strcmp(dataType, 'sim')
-                        [pf.x, xh, pf.w, pf.idxDesc,yk,ahk] = FS_filter(pf, sys, amp(:,t),...
-                            handles.motion, handles.gridCoord(:,:), handles.tankCoord, tInt);
-                    else
-                        [pf.x, xh, pf.w, pf.idxDesc,yk,ahk] = FS_filter(pf, sys, amp(:,t),...
-                            handles.motion, gridCoord, tankCoord, tInt);
-                    end
+                    % Particle filter                     
+                    [pf.x, xh, pf.w, pf.idxDesc,yk,ahk] = FS_filter(pf, sys, amp(:,t),...
+                        handles.motion, gridCoord, tankCoord, tInt);
                 end
                 xAmp(id,t,:,:)  = [normc(yk) normc(ahk')];
                 xPart(id,t,:,:) = squeeze(pf.x)';

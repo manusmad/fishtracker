@@ -1,6 +1,5 @@
 function [xk, xhk, wk,idxDesc,yk,ahk] = FS_filter(pf, sys, gAmp, motion, gridcoord, tankcoord, tInt)
-[~,minElecIdx] = min(abs(gAmp));
-yk = gAmp - gAmp(minElecIdx);
+yk = gAmp - min(gAmp);
 [nx,Ns] = size(pf.x(1:(end-1),:));  
 resample_percentaje = 0.5;
 

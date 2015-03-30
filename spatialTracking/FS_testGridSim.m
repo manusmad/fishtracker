@@ -1,7 +1,6 @@
 function [xD,yD] = FS_testGridSim(wild)
 
 if ~wild
-    %% Tank Electrode
     dD = 30;
     [yD,xD] = meshgrid(dD:-dD:-dD,-dD:dD:dD);
     % xD = xD';
