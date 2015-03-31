@@ -1,7 +1,6 @@
 function [xk, xhk, wk,idxDesc,yk,ahk] = FS_filter(pf, sys, gAmp, motion, gridcoord, tankcoord, tInt)
 yk = gAmp - min(gAmp);
 [nx,Ns] = size(pf.x(1:(end-1),:));  
-resample_percentaje = 0.5;
 
 %% Separate memory
 xkm1 = pf.x; % extract particles from last iteration;
@@ -69,7 +68,14 @@ ahk = FS_ObsvModel(xhk, gridcoord, tankcoord, motion)';
 %% Resampling
 
 % % Calculate effective sample size: eq 48, Ref 1
-Neff = floor(1/sum(wk.^2));
+% resample_percentaje = 0.5;
+% Neff = floor(1/sum(wk.^2));
+Ns = length(wk);  % Ns = number of particles
+% Neff = floor(0.95*Ns); % Static
+% Neff = floor(0.95*Ns); % Moving 40 - 0.95 %140625.95 .99
+resampled_ratio = 1;
+
+Neff = floor(resampled_ratio*Ns); % SIm
 %     if Neff < resample_percentaje*Ns;
 %        disp('Resampling ...')
        [xk, wk] = resample(xk, wk, xhk, nx, motion, tInt,tankcoord, Neff);
@@ -81,12 +87,8 @@ return; %
 
 %% Resampling function
 function [xk, wk] = resample(xk, wk, xhk, nx, motion, tInt,tankcoord, Neff)
-
 Ns = length(wk);  % Ns = number of particles
-
-% Neff = floor(0.95*Ns); % Static
-% Neff = floor(0.95*Ns); % Moving 40 - 0.95 %140625.95 .99
-Neff = floor(1*Ns); % SIm
+centered_ratio = 1;
 
 idx = randsample(1:Ns, Neff, 1, wk);
 xk  = xk(:,idx);    % extract new particles
@@ -95,14 +97,14 @@ xk(end,:) = xk(end,:) + 1;
 % wxk = repmat(mean(wk(idx,1)),Neff,1); 
 
 % centered_particles = floor(1*(Ns - Neff));    % Static
-centered_particles = floor(1*(Ns - Neff));    %0.9 & Moving 40 -1 %140625 - 0.99
+centered_particles = floor(centered_ratio*(Ns - Neff));    %0.9 & Moving 40 -1 %140625 - 0.99
 random_particles   = (Ns - Neff) - centered_particles;
 
 if strcmp(motion, 'uni')
     % Unicycle 
     %     xNew_centered = [(xhk(1,1)+ 5*randn(1,centered_particles)); (xhk(2,1)+ 5*randn(1,centered_particles)); wrapToPi(xhk(3,1)+ 1*randn(1,centered_particles));repmat(xhk(4:end,1), 1, centered_particles)] + FS_gen_sysv_noise(nx, centered_particles, motion);
 %     xNew_centered = [(xhk(1,1)+ 5*randn(1,centered_particles)); (xhk(2,1)+ 5*randn(1,centered_particles)); wrapToPi(xhk(3,1)+ 1*randn(1,centered_particles));xhk(4,1) + 0.1*randn(1,centered_particles); xhk(5,1) + 0.05*randn(1,centered_particles)];
-xNew_centered = [(xhk(1,1)+ 2.5*randn(1,centered_particles)); (xhk(2,1)+ 2.5*randn(1,centered_particles)); wrapToPi(xhk(3,1)+ 0.2*randn(1,centered_particles));xhk(4,1) + 0.1*randn(1,centered_particles); xhk(5,1) + 0.01*randn(1,centered_particles)];
+    xNew_centered = [(xhk(1,1)+ 2.5*randn(1,centered_particles)); (xhk(2,1)+ 2.5*randn(1,centered_particles)); wrapToPi(xhk(3,1)+ 0.2*randn(1,centered_particles));xhk(4,1) + 0.1*randn(1,centered_particles); xhk(5,1) + 0.01*randn(1,centered_particles)];
     %     xNew_centered = repmat(xhk, 1, centered_particles) + repmat(wMatrix, 1, centered_particles).*FS_gen_sysv_noise(nx, centered_particles, motion, tInt);
 elseif strcmp(motion, 'random')
     % Random

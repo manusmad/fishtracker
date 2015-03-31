@@ -165,7 +165,7 @@ for id = 1:nFish
 end
 
 %% Save all data
-if get(handles.Wild,'Value')
+if wildTag
 %     [~,dataFileName,~] = fileparts(handles.elecFile);
 %     dataFileName = fullfile(handles.dir_path,[dataFileName '_temp.mat']);
     dataFileName = fullfile(handles.dir_path,'temp.mat');
@@ -292,12 +292,14 @@ else
         end
         
         if ndims(vidParams.tubecen) == 2
-                xError = vidParams.tubecen(find(~isempty(vidParams.tubecen(:,1))),1)' - squeeze(xMean(fID, find(~isnan(vidParams.tubecen(:,1))),:));
-                yError = vidParams.tubecen(find(~isnan(vidParams.tubecen(:,1))),2)' - squeeze(yMean(fID, find(~isnan(vidParams.tubecen(:,1))),:));
+                notNan = ~isnan(vidParams.tubecen(:,1));
+
+                xError = vidParams.tubecen(notNan,1)' - squeeze(xMean(fID, notNan,:));
+                yError = vidParams.tubecen(notNan,2)' - squeeze(yMean(fID, notNan,:));
     %             thError = vidParams.tubecen( find(~isnan(vidParams.fishTheta(:,1))),2)' - squeeze(yMean(fID, find(~isnan(vidParams.tubecen(:,1))),:));
 
-                dCenElec = abs((vidParams.tubecen( find(~isnan(vidParams.tubecen(:,1))),1)' - vidParams.gridcen(5,1)) ...
-                              +1i*(vidParams.tubecen( find(~isnan(vidParams.tubecen(:,1))),2)' - vidParams.gridcen(5,2)));
+                dCenElec = abs((vidParams.tubecen(notNan,1)' - vidParams.gridcen(5,1)) ...
+                              +1i*(vidParams.tubecen(notNan,2)' - vidParams.gridcen(5,2)));
 
                 xMSE = mean(xError.^2)/length(timeIdx);
                 yMSE = mean(yError.^2)/length(timeIdx);
@@ -305,43 +307,18 @@ else
         elseif ndims(vidParams.tubecen) == 3
             dCenElec = [];
             for fVidID = 1:size(vidParams.tubecen,3)
-                
-                xError = vidParams.tubecen( find(~isnan(vidParams.tubecen(:,1,fVidID))),1,fVidID)' - squeeze(xMean(fID, find(~isnan(vidParams.tubecen(:,1,fVidID))),:));
-                yError = vidParams.tubecen( find(~isnan(vidParams.tubecen(:,1,fVidID))),2,fVidID)' - squeeze(yMean(fID, find(~isnan(vidParams.tubecen(:,1,fVidID))),:));
+                notNan = ~isnan(vidParams.tubecen(:,1,fVidID));
+
+                xError = vidParams.tubecen(notNan,1,fVidID)' - squeeze(xMean(fID,notNan,:));
+                yError = vidParams.tubecen(notNan,2,fVidID)' - squeeze(yMean(fID,notNan,:));
     %             thError = vidParams.tubecen( find(~isnan(vidParams.fishTheta(:,1))),2)' - squeeze(yMean(fID, find(~isnan(vidParams.tubecen(:,1))),:));
 
-                xMSE(fVidID) = mean((vidParams.tubecen( find(~isnan(vidParams.tubecen(:,1,fVidID))),1,fVidID)' - squeeze(xMean(fID, find(~isnan(vidParams.tubecen(:,1,fVidID))),:))).^2)/length(timeIdx);
-                yMSE(fVidID) = mean((vidParams.tubecen( find(~isnan(vidParams.tubecen(:,1,fVidID))),2,fVidID)' - squeeze(yMean(fID, find(~isnan(vidParams.tubecen(:,1,fVidID))),:))).^2)/length(timeIdx);
+                xMSE(fVidID) = mean((vidParams.tubecen(notNan,1,fVidID)' - squeeze(xMean(fID,notNan,:))).^2)/length(timeIdx);
+                yMSE(fVidID) = mean((vidParams.tubecen(notNan,2,fVidID)' - squeeze(yMean(fID,notNan,:))).^2)/length(timeIdx);
             end
         end
     end
-
-    %%
-
     save(dataFileName,'xError','yError','dCenElec', 'xMSE', 'yMSE','rConv','xMean', 'xStd', 'yMean', 'yStd','thMean', 'thStd', 'ampMean', 'xPart', 'xFishIter','xFish', 'xAmp', 'xWeight', 'xIdxDesc', 'fishHist','fishTime','vidParams','wildTag','tankCoord','gridCoord','ampActNormed','dataType','ampAll','nFish','freqCell','timeIdx','-v7.3');
-%     FS_plotOverhead(handles,type, handles.gridCoord, handles.tankCoord, xMean, yMean, thMean,nFish, vidParams)
-%%
-%{
-colMat = distinguishable_colors(nFish);
-repeat = 1;
-while(repeat)
-    prompt = 'Record? 1)Yes 0)No ';
-    recording = input(prompt);
-
-    FS_vidGen(dataFileName,recording,0,colMat);
-%     FS_simPlot(dataFileName,recording,1);
-
-
-    prompt = 'Repeat? 1)Yes 0)No ';
-    repeat = input(prompt);
-end
-%}
-% if strcmp(handles.trialType,'Free')
-%     
-% elseif strcmp(handles.trialType,'Static')
-%     FS_statGen(handles, xPart, xFish, fishTime,ampFish, handles.gridCoord);
-% end
-
 
 end
 progressbar(1)
