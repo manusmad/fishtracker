@@ -203,8 +203,7 @@ index_selected      = get(handles.elecFiles,'Value');
 file_list           = get(handles.elecFiles,'String');
 filename            = file_list{index_selected};
 handles.elecFile    = filename;
-clipsname = [filename([1:end-11]),'_tubes',filename([end-3:end])];
-
+clipsname           = [filename([1:end-11]),'_tubes',filename([end-3:end])];
 handles.motion = 'random';
 try
     handles.elecTracked = open(fullfile(handles.dir_path,filename));
@@ -215,7 +214,7 @@ end
 if get(handles.rawRadio,'Value')
     if ~get(handles.Wild,'Value') 
         try
-            handles.vidTracked = open(fullfile(handles.vdata_path,clipsname));
+            handles.vidTracked = open(fullfile(handles.dir_path(1:end-6),'clips',clipsname));
         catch ex
             errordlg(ex.getReport('basic'),'File Type Error','modal')
         end
@@ -226,11 +225,15 @@ if get(handles.rawRadio,'Value')
         handles.gridCoord   = [gridTemp(:,1) -gridTemp(:,2)];
         tankTemp            = (handles.vidTracked.tankcen-repmat(handles.vidTracked.gridcen(5,:),4,1))/handles.scaleFact;
         handles.tankCoord   = [tankTemp(1:2,:);tankTemp(4:-1:3,:);tankTemp(1,:)];
+        set(handles.limMax,'Enable','off');
+        set(handles.limManual,'Enable','off');
     else
         [xD,yD]             = FS_testGridSim(get(handles.Wild,'Value'));
         handles.gridCoord   = [xD yD];
         bndry               = 200;
         handles.tankCoord   = [-bndry -bndry;bndry -bndry;bndry bndry;-bndry bndry;-bndry -bndry];
+        set(handles.limMax,'Enable','on');
+        set(handles.limManual,'Enable','on');
     end
 
     [handles, dataFileName] = FS_Main(particles,numIter, handles);
@@ -338,18 +341,32 @@ end
 
 if get(handles.limDefault,'Value')
     if get(handles.Wild,'Value')
-        handles.bndry = 200;
+        handles.bndryX = [-200 200];
+        handles.bndryY = [-200 200];
+    elseif get(handles.Tank,'Value')
+        handles.bndryX = [vidParams.tankcen(1,1) vidParams.tankcen(2,1)];
+        handles.bndryY = [vidParams.tankcen(1,2) vidParams.tankcen(4,2)];
     else
-        handles.bndry = 80;
+        handles.bndryX = [-80 80];
+        handles.bndryY = [-80 80];
     end
 elseif get(handles.limMax,'Value')
-        handles.bndry = max([max(max(abs(xMean))) max(max(abs(yMean)))]);
+        maxLim = max([max(max(abs(handles.xMean))) max(max(abs(handles.yMean)))]);
+        handles.bndryX = [-maxLim maxLim];
+        handles.bndryY = [-maxLim maxLim];
 elseif get(handles.limManual,'Value')
     handles.limScale = get(handles.limEdit,'Value');
     if get(handles.Wild,'Value')
-        handles.bndry = handles.limScale*200;
+        handles.bndryX = handles.limScale*[-200 200];
+        handles.bndryY = handles.limScale*[-200 200];
+    elseif get(handles.Tank,'Value')
+        xPxl = handles.limScale*abs(vidParams.tankcen(1,1)-vidParams.tankcen(2,1));
+        yPxl = handles.limScale*abs(vidParams.tankcen(1,2)-vidParams.tankcen(4,2));
+        handles.bndryX = [vidParams.tankcen(1,1)-xPxl vidParams.tankcen(2,1)+xPxl];
+        handles.bndryY = [vidParams.tankcen(1,2)-yPxl vidParams.tankcen(4,2)+yPxl];
     else
-        handles.bndry = handles.limScale*80;
+        handles.bndryX = handles.limScale*[-80 80];
+        handles.bndryY = handles.limScale*[-80 80];
     end
 end
 
@@ -961,9 +978,14 @@ function data_path_KeyPressFcn(hObject, eventdata, handles)
 %	Character: character interpretation of the key(s) that was pressed
 %	Modifier: name(s) of the modifier key(s) (i.e., control, shift) pressed
 % handles    structure with handles and user data (see GUIDATA)
-folder_name = uigetdir;
-set(handles.data_path,'String',folder_name);
-set(handles.data_path,'ToolTipString',['Dataset Directory: ' folder_name]);
+handles.dir_path  = get(handles.data_path, 'String');
+folder_name = uigetdir(handles.dir_path,'Select dataset folder ...');
+if folder_name ~= 0
+    set(handles.data_path,'String',folder_name);
+    set(handles.data_path,'ToolTipString',['Dataset Directory: ' folder_name]);
+    lastFoldAddr = fullfile(fileparts(which('spatialTracking.m')),'lastFold');
+    save(lastFoldAddr,'folder_name');
+end
 
 guidata(hObject, handles);
 
@@ -973,14 +995,14 @@ function selDir_Callback(hObject, eventdata, handles)
 % hObject    handle to selDir (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-folder_name = uigetdir;
+handles.dir_path  = get(handles.data_path, 'String');
+folder_name = uigetdir(handles.dir_path,'Select dataset folder ...');
 if folder_name ~= 0
     set(handles.data_path,'String',folder_name);
     set(handles.data_path,'ToolTipString',['Dataset Directory: ' folder_name]);
+    lastFoldAddr = fullfile(fileparts(which('spatialTracking.m')),'lastFold');
+    save(lastFoldAddr,'folder_name');
 end
-
-lastFoldAddr = fullfile(fileparts(which('spatialTracking.m')),'lastFold');
-save(lastFoldAddr,'folder_name');
 
 % exist lastFoldAddr var
 
@@ -1018,20 +1040,35 @@ function uipanel17_SelectionChangeFcn(hObject, eventdata, handles)
 %	OldValue: handle of the previously selected object or empty if none was selected
 %	NewValue: handle of the currently selected object
 % handles    structure with handles and user data (see GUIDATA)
+
 if get(handles.limDefault,'Value')
     if get(handles.Wild,'Value')
-        handles.bndry = 200;
+        handles.bndryX = [-200 200];
+        handles.bndryY = [-200 200];
+    elseif get(handles.Tank,'Value')
+        handles.bndryX = [handles.vidParams.tankcen(1,1) handles.vidParams.tankcen(2,1)];
+        handles.bndryY = [handles.vidParams.tankcen(1,2) handles.vidParams.tankcen(4,2)];
     else
-        handles.bndry = 80;
+        handles.bndryX = [-80 80];
+        handles.bndryY = [-80 80];
     end
 elseif get(handles.limMax,'Value')
-        handles.bndry = max([max(max(abs(handles.xMean))) max(max(abs(handles.yMean)))]);
+        maxLim = max([max(max(abs(handles.xMean))) max(max(abs(handles.yMean)))]);
+        handles.bndryX = [-maxLim maxLim];
+        handles.bndryY = [-maxLim maxLim];
 elseif get(handles.limManual,'Value')
-    handles.limScale = str2double(get(handles.limEdit,'String'));
+    handles.limScale = get(handles.limEdit,'Value');
     if get(handles.Wild,'Value')
-        handles.bndry = handles.limScale*200;
+        handles.bndryX = handles.limScale*[-200 200];
+        handles.bndryY = handles.limScale*[-200 200];
+    elseif get(handles.Tank,'Value')
+        xPxl = handles.limScale*abs(handles.vidParams.tankcen(1,1)-handles.vidParams.tankcen(2,1));
+        yPxl = handles.limScale*abs(handles.vidParams.tankcen(1,2)-handles.vidParams.tankcen(4,2));
+        handles.bndryX = [handles.vidParams.tankcen(1,1)-xPxl handles.vidParams.tankcen(2,1)+xPxl];
+        handles.bndryY = [handles.vidParams.tankcen(1,2)-yPxl handles.vidParams.tankcen(4,2)+yPxl];
     else
-        handles.bndry = handles.limScale*80;
+        handles.bndryX = handles.limScale*[-80 80];
+        handles.bndryY = handles.limScale*[-80 80];
     end
 end
 

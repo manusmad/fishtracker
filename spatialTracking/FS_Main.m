@@ -1,5 +1,6 @@
 function [handles, dataFileName] = FS_Main(nPart, nIter,handles)
 progressbar(0)
+% parpool;
 
 wildTag = get(handles.Wild,'Value');
 if wildTag
@@ -8,8 +9,8 @@ else
     dataType = 'tank';
 end
 
-tankCoord = handles.tankCoord;
-gridCoord = handles.gridCoord;
+tankCoord   = handles.tankCoord;
+gridCoord   = handles.gridCoord;
 fishHist    = handles.elecTracked.tracks;
 fishID      = unique([fishHist.id]);
 nFish       = length(fishID);
@@ -57,6 +58,8 @@ fishHist    = fishHist(sortIdx);
 % end
 
 %% Particle filter
+
+
 tInt  = mean(diff(fishTime));
 nTime = length(fishTime);
 [nx,sys] = FS_processEq(handles.motion);
@@ -78,11 +81,13 @@ xIdxDesc = zeros(nFish,nTime,nPart);
 xFishIter = zeros(nFish,nIter,nTime,nx);
 
 angThresh = 0;
+motionUni = strcmp(handles.motion,'uni');
+motionRandom = strcmp(handles.motion,'random');
 
 for id = 1:nFish
     display(sprintf('\nFish %d of %d',id,nFish));
          
-    p1 = [fishHist([fishHist.id] == fishID(id)).p1];
+    p1 = [fishHist(find([fishHist.id] == fishID(id))).p1];
     for i = 1:nTime
         p2 = p1(:,i);
         if sum(isnan(p1(:,i))) < (nCh - 4)                           
@@ -123,47 +128,50 @@ for id = 1:nFish
         end
     end
     
-    % Initialize pf structure
-    [pf.x ,pf.w] = FS_initParticles(nPart, nx+1, handles.motion, tankCoord);
-    if strcmp(handles.motion,'uni') 
-        for t = 1:nLoops 
-            display(strcat(num2str(t),'/',num2str(nLoops)));
-            t1 = cycleMat(t);
-
-            % Particle filter    
-            [pf.x, xh, pf.w] = FS_filter(pf, sys, amp(handles.elecTrunc,t1),...
-                handles.motion, handles.gridCoord(:,:), handles.tankCoord, tInt);
-    %         [xh,~]=FS_Optim(xP,amp(handles.elecTrunc,t1),handles.gridCoord);
-
-            xPart(id,t1,:,:) = squeeze(pf.x)';
-            xFish(id,t1,:) = xh';
-
-            if strcmp(handles.motion, 'uni') && (t == fL || t == rL)
-                pf.x(4:5,:) = -pf.x(4:5,:);
-            end
-        end
-    elseif strcmp(handles.motion,'random')
+    % Initialize pf(id) structure
+    [pf(id).x ,pf(id).w] = FS_initParticles(nPart, nx+1, handles.motion, tankCoord);
+    
+%     if motionUni
+%         for t = 1:nLoops 
+%             display(strcat(num2str(t),'/',num2str(nLoops)));
+%             t1 = cycleMat(t);
+% 
+%             % Particle filter    
+%             [pf(id).x, xh, pf(id).w] = FS_filter(pf(id), sys, amp(handles.elecTrunc,t1),...
+%                 handles.motion, handles.gridCoord(:,:), handles.tankCoord, tInt);
+%     %         [xh,~]=FS_Optim(xP,amp(handles.elecTrunc,t1),handles.gridCoord);
+% 
+% %             xPart(id,t1,:,:) = squeeze(pf(id).x)';
+% %             xFish(id,t1,:) = xh';
+% 
+%             if strcmp(handles.motion, 'uni') && (t == fL || t == rL)
+%                 pf(id).x(4:5,:) = -pf(id).x(4:5,:);
+%             end
+%         end
+%     else
+        if motionRandom
         for iterLoop = 1:nIter
             display(sprintf('\nIteration %d of %d',iterLoop,nIter));
             for t = 1:nTime 
                 progressbar(((id-1)*nIter*nTime + (iterLoop-1)*nTime + t)/(1.1*nFish*nIter*nTime))
                 for genLoop = 1:nGen
                     % Particle filter                     
-                    [pf.x, xh, pf.w, pf.idxDesc,yk,ahk] = FS_filter(pf, sys, amp(:,t),...
+                    [pf(id).x, xh, pf(id).w, pf(id).idxDesc,yk,ahk] = FS_filter(pf(id), sys, amp(:,t),...
                         handles.motion, gridCoord, tankCoord, tInt);
                 end
-                xAmp(id,t,:,:)  = [normc(yk) normc(ahk')];
-                xPart(id,t,:,:) = squeeze(pf.x)';
-                xWeight(id,t,:) = squeeze(pf.w)';
-                xIdxDesc(id,t,:)= squeeze(pf.idxDesc)';
-                xFish(id,t,:)   = xh';
+%                 xAmp(id,t,:,:)  = [normc(yk) normc(ahk')];
+                xPart(id,t,:,:) = squeeze(pf(id).x)';
+                xWeight(id,t,:) = squeeze(pf(id).w)';
+%                 xIdxDesc(id,t,:)= squeeze(pf(id).idxDesc)';
+%                 xFish(id,t,:)   = 
+                xFishIter(id,iterLoop,t,:) = xh';
             end
-            xFishIter(id,iterLoop,:,:) = xFish(id,:,:);
+%             xFishIter(id,iterLoop,:,:) = xFish(id;
         end
     end
     ampAll(id,:,:) = amp;
 end
-
+% matlabpool('close');
 %% Save all data
 if wildTag
 %     [~,dataFileName,~] = fileparts(handles.elecFile);
@@ -174,25 +182,26 @@ if wildTag
     for fID = 1:nFish
         for i = 1:nTime
            xMean(fID,i,1) = squeeze(mean(xFishIter(fID,:,i,1)));
-           xStd(fID,i,1)  = squeeze(std(xFishIter(fID,:,i,1)));
+%            xStd(fID,i,1)  = squeeze(std(xFishIter(fID,:,i,1)));
 
            yMean(fID,i,1) = squeeze(mean(xFishIter(fID,:,i,2)));
-           yStd(fID,i,1)  = squeeze(std(xFishIter(fID,:,i,2)));
+%            yStd(fID,i,1)  = squeeze(std(xFishIter(fID,:,i,2)));
 
            thMean(fID,i,1) = circ_mean(squeeze(xFishIter(fID,:,i,3))');
-           thStd(fID,i,1)  = circ_std(squeeze(xFishIter(fID,:,i,3))');
+%            thStd(fID,i,1)  = circ_std(squeeze(xFishIter(fID,:,i,3))');
            
-           ampMean(fID,i,:) = FS_ObsvModel(squeeze([xMean(fID,i,1);yMean(fID,i,1);thMean(fID,i,1)]), gridCoord, tankCoord, handles.motion)';
+%            ampMean(fID,i,:) = FS_ObsvModel(squeeze([xMean(fID,i,1);yMean(fID,i,1);thMean(fID,i,1)]), gridCoord, tankCoord, handles.motion)';
 
-           x = squeeze(xPart(1,i,xIdxDesc(fID,i,1:cHullPart),1));
-           y = squeeze(xPart(1,i,xIdxDesc(fID,i,1:cHullPart),2));
+%            x = squeeze(xPart(1,i,xIdxDesc(fID,i,1:cHullPart),1));
+%            y = squeeze(xPart(1,i,xIdxDesc(fID,i,1:cHullPart),2));
 
-           [~,V]  = convhull(x,y);
-           rConv(fID,i) = sqrt(V/pi);
+%            [~,V]  = convhull(x,y);
+%            rConv(fID,i) = sqrt(V/pi);
         end
     end
     
-    save(dataFileName,'rConv','xMean', 'xStd', 'yMean', 'yStd','thMean', 'thStd', 'ampMean','xPart', 'xFishIter','xFish', 'xAmp', 'xWeight', 'xIdxDesc', 'fishHist','fishTime','wildTag','tankCoord','gridCoord','dataType','nFish','ampAll','freqCell','-v7.3');   
+%     save(dataFileName,'rConv','xMean', 'xStd', 'yMean', 'yStd','thMean', 'thStd', 'ampMean','xPart', 'xFishIter','xFish', 'xAmp', 'xWeight', 'xIdxDesc', 'fishHist','fishTime','wildTag','tankCoord','gridCoord','dataType','nFish','ampAll','freqCell','-v7.3');   
+save(dataFileName,'xMean', 'yMean','thMean','xPart', 'xFishIter', 'xWeight','fishTime','wildTag','tankCoord','gridCoord','dataType','nFish','ampAll','freqCell','-v6');   
     
 elseif strcmp(dataType,'sim')   
     cHullPart = 200;

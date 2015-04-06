@@ -41,8 +41,8 @@ if strcmp(type,'wild')
         end
     end
 
-    xlim([-handles.bndry,handles.bndry]);
-    ylim([-handles.bndry,handles.bndry]);  
+%     xlim([-handles.bndry,handles.bndry]);
+%     ylim([-handles.bndry,handles.bndry]);  
     
     % set(gca,'YDir','reverse');
     %  axis off
@@ -64,8 +64,8 @@ elseif  strcmp(type,'sim')
         end
     end
 
-    xlim([-handles.bndry,handles.bndry]);
-    ylim([-handles.bndry,handles.bndry]);   
+%     xlim([-handles.bndry,handles.bndry]);
+%     ylim([-handles.bndry,handles.bndry]);   
     % set(gca,'YDir','reverse');
     %  axis off
 else
@@ -87,13 +87,13 @@ else
         end
     end
 %     xlim([vidParams.tankcen(1,1),vidParams.tankcen(2,1)]);
-%         ylim([vidParams.tankcen(1,2),vidParams.tankcen(4,2)]);    
-    xlim([-handles.bndry,handles.bndry]);
-    ylim([-handles.bndry,handles.bndry]); 
+%     ylim([vidParams.tankcen(1,2),vidParams.tankcen(4,2)]);    
+
     set(gca,'YDir','reverse');
     %  axis off
 end
- 
+xlim(handles.bndryX);
+ylim([handles.bndryY]);  
 set(gca,'xcolor','w','ycolor','w','xtick',[],'ytick',[])
 
 amp = zeros(1,size(squeeze(handles.ampAll(1,:,handles.sNo)),2));
