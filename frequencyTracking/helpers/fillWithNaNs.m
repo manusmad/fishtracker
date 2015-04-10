@@ -3,18 +3,30 @@
 %
 % Manu Madhav
 % 16-Jul-14
-function tracks = fillWithNaNs(tracks,T,nCh)
+function tracks = fillWithNaNs(tracks,T,chNum,chNumOrig)
+
+if isempty(chNum)
+    nCh = length(tracks(1).a1);
+    chNum = 1:nCh;
+else
+    nCh = length(chNum);
+end
+
+if isempty(chNumOrig)
+    chNumOrig = chNum;
+end
 
 [track0.t,track0.f1,track0.a1,track0.a2,track0.a3,...
         track0.p1,track0.p2,track0.p3,track0.id] = deal(NaN);
 track0.conf = -1000;
-if isempty(nCh)
-    nCh = length(tracks(1).a1);
-end
+    
 [track0.a1,track0.a2,track0.a3,track0.p1,track0.p2,track0.p3] = deal(NaN(nCh,1));
 track0 = computeComparisonVec(track0);
 
-%addpath('progressbar');
+% Modified from:
+% http://www.mathworks.com/matlabcentral/answers/48942-insert-element-in-vector
+insert = @(x, a, n)cat(1,  x(1:n-1), a, x(n:end));
+
 % If first argument is empty, return a tracks array with all NaN fields
 if isempty(tracks)
     tracks = repmat(track0,size(T));
@@ -30,10 +42,10 @@ else
     ids = unique([tracks.id]);
     nTracks = length(ids);
     
-    %progressbar('Filling empty data...');
+    progressbar('Filling empty data...');
     
     for j = 1:nTracks
-        %progressbar(j/nTracks);
+        progressbar(j/nTracks);
         idTrack = tracks([tracks.id] == ids(j));
         
         [~,memberIdx] = ismember([idTrack.t],T);
@@ -50,7 +62,18 @@ else
             newTrack.id = ids(j);
             tracks = [tracks newTrack];
         end
+    end    
+    
+    delCh = find(~ismember(chNumOrig,chNum));
+    % Fill in NaNs for deleted channels
+    for k = 1:length(tracks)
+        for d = delCh
+            tracks(k).a1 = insert(tracks(k).a1,NaN,d);
+            tracks(k).a2 = insert(tracks(k).a2,NaN,d);
+            tracks(k).a3 = insert(tracks(k).a3,NaN,d);
+            tracks(k).p1 = insert(tracks(k).p1,NaN,d);
+            tracks(k).p2 = insert(tracks(k).p2,NaN,d);
+            tracks(k).p3 = insert(tracks(k).p3,NaN,d);
+        end
     end
-end    
-%rmpath('progressbar');
-
+end
