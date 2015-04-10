@@ -14,7 +14,7 @@ end
 [track0.a1,track0.a2,track0.a3,track0.p1,track0.p2,track0.p3] = deal(NaN(nCh,1));
 track0 = computeComparisonVec(track0);
 
-addpath('progressbar');
+%addpath('progressbar');
 % If first argument is empty, return a tracks array with all NaN fields
 if isempty(tracks)
     tracks = repmat(track0,size(T));
@@ -30,10 +30,10 @@ else
     ids = unique([tracks.id]);
     nTracks = length(ids);
     
-    progressbar('Filling empty data...');
+    %progressbar('Filling empty data...');
     
     for j = 1:nTracks
-        progressbar(j/nTracks);
+        %progressbar(j/nTracks);
         idTrack = tracks([tracks.id] == ids(j));
         
         [~,memberIdx] = ismember([idTrack.t],T);
@@ -52,5 +52,5 @@ else
         end
     end
 end    
-rmpath('progressbar');
+%rmpath('progressbar');
 
