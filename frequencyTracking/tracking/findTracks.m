@@ -94,7 +94,9 @@ parfor tstep = 1:nT
             locs(elimIdx) = []; 
         end
     end
-    sigs{tstep} = tSigs;
+    if length(tSigs)~=1 || ~isempty(tSigs.t)
+        sigs{tstep} = tSigs;
+    end
     parfor_progress;
 end
 
@@ -170,7 +172,9 @@ parfor tstep = 1:nT
         fprintf('No signatures at time %2.2f\n',T(tstep));
     end   
     
-    cand{tstep} = tCand;
+    if length(tCand)~=1 || ~isempty(tCand.t)
+        cand{tstep} = tCand;
+    end
     parfor_progress;
 end
 
