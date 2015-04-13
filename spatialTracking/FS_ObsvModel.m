@@ -45,7 +45,7 @@ rmodel = @(th0,r0) cos(th0) ./ abs(r0);
 r2model = @(th0,r0) cos(th0) ./ abs(r0).^2;
 r3model = @(th0,r0) cos(th0) ./ abs(r0).^3;
 logrmodel = @(th0,r0) cos(th0) ./ log(abs(r0));  
-model = r2model;
+model = r07model;
 
 dipMul = 1;
 

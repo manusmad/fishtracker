@@ -73,7 +73,7 @@ ahk = FS_ObsvModel(xhk, gridcoord, tankcoord, motion)';
 Ns = length(wk);  % Ns = number of particles
 % Neff = floor(0.95*Ns); % Static
 % Neff = floor(0.95*Ns); % Moving 40 - 0.95 %140625.95 .99
-resampled_ratio = 1;
+resampled_ratio = 1 ;
 
 Neff = floor(resampled_ratio*Ns); % SIm
 %     if Neff < resample_percentaje*Ns;
@@ -88,7 +88,7 @@ return; %
 %% Resampling function
 function [xk, wk] = resample(xk, wk, xhk, nx, motion, tInt,tankcoord, Neff)
 Ns = length(wk);  % Ns = number of particles
-centered_ratio = 1;
+centered_ratio = 0.9;
 
 idx = randsample(1:Ns, Neff, 1, wk);
 xk  = xk(:,idx);    % extract new particles
@@ -149,8 +149,8 @@ xk      = [xk xNew_centered xNew_random];
 % wxk     = repmat(percNeff/Neff,Neff,1);
 % centPerc = 0.89;  % 0.89 Moving 40
 
-% percNeff = sum(wxk);
-% centPerc = (1-percNeff)/centered_particles;
+percNeff = sum(wxk);
+centPerc = (1-percNeff)/centered_particles;
 % 
 % wcentered = repmat(centPerc*(1-percNeff)/centered_particles,centered_particles,1);
 % wknew     = repmat((1-centPerc)*(1-percNeff)/random_particles,random_particles,1);

@@ -132,6 +132,9 @@ if handles.showTime == 1
 end
 
 if handles.showHull == 1
+    if strcmp(type,'tank')
+        stepNo      = handles.timeIdx(handles.sNo);
+    end
     wt_perc = 0.9;
     for i = 1:numFish
         fID = fishSelect(i);
@@ -142,7 +145,10 @@ if handles.showHull == 1
     end
 end
 
-if handles.showParticles == 1
+if handles.showParticles == 1   
+    if strcmp(type,'tank')
+        stepNo      = handles.timeIdx(handles.sNo);
+    end
     t= 0:pi/10:2*pi;
     for i = 1:numFish
         fID = fishSelect(i);

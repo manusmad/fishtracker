@@ -1,13 +1,20 @@
 function FS_plotHeat(handles)
 
+type        = handles.dataType;
 fishSelect  = handles.fishSelect; 
 numFish     = length(fishSelect);
 
-amp = zeros(1,size(squeeze(handles.ampAll(1,:,handles.sNo)),2));
+if strcmp(type,'tank')
+    stepNo      = handles.timeIdx(handles.sNo);
+else
+    stepNo      = handles.sNo;
+end
+
+amp = zeros(1,size(squeeze(handles.ampAll(1,:,stepNo)),2));
 for fID = 1:numFish
     i = fishSelect(fID);
-    if sum(isnan(squeeze(handles.ampAll(i,:,handles.sNo)))) < size(squeeze(handles.ampAll(1,:,handles.sNo)),2)
-       amp = amp + squeeze(handles.ampAll(i,:,handles.sNo));
+    if sum(isnan(squeeze(handles.ampAll(i,:,stepNo)))) < size(squeeze(handles.ampAll(1,:,stepNo)),2)
+       amp = amp + squeeze(handles.ampAll(i,:,stepNo));
     end   
 end
 
