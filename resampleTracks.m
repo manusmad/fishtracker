@@ -37,7 +37,6 @@ Ts_tracks = min(diff(t));
 idx = find(diff(t)>Ts_tracks*1.8);
 t = sort([t t(idx)+Ts_tracks]);
 
-
 newTrack = tracks(1);
 newTrack.t = [];
 newTrack.f1 = [];
@@ -45,7 +44,9 @@ newTrack.id = -1;
 newTrack.conf = -1000;
 addpath('packages/disperse')
 clf, hold on;
-for u = uId(1)
+for u = uId
+    newTrack.id = u;
+    
     % For each unique track
     uTrack = tracks([tracks.id]==u);
     plot([uTrack.t],[uTrack.f1],'.b');
@@ -53,31 +54,33 @@ for u = uId(1)
     % Sort by time
     [~,idx] = sort([uTrack.t]);
     uTrack = uTrack(idx);
-    
     % Find at which times tracks are missing
     [timeidx,trackidx] = ismember(t,[uTrack.t]);
     
     % When there is only one point missing, we can easily interpolate
     mididx = strfind(timeidx,[1 0 1]);
-    newTracks = repmat(newTrack,1,length(mididx));
-    [newTracks.t] = disperse(t(mididx+1));
-    [newTracks.f1] = disperse(mean([[uTrack(trackidx(mididx)).f1];[uTrack(trackidx(mididx)+1).f1]]));
-    uTrack = [uTrack newTracks];
-    plot([newTracks.t],[newTracks.f1],'*r');
-
+    if ~isempty(mididx)
+        newTracks = repmat(newTrack,1,length(mididx));
+        [newTracks.t] = disperse(t(mididx+1));
+        [newTracks.f1] = disperse(mean([[uTrack(trackidx(mididx)).f1];[uTrack(trackidx(mididx)+1).f1]]));
+        uTrack = [uTrack newTracks];
+        plot([newTracks.t],[newTracks.f1],'*r');
+    end
     
     % Sort and find again
     [~,idx] = sort([uTrack.t]);
     uTrack = uTrack(idx);
+    [timeidx,trackidx] = ismember(t,[uTrack.t]);
     
-
     % When there is an end, we can add one more point
     endidx = strfind(timeidx,[1 1 0]);   
-    newTracks = repmat(newTrack,1,length(endidx));
-    [newTracks.t] = disperse(t(endidx+2));
-    [newTracks.f1] = disperse(2*[uTrack(trackidx(endidx)+1).f1] - [uTrack(trackidx(endidx)).f1]);
-    uTrack = [uTrack newTracks];
-    plot([newTracks.t],[newTracks.f1],'*g');
+    if ~isempty(endidx)
+        newTracks = repmat(newTrack,1,length(endidx));
+        [newTracks.t] = disperse(t(endidx+2));
+        [newTracks.f1] = disperse(2*[uTrack(trackidx(endidx+1)).f1] - [uTrack(trackidx(endidx)).f1]);
+        uTrack = [uTrack newTracks];
+        plot([newTracks.t],[newTracks.f1],'*g');
+    end
     
     % Sort and find again
     [~,idx] = sort([uTrack.t]);
@@ -86,12 +89,19 @@ for u = uId(1)
     
     % Same for a beginning
     begidx = strfind(timeidx,[0 1 1]);   
-    newTracks = repmat(newTrack,1,length(begidx));
-    [newTracks.t] = disperse(t(begidx));
-    [newTracks.f1] = disperse(2*[uTrack(trackidx(begidx)+1).f1] - [uTrack(trackidx(begidx)+2).f1]);
-    uTrack = [uTrack newTracks];
-    plot([newTracks.t],[newTracks.f1],'*k');
+    if ~isempty(begidx)
+        newTracks = repmat(newTrack,1,length(begidx));
+        [newTracks.t] = disperse(t(begidx));
+        [newTracks.f1] = disperse(2*[uTrack(trackidx(begidx+1)).f1] - [uTrack(trackidx(begidx+2)).f1]);
+        uTrack = [uTrack newTracks];
+        plot([newTracks.t],[newTracks.f1],'*k');
+    end
+    
+    tracks = [tracks uTrack];
 end
 rmpath('packages/disperse')
 
 %% Window the data according to chosen frequency resolution and overlap
+
+% Window start points
+w1 = 1:nOverlap:size(elec.data,1);
