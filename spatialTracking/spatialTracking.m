@@ -291,7 +291,7 @@ handles.vidParams   = vidParams;
 if ~get(handles.Wild,'Value')
     handles.nSteps = vidParams.nFrames;
 else
-    handles.nSteps = length(fishTime);
+    handles.nSteps = length(fishTime)
     handles.timeIdx = 1:handles.nSteps;
 end
 

@@ -13,7 +13,7 @@ load(fullfile(elecFilePath,elecFileName),'elec');
 
 %% Params
 Tres_out = 0.05;
-Fres_out = 0.1;
+Fres_out = 0.25;
 
 [nT,nCh] = size(elec.data);
 Ts_in = diff(elec.t(1:2));
@@ -103,5 +103,32 @@ rmpath('packages/disperse')
 
 %% Window the data according to chosen frequency resolution and overlap
 
-% Window start points
-w1 = 1:nOverlap:size(elec.data,1);
+w1 = 1:nOverlap:size(elec.data,1);  % Window start points
+nFFT = length(0:Fres_out:Fs_in);
+wm = w1 + round(nFFT/2);            % Window middles
+
+
+% Resample the frequency trajectories
+for u = uId(1)
+    % For each unique track
+    uTrack = tracks([tracks.id]==u);
+    
+    % Sort by time
+    [~,idx] = sort([uTrack.t]);
+    uTrack = uTrack(idx);
+    
+    % Find at which times tracks are missing
+    [timeidx,trackidx] = ismember(t,[uTrack.t]);
+    begidx = strfind(timeidx,[0 1]);
+    endidx = strfind(timeidx,[1 0]);
+    
+    widx = [];
+    for k = 1:length(begidx)
+        [~,idx1] = min(abs(elec.t-t(begidx(k))));
+        [~,idx2] = min(abs(elec.t-t(endidx(k))));
+        widx = [widx idx1:nOverlap:idx2];
+        tResamp = elec.t(idx1+round(nFFT/2));
+        fResamp = interp1([uTrack(trackidx(begidx(k)+1:endidx(k))).t],...
+            [uTrack(trackidx(begidx(k)+1:endidx(k))).f1],tResamp);
+    end
+end
