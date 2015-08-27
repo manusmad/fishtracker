@@ -13,7 +13,7 @@ function handles = assignPoints(handles)
             selectedIdx = inpolygon([handles.tracks.t]',[handles.tracks.f1]',P(:,1),P(:,2));
            
             % Cannot have repeated times in the track being assigned to
-            repeatIdx = [handles.tracks.id]==assignId & ~selectedIdx' & ismember([handles.tracks.t],[handles.tracks(selectedIdx).t]);
+%             repeatIdx = [handles.tracks.id]==assignId & ~selectedIdx' & ismember([handles.tracks.t],[handles.tracks(selectedIdx).t]);
            
             % Cannot have repeated times in the selection
             selectedIdx = find(selectedIdx);
@@ -21,7 +21,7 @@ function handles = assignPoints(handles)
             selectedIdx = selectedIdx(uniqueIdx);
            
             [handles.tracks(selectedIdx).id] = deal(assignId);
-            handles.tracks(repeatIdx) = [];
+%             handles.tracks(repeatIdx) = [];
             
             handles = cleanTracks(handles);
             handles = populateTracksList(handles);

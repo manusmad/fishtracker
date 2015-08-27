@@ -20,3 +20,4 @@ function [handles,id1] = joinTracks(handles,id1,time1,id2,time2)
     
     handles.tracks(idx1).id = id1;
     handles.tracks(idx2).id = id1;
+    handles = populateTracksList(handles);

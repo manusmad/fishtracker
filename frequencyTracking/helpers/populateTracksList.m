@@ -1,5 +1,14 @@
 function handles = populateTracksList(handles)
     if isfield(handles,'tracks')
+        % If there are f1=NaN only arrays, eliminate them.
+        ids = unique([handles.tracks.id]);
+        for id = ids
+            idx = [handles.tracks.id]==id;
+            if ~any(~isnan([handles.tracks(idx).f1]))
+                handles.tracks(idx) = [];
+            end
+        end
+        
         ids = unique([handles.tracks.id]);
         handles.nTracks = length(ids);
         list = cell(handles.nTracks,1);
@@ -13,7 +22,7 @@ function handles = populateTracksList(handles)
         set(handles.tracksListBox,'ListboxTop',handles.nTracks);
         
         selTrack = get(handles.tracksListBox,'Value');
-        if selTrack>handles.nTracks
+        if any(selTrack>handles.nTracks)
             set(handles.tracksListBox,'Value',handles.nTracks);
         end
         

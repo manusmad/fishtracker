@@ -2,6 +2,7 @@ function handles = refreshPlot(handles)
     plotFlag = 0;
     % Clear selections
     if isfield(handles,'hPoly');
+        delete(handles.hPoly);
         handles = rmfield(handles,'hPoly');
     end
     

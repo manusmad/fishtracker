@@ -4,6 +4,7 @@ function [handles,del] = cleanTracks(handles)
     del = 0;
     for id = ids
         track = handles.tracks([handles.tracks.id]==id);
+        track = track(~isnan([track.f1]));
         lTrack = length(track);
    
         if lTrack<=10

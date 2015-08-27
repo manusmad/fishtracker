@@ -34,12 +34,12 @@ parfor tstep = 1:nT
         [pks,locs] = findpeaks(za(:,c),'SORTSTR','descend','MINPEAKHEIGHT',thresh/ratio12,'MINPEAKPROMINENCE',thresh/(ratio12*2));
         
         % Eliminate 60-cycle and harmonics
-        elimIdx = zeros(size(pks));
-        for k = 1:ceil(2000/60)
-            elimIdx = elimIdx | abs(F(locs)-60*k)<1;
-        end
-        pks(elimIdx) = [];
-        locs(elimIdx) = [];
+%         elimIdx = zeros(size(pks));
+%         for k = 1:ceil(2000/60)
+%             elimIdx = elimIdx | abs(F(locs)-60*k)<1;
+%         end
+%         pks(elimIdx) = [];
+%         locs(elimIdx) = [];
        
         % Sort by frequency
         [locs,idx] = sort(locs,'ascend');
@@ -106,6 +106,7 @@ parfor_progress(0);
 progressbar(1,[],[]);
 
 toc;
+
 %% Plot all signatures
 % figure,clf, hold on;
 % colormap('hot');
@@ -138,22 +139,13 @@ parfor tstep = 1:nT
     tSigs = sigs([sigs.t]==T(tstep));
 
     if ~isempty([tSigs.f1])
-        % Sort by frequency
-        [~,idx] = sort([tSigs.f1]);
-        tSigs = tSigs(idx);
+        uF1 = unique([tSigs.f1]);
         
-        % Find breaks in frequency and bin
-        binIdx = find(diff([tSigs.f1])>Fsep);
-        binIdx = [0 binIdx length(tSigs)];
-        nBins = length(binIdx)-1;
-        
-        for k = 1:nBins
-            binSigs = tSigs(binIdx(k)+1:binIdx(k+1));
-            
-            if unique([binSigs.ch]>0)
+        for k = 1:length(uF1)
+            if sum([tSigs.f1]==uF1(k))>2
                 nCand = nCand+1;
                 tCand(nCand).t = T(tstep);
-                tCand(nCand).f1 = mode([binSigs.f1]);
+                tCand(nCand).f1 = uF1(k);
 
                 [~,f1idx] = min(abs(F-tCand(nCand).f1));
                 [~,f2idx] = min(abs(F-tCand(nCand).f1*2));
@@ -210,10 +202,9 @@ fish = [];
 stray = [];
 
 cand = computeComparisonVec(cand);
-thresh = (nCh*0.1+11)/(T(2)-T(1));  % nCh*0.1/dT is for a1s, 10/dT for f1, 2/dT 
+thresh = (nCh*0.1+22)/(T(2)-T(1));  % nCh*0.1/dT is for a1s, 10/dT for f1, 2/dT 
 
 activeFish = [];
-activeConfMax = 20;
 activeConfMin = 0;
 
 strayFish = [];

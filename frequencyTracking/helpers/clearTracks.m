@@ -4,6 +4,7 @@ function handles = clearTracks(handles)
         if isfield(handles,'tracksFileName')
             handles = rmfield(handles,'tracksFileName');
         end
+        set(handles.tracksListBox,'Value',1);
         set(handles.tracksFileTxt,'String','<None>');
         handles.undo.empty();
         handles.redo.empty();
