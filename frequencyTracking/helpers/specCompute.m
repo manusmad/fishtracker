@@ -4,6 +4,7 @@ function handles = specCompute(handles)
         spec = specFullFile(handles.elec,handles.params.nFFT,handles.params.overlap);
         spec.meta.nFFT = handles.params.nFFT;
         spec.meta.overlap = handles.params.overlap;
+        handles.meta = spec.meta;
         handles.Smag = normSpecMag(spec.S);
 
         runTime = toc;
