@@ -62,15 +62,23 @@ fishHist    = fishHist(sortIdx);
 
 tInt  = mean(diff(fishTime));
 nTime = length(fishTime);
+
+% nTime = 300;
 [nx,sys] = FS_processEq(handles.motion);
 % nIter = 1;
-nGen = 2;
+
+%150817
+% nGen = 2;
+nGen = 10;
+%150817
 
 % Cycles
 fMat = 1:nTime; rMat = nTime-1:-1:1; ffMat = 2:nTime;
 fL = length(fMat); rL= length(rMat) + fL; 
 % ffL = length(ffMat) + rL;
-cycleMat = [fMat rMat ffMat];
+
+% cycleMat = [fMat rMat ffMat];
+cycleMat = [fMat rMat];
 nLoops   = length(cycleMat);
 
 xFish    = zeros(nFish,nTime,nx);
@@ -152,12 +160,15 @@ for id = 1:nFish
         if motionRandom
         for iterLoop = 1:nIter
             display(sprintf('\nIteration %d of %d',iterLoop,nIter));
-            for t = 1:nTime 
+%             for t = 1:nTime 
+            for t1 = 1:nLoops 
+                t = cycleMat(t1);
                 progressbar(((id-1)*nIter*nTime + (iterLoop-1)*nTime + t)/(1.1*nFish*nIter*nTime))
+%                 amp(:,t)
                 for genLoop = 1:nGen
                     % Particle filter                     
                     [pf(id).x, xh, pf(id).w, pf(id).idxDesc,yk,ahk] = FS_filter(pf(id), sys, amp(:,t),...
-                        handles.motion, gridCoord, tankCoord, tInt);
+                        handles.motion, gridCoord, tankCoord, tInt, genLoop);
                 end
 %                 xAmp(id,t,:,:)  = [normc(yk) normc(ahk')];
                 xPart(id,t,:,:) = squeeze(pf(id).x)';
@@ -165,6 +176,9 @@ for id = 1:nFish
 %                 xIdxDesc(id,t,:)= squeeze(pf(id).idxDesc)';
 %                 xFish(id,t,:)   = 
                 xFishIter(id,iterLoop,t,:) = xh';
+                %150817
+%                 [pf(id).x ,pf(id).w] = FS_initParticles(nPart, nx+1, handles.motion, tankCoord);
+                %150817
             end
 %             xFishIter(id,iterLoop,:,:) = xFish(id;
         end
@@ -177,7 +191,7 @@ if wildTag
 %     [~,dataFileName,~] = fileparts(handles.elecFile);
 %     dataFileName = fullfile(handles.dir_path,[dataFileName '_temp.mat']);
     dataFileName = fullfile(handles.dir_path,'temp.mat');
-    
+%     ampAll  = ampAllTemp;
     cHullPart = 200;
     for fID = 1:nFish
         for i = 1:nTime
@@ -187,7 +201,7 @@ if wildTag
            yMean(fID,i,1) = squeeze(mean(xFishIter(fID,:,i,2)));
 %            yStd(fID,i,1)  = squeeze(std(xFishIter(fID,:,i,2)));
 
-           thMean(fID,i,1) = circ_mean(squeeze(xFishIter(fID,:,i,3))');
+           thMean(fID,i,1) = wrapTo2Pi(circ_mean(squeeze(xFishIter(fID,:,i,3))'));
 %            thStd(fID,i,1)  = circ_std(squeeze(xFishIter(fID,:,i,3))');
            
 %            ampMean(fID,i,:) = FS_ObsvModel(squeeze([xMean(fID,i,1);yMean(fID,i,1);thMean(fID,i,1)]), gridCoord, tankCoord, handles.motion)';
@@ -201,10 +215,11 @@ if wildTag
     end
     
 %     save(dataFileName,'rConv','xMean', 'xStd', 'yMean', 'yStd','thMean', 'thStd', 'ampMean','xPart', 'xFishIter','xFish', 'xAmp', 'xWeight', 'xIdxDesc', 'fishHist','fishTime','wildTag','tankCoord','gridCoord','dataType','nFish','ampAll','freqCell','-v7.3');   
-save(dataFileName,'xMean', 'yMean','thMean','xPart', 'xFishIter', 'xWeight','fishTime','wildTag','tankCoord','gridCoord','dataType','nFish','ampAll','freqCell','-v6');   
+save(dataFileName,'xMean', 'yMean','thMean','xPart', 'xFishIter', 'xWeight','fishTime','wildTag','tankCoord','gridCoord','dataType','nFish','ampAll','freqCell','-v7.3');   
     
 elseif strcmp(dataType,'sim')   
     cHullPart = 200;
+%     ampAll  = ampAllTemp;
     for fID = 1:nFish
         for i = 1:nTime
            xMean(fID,i,1) = squeeze(mean(xFishIter(fID,:,i,1)));
@@ -216,8 +231,11 @@ elseif strcmp(dataType,'sim')
            thMean(fID,i,1) = circ_mean(squeeze(xFishIter(fID,:,i,3))');
            thStd(fID,i,1)  = circ_std(squeeze(xFishIter(fID,:,i,3))');
            
+                thMean(fID,i,1) = wrapTo2Pi(circ_mean(squeeze(xFishIter(fID,:,timeIdx(i),3))'));
+           thStd(fID,i,1)  = circ_std(squeeze(xFishIter(fID,:,timeIdx(i),3))');
+           
            ampMean(fID,i,:) = FS_ObsvModel(squeeze([xMean(fID,i,1);yMean(fID,i,1);thMean(fID,i,1)]), gridCoord, tankCoord, handles.motion)';
-
+           
            x = squeeze(xPart(1,i,xIdxDesc(fID,i,1:cHullPart),1));
            y = squeeze(xPart(1,i,xIdxDesc(fID,i,1:cHullPart),2));
 
@@ -248,7 +266,8 @@ else
 %     dataFileName = fullfile(handles.dir_path,[dataFileName '_temp.mat']);
     dataFileName = fullfile(handles.dir_path,'temp.mat');
     vidParams = handles.vidTracked;
-
+    
+    %{
     nanIdx = find((cellfun('isempty', vidParams.tubecen)));
     noNanIdx = find(not(cellfun('isempty', vidParams.tubecen)));
     
@@ -266,10 +285,12 @@ else
     
     vidParams.fishCen = tubeCen;
     vidParams.fishTheta = tubeAng;
-  
-    nFrames = vidParams.nFrames;
-    elecTime = fishTime + vidParams.elecTime(1);
-    timeIdx  = zeros(nFrames,1);
+    %}
+    
+    nFrames     = length(vidParams.frameTime);
+    elecTime    = fishTime + vidParams.elecTime(1);
+%     elecTime    = fishTime;
+    timeIdx     = zeros(nFrames,1);
     for n = 1:nFrames
        [~,timeIdx(n)] = min(abs(elecTime - vidParams.frameTime(n)));
     end
@@ -292,7 +313,7 @@ else
            thStd(fID,i,1)  = circ_std(squeeze(xFishIter(fID,:,timeIdx(i),3))');
             
            ampMean(fID,i,:) = FS_ObsvModel(squeeze([xMean(fID,i,1);yMean(fID,i,1);thMean(fID,i,1)]), gridCoord, tankCoord, handles.motion)';
-           
+%            ampAll(fID,:,i) = ampAllTemp(fID,:,timeIdx(i));
 %            x = squeeze(xPart(1,timeIdx(i),xIdxDesc(fID,timeIdx(i),1:cHullPart),1));
 %            y = squeeze(xPart(1,timeIdx(i),xIdxDesc(fID,timeIdx(i),1:cHullPart),2));
 
@@ -300,30 +321,30 @@ else
 %            rConv(fID,i) = sqrt(V/pi);
         end
         
-        if ndims(vidParams.tubecen) == 2
-                notNan = ~isnan(vidParams.tubecen(:,1));
+        if ndims(vidParams.fishcen) == 2
+                notNan = ~isnan(vidParams.fishcen(:,1));
 
-                xError = vidParams.tubecen(notNan,1)' - squeeze(xMean(fID, notNan,:));
-                yError = vidParams.tubecen(notNan,2)' - squeeze(yMean(fID, notNan,:));
-    %             thError = vidParams.tubecen( find(~isnan(vidParams.fishTheta(:,1))),2)' - squeeze(yMean(fID, find(~isnan(vidParams.tubecen(:,1))),:));
+                xError = vidParams.fishcen(notNan,1)' - squeeze(xMean(fID, notNan,:));
+                yError = vidParams.fishcen(notNan,2)' - squeeze(yMean(fID, notNan,:));
+    %             thError = vidParams.fishcen( find(~isnan(vidParams.fishTheta(:,1))),2)' - squeeze(yMean(fID, find(~isnan(vidParams.fishcen(:,1))),:));
 
-                dCenElec = abs((vidParams.tubecen(notNan,1)' - vidParams.gridcen(5,1)) ...
-                              +1i*(vidParams.tubecen(notNan,2)' - vidParams.gridcen(5,2)));
+                dCenElec = abs((vidParams.fishcen(notNan,1)' - vidParams.gridcen(5,1)) ...
+                              +1i*(vidParams.fishcen(notNan,2)' - vidParams.gridcen(5,2)));
 
                 xMSE = mean(xError.^2)/length(timeIdx);
                 yMSE = mean(yError.^2)/length(timeIdx);
 
-        elseif ndims(vidParams.tubecen) == 3
+        elseif ndims(vidParams.fishcen) == 3
             dCenElec = [];
-            for fVidID = 1:size(vidParams.tubecen,3)
-                notNan = ~isnan(vidParams.tubecen(:,1,fVidID));
+            for fVidID = 1:size(vidParams.fishcen,3)
+                notNan = ~isnan(vidParams.fishcen(:,1,fVidID));
 
-                xError = vidParams.tubecen(notNan,1,fVidID)' - squeeze(xMean(fID,notNan,:));
-                yError = vidParams.tubecen(notNan,2,fVidID)' - squeeze(yMean(fID,notNan,:));
-    %             thError = vidParams.tubecen( find(~isnan(vidParams.fishTheta(:,1))),2)' - squeeze(yMean(fID, find(~isnan(vidParams.tubecen(:,1))),:));
+                xError = vidParams.fishcen(notNan,1,fVidID)' - squeeze(xMean(fID,notNan,:));
+                yError = vidParams.fishcen(notNan,2,fVidID)' - squeeze(yMean(fID,notNan,:));
+    %             thError = vidParams.fishcen( find(~isnan(vidParams.fishTheta(:,1))),2)' - squeeze(yMean(fID, find(~isnan(vidParams.fishcen(:,1))),:));
 
-                xMSE(fVidID) = mean((vidParams.tubecen(notNan,1,fVidID)' - squeeze(xMean(fID,notNan,:))).^2)/length(timeIdx);
-                yMSE(fVidID) = mean((vidParams.tubecen(notNan,2,fVidID)' - squeeze(yMean(fID,notNan,:))).^2)/length(timeIdx);
+                xMSE(fVidID) = mean((vidParams.fishcen(notNan,1,fVidID)' - squeeze(xMean(fID,notNan,:))).^2)/length(timeIdx);
+                yMSE(fVidID) = mean((vidParams.fishcen(notNan,2,fVidID)' - squeeze(yMean(fID,notNan,:))).^2)/length(timeIdx);
             end
         end
     end

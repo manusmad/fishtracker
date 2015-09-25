@@ -19,6 +19,7 @@ for fID = 1:numFish
 end
 
 gridCoord   = handles.gridCoord;
+tankCoord   = handles.tankCoord;
 divNo = 100;
 
 xRange = max(gridCoord(:,1))- min(gridCoord(:,1));
@@ -41,3 +42,10 @@ plot(imGridCoord(:,1),imGridCoord(:,2),'+w');
 
 set (gca, 'xtick', [],'ytick', []);
 axis tight
+
+%%
+% axes(handles.ax_freqTrack); cla
+% 
+% FS_ObsvModel(squeeze([xMean(fID,i,1);yMean(fID,i,1);thMean(fID,i,1)]), gridCoord, tankCoord, handles.motion)';
+
+

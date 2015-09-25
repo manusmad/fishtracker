@@ -22,7 +22,7 @@ function varargout = spatialTracking(varargin)
 
 % Edit the above text to modify the response to help spatialTracking
 
-% Last Modified by GUIDE v2.5 07-Apr-2015 12:16:03
+% Last Modified by GUIDE v2.5 29-Apr-2015 17:25:19
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -201,9 +201,10 @@ numIter             = str2double(get(handles.numIter,'String'));
 
 index_selected      = get(handles.elecFiles,'Value');
 file_list           = get(handles.elecFiles,'String');
+% for index_selected = 1:length(file_list)
 filename            = file_list{index_selected};
 handles.elecFile    = filename;
-clipsname           = [filename([1:end-11]),'_tubes',filename([end-3:end])];
+clipsname           = [filename([1:end-11]),filename([end-3:end])];
 handles.motion = 'random';
 try
     handles.elecTracked = open(fullfile(handles.dir_path,filename));
@@ -214,7 +215,7 @@ end
 if get(handles.rawRadio,'Value')
     if ~get(handles.Wild,'Value') 
         try
-            handles.vidTracked = open(fullfile(handles.dir_path(1:end-6),'clips',clipsname));
+            handles.vidTracked = open(fullfile(handles.dir_path(1:end-10),'videotracks',[clipsname(1:end-4) '_videotracks.mat']));
         catch ex
             errordlg(ex.getReport('basic'),'File Type Error','modal')
         end
@@ -225,8 +226,8 @@ if get(handles.rawRadio,'Value')
         handles.gridCoord   = [gridTemp(:,1) -gridTemp(:,2)];
         tankTemp            = (handles.vidTracked.tankcen-repmat(handles.vidTracked.gridcen(5,:),4,1))/handles.scaleFact;
         handles.tankCoord   = [tankTemp(1:2,:);tankTemp(4:-1:3,:);tankTemp(1,:)];
-        set(handles.limMax,'Enable','off');
-        set(handles.limManual,'Enable','off');
+        set(handles.limMax,'Enable','on');
+        set(handles.limManual,'Enable','on');
     else
         [xD,yD]             = FS_testGridSim(get(handles.Wild,'Value'));
         handles.gridCoord   = [xD yD];
@@ -288,10 +289,12 @@ else
 end
 handles.vidParams   = vidParams;
 
+
 if ~get(handles.Wild,'Value')
+    vidParams.nFrames   = length(vidParams.frameTime);
     handles.nSteps = vidParams.nFrames;
-else
-    handles.nSteps = length(fishTime)
+else    
+    handles.nSteps = length(fishTime);
     handles.timeIdx = 1:handles.nSteps;
 end
 
@@ -304,6 +307,7 @@ set(handles.dataName,'String', ['Dataset: ' filename]);
 set(handles.numFish,'String', ['Number of Fish: ' num2str(nFish)]);
 set(handles.vidFPS,'String', num2str(1/mean(diff(handles.fishTime))));
 
+handles.filename = filename(1:end-4);
 
 handles.fishList = cellfun(@num2str,num2cell(1:nFish),'uniformoutput',0);
 set(handles.elecFishList,'String',handles.fishList,'Value',1)
@@ -371,12 +375,15 @@ elseif get(handles.limManual,'Value')
 end
 
 FS_plotOverhead(handles)
-FS_plotHeat(handles)
 FS_plotFreqTrack(handles)
+FS_plotHeat(handles)
 
-display(['Done loading']);    
+display(['Done loading']);
+
 guidata(hObject, handles);
+beep
 
+% end
 % --- Executes on slider movement.
 function stepSlider_Callback(hObject, eventdata, handles)
 % hObject    handle to stepSlider (see GCBO)
@@ -395,10 +402,15 @@ end
 handles.sNo = curr_step;
 
 FS_plotOverhead(handles)
-FS_plotHeat(handles)
 FS_plotFreqTrack(handles)
+FS_plotHeat(handles)
 
 set(handles.stepNo,'String',num2str(curr_step));
+
+if ~get(handles.Wild,'Value')
+    curr_step = handles.timeIdx(curr_step);
+end
+
 set(handles.timeText,'String',['Time: ' num2str(handles.fishTime(curr_step)) 's of ' num2str(handles.fishTime(end)) 's']);
 % handles.showVF = get(handles.enableVFish,'Value');
 % handles.showEF = get(handles.enableEFish,'Value');
@@ -435,8 +447,8 @@ while (get(handles.playPause,'Value') == 1 && strcmp(get(handles.playPause,'Stri
     handles.sNo = stepNo;
     
     FS_plotOverhead(handles)
-    FS_plotHeat(handles)
     FS_plotFreqTrack(handles)
+    FS_plotHeat(handles)
     
 %     handles.frameIdx = floor(stepNo/handles.nSkip)+1;
     
@@ -477,8 +489,8 @@ stepNo = str2double(get(handles.stepNo,'String'));
 handles.sNo = stepNo;
 
 FS_plotOverhead(handles)
-FS_plotHeat(handles)
 FS_plotFreqTrack(handles)
+FS_plotHeat(handles)
     
 stepScale = stepNo/handles.nSteps;
 
@@ -553,8 +565,8 @@ set(handles.timeText,'String',['Time: ' num2str(handles.fishTime(stepNo)) 's of 
 handles.sNo = stepNo;
 
 FS_plotOverhead(handles)
-FS_plotHeat(handles)
 FS_plotFreqTrack(handles)
+FS_plotHeat(handles)
 
 stepScale = (stepNo-1)/handles.nSteps;
 set(handles.stepSlider,'Value',stepScale);
@@ -582,8 +594,8 @@ set(handles.timeText,'String',['Time: ' num2str(handles.fishTime(stepNo)) 's of 
 handles.sNo = stepNo;
 
 FS_plotOverhead(handles)
-FS_plotHeat(handles)
 FS_plotFreqTrack(handles)
+FS_plotHeat(handles)
     
 stepScale = (stepNo-1)/handles.nSteps;
 set(handles.stepSlider,'Value',stepScale);
@@ -604,8 +616,8 @@ if ~handles.showAllFish
     C = get(handles.elecFishList,{'string','value'});
     handles.fishSelect = C{2};
     FS_plotOverhead(handles)
-    FS_plotHeat(handles)
     FS_plotFreqTrack(handles)
+    FS_plotHeat(handles)
 else
     handles.fishSelect = 1:handles.nFish;
 end
@@ -671,14 +683,21 @@ else
     pdfName = fullfile(handles.dir_path, fName);
 end
 
+%{
 [FileName,PathName,~] = uiputfile('*.pdf','Save overhead plot as ..',pdfName);
 
 if FileName ~= 0
     userFileName = fullfile(PathName, FileName);
+%     print(fName(1:end-4),'-dpdf')
+%     export_fig(userFileName,'-zbuffer',handles.ax_overhead);
     export_fig(handles.ax_overhead,userFileName);
     set(handles.figSaveText,'String',['Saved ' FileName ' at ' datestr(now)]);
 end
-
+%}
+F = getframe(handles.ax_overhead);
+Image = frame2im(F);
+imwrite(Image, [fName(1:end-4),'.jpg'])
+set(handles.figSaveText,'String',['Saved ' [fName(1:end-4),'.jpg'] ' at ' datestr(now)]);
 guidata(hObject, handles);
 
 % --- Executes on button press in saveVideo.
@@ -1219,3 +1238,13 @@ function edit12_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+% --- Executes when selected object is changed in uipanel10.
+function uipanel10_SelectionChangeFcn(hObject, eventdata, handles)
+% hObject    handle to the selected object in uipanel10 
+% eventdata  structure with the following fields (see UIBUTTONGROUP)
+%	EventName: string 'SelectionChanged' (read only)
+%	OldValue: handle of the previously selected object or empty if none was selected
+%	NewValue: handle of the currently selected object
+% handles    structure with handles and user data (see GUIDATA)

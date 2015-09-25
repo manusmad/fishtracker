@@ -1,5 +1,6 @@
 function FS_plotOverhead(handles)
 
+filename    = handles.filename;
 type        = handles.dataType;
 gridCoord   = handles.gridCoord;
 tankCoord   = handles.tankCoord;
@@ -20,6 +21,11 @@ axes(handles.ax_overhead)
 cla
 colrs = distinguishable_colors(nFish);
 
+if strcmp(type,'tank')
+    stepNoFish      = handles.timeIdx(handles.sNo);
+else
+    stepNoFish      = stepNo;
+end
 
 plot(tankCoord(:,1),tankCoord(:,2),'ob','LineWidth',1.01),hold on;
 plot(tankCoord(:,1),tankCoord(:,2),'+b','LineWidth',1.01);
@@ -32,12 +38,16 @@ if strcmp(type,'wild')
     if handles.showTrack == 1
         for i = 1:numFish
             fishLoop = fishSelect(i);
-            scatter(xMean(fishLoop,:,1),yMean(fishLoop,:,1),10,colrs(fishLoop,:),'fill');
+            fishPresentIdx = find(sum(isnan(squeeze(handles.ampAll(fishLoop,:,:)))) ~= 16);
+            fishPresentIdx = fishPresentIdx(fishPresentIdx<=size(xMean,2));
+            scatter(xMean(fishLoop,fishPresentIdx,1),yMean(fishLoop,fishPresentIdx,1),20,colrs(fishLoop,:),'fill');
         end
     elseif handles.showTrack == 3
         for i = 1:numFish
             fishLoop = fishSelect(i);
-            scatter(xMean(fishLoop,1:stepNo,1),yMean(fishLoop,1:stepNo,1),10,colrs(fishLoop,:),'fill');
+            fishPresentIdx = find(sum(isnan(squeeze(handles.ampAll(fishLoop,:,:)))) ~= 16);
+            fishPresentIdx = fishPresentIdx(fishPresentIdx<=size(xMean,2));
+            scatter(xMean(fishLoop,fishPresentIdx(fishPresentIdx<=stepNo),1),yMean(fishLoop,fishPresentIdx(fishPresentIdx<=stepNo),1),20,colrs(fishLoop,:),'fill');
         end
     end
 
@@ -55,12 +65,12 @@ elseif  strcmp(type,'sim')
     if handles.showTrack == 1
         for i = 1:numFish
             fishLoop = fishSelect(i);
-            scatter(xMean(fishLoop,:,1),yMean(fishLoop,:,1),10,colrs(fishLoop,:),'fill');
+            scatter(xMean(fishLoop,:,1),yMean(fishLoop,:,1),20,colrs(fishLoop,:),'fill');
         end
     elseif handles.showTrack == 3
         for i = 1:numFish
             fishLoop = fishSelect(i);
-            scatter(xMean(fishLoop,1:stepNo,1),yMean(fishLoop,1:stepNo,1),10,colrs(fishLoop,:),'fill');
+            scatter(xMean(fishLoop,1:stepNo,1),yMean(fishLoop,1:stepNo,1),20,colrs(fishLoop,:),'fill');
         end
     end
 
@@ -72,18 +82,22 @@ else
     fW = 3;
     fL = 20;
     if handles.showVid == 1
-        scatter(vidParams.tubecen(:,1),vidParams.tubecen(:,2),80,'k','fill');
+        for iFish = 1:size(vidParams.fishcen,3)
+            scatter(vidParams.fishcen(:,1,iFish),vidParams.fishcen(:,2,iFish),20,'k','fill');
+            plot_ellipse(fW,fL,vidParams.fishcen(stepNo,1,iFish),vidParams.fishcen(stepNo,2,iFish),rad2deg(vidParams.fishang(stepNo,iFish)-pi/2),[0 0 0; 0 0 0]);
+            hold on
+        end
     end
     if handles.showTrack == 1
         for i = 1:numFish
             fishLoop = fishSelect(i);
-            scatter(xMean(fishLoop,:,1),yMean(fishLoop,:,1),10,colrs(fishLoop,:),'fill');
+            scatter(xMean(fishLoop,:,1),yMean(fishLoop,:,1),20,colrs(fishLoop,:),'fill');
         end
     elseif handles.showTrack == 3
         
         for i = 1:numFish
             fishLoop = fishSelect(i);
-            scatter(xMean(fishLoop,1:stepNo,1),yMean(fishLoop,1:stepNo,1),10,colrs(fishLoop,:),'fill');
+            scatter(xMean(fishLoop,1:stepNo,1),yMean(fishLoop,1:stepNo,1),20,colrs(fishLoop,:),'fill');
         end
     end
 %     xlim([vidParams.tankcen(1,1),vidParams.tankcen(2,1)]);
@@ -96,11 +110,11 @@ xlim(handles.bndryX);
 ylim([handles.bndryY]);  
 set(gca,'xcolor','w','ycolor','w','xtick',[],'ytick',[])
 
-amp = zeros(1,size(squeeze(handles.ampAll(1,:,handles.sNo)),2));
+amp = zeros(1,size(squeeze(handles.ampAll(1,:,stepNoFish)),2));
 for fID = 1:numFish
     i = fishSelect(fID);
-    if sum(isnan(squeeze(handles.ampAll(i,:,handles.sNo)))) == 0
-       amp = amp + squeeze(handles.ampAll(i,:,handles.sNo));
+    if sum(isnan(squeeze(handles.ampAll(i,:,stepNoFish)))) == 0
+       amp = amp + squeeze(handles.ampAll(i,:,stepNoFish));
     end   
 end
 
@@ -116,44 +130,49 @@ if handles.showPosition == 1
 elseif handles.showAngle == 1
     for i = 1:numFish
         fID = fishSelect(i);
-        if sum(~isnan(squeeze(handles.ampAll(fID,:,handles.sNo))))
+        if sum(~isnan(squeeze(handles.ampAll(fID,:,stepNoFish))))
             colrsMat = [colrs(fID,:);colrs(fID,:)];
         else
             colrsMat = [1 1 1;colrs(fID,:)];
         end
+%         plot_ellipse(fW,fL,xMean(fID,stepNo),yMean(fID,stepNo),rad2deg(thMean(fID,stepNo)-pi/2),colrsMat);
         plot_ellipse(fW,fL,xMean(fID,stepNo),yMean(fID,stepNo),rad2deg(thMean(fID,stepNo)-pi/2),colrsMat);
     end
 end
 
 if handles.showTime == 1
+%     if strcmp(type,'tank')
+%         stepNo      = handles.timeIdx(handles.sNo);
+%     end
    xBound = get(gca,'xlim'); yBound = get(gca,'ylim'); 
    xText = xBound(2) - (diff(xBound)/10); yText = yBound(2) - (diff(yBound)/20);
-   text(xText, yText, ['Time: ' num2str(handles.fishTime(stepNo)) 's']);
+   text(xText, yText, ['Time: ' num2str(handles.fishTime(stepNoFish)) 's']);
+   text(xBound(2) - (diff(xBound)/2), yBound(1) + (diff(yBound)/20), filename, 'interpreter', 'none');
 end
 
 if handles.showHull == 1
-    if strcmp(type,'tank')
-        stepNo      = handles.timeIdx(handles.sNo);
-    end
+%     if strcmp(type,'tank')
+%         stepNo      = handles.timeIdx(handles.sNo);
+%     end
     wt_perc = 0.9;
     for i = 1:numFish
         fID = fishSelect(i);
-        convIdx = find(xWeight(fID,stepNo,:) > wt_perc*max(xWeight(fID,stepNo,:)));
-        partXY = squeeze(xPart(fID,stepNo,convIdx,1:2));
+        convIdx = find(xWeight(fID,stepNoFish,:) > wt_perc*max(xWeight(fID,stepNoFish,:)));
+        partXY = squeeze(xPart(fID,stepNoFish,convIdx,1:2));
         k = convhull(partXY(:,1),partXY(:,2));
         plot(partXY(k,1),partXY(k,2),'Color',colrs(fID,:))
     end
 end
 
 if handles.showParticles == 1   
-    if strcmp(type,'tank')
-        stepNo      = handles.timeIdx(handles.sNo);
-    end
+%     if strcmp(type,'tank')
+%         stepNo      = handles.timeIdx(handles.sNo);
+%     end
     t= 0:pi/10:2*pi;
     for i = 1:numFish
         fID = fishSelect(i);
-        xPatch = repmat(sin(t)',1,nPart)+repmat(reshape(xPart(fID,stepNo,:,1),1,nPart),length(t),1);
-        yPatch = repmat(cos(t)',1,nPart)+repmat(reshape(xPart(fID,stepNo,:,2),1,nPart),length(t),1);  
+        xPatch = repmat(sin(t)',1,nPart)+repmat(reshape(xPart(fID,stepNoFish,:,1),1,nPart),length(t),1);
+        yPatch = repmat(cos(t)',1,nPart)+repmat(reshape(xPart(fID,stepNoFish,:,2),1,nPart),length(t),1);  
         pb=patch(xPatch,yPatch,colrs(fID,:),'EdgeColor','none');
         alpha(pb,0.08);
         hold on;

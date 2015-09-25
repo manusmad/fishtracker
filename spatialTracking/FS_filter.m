@@ -1,4 +1,4 @@
-function [xk, xhk, wk,idxDesc,yk,ahk] = FS_filter(pf, sys, gAmp, motion, gridcoord, tankcoord, tInt)
+function [xk, xhk, wk,idxDesc,yk,ahk] = FS_filter(pf, sys, gAmp, motion, gridcoord, tankcoord, tInt, genLoop)
 yk = gAmp - min(gAmp);
 [nx,Ns] = size(pf.x(1:(end-1),:));  
 
@@ -11,7 +11,6 @@ xkm1(3,:) = wrapTo2Pi(xkm1(3,:));
 % xkm1(3,:) = circ_mean(xkm1(3,:));
 
 xk = sys(xkm1, FS_gen_sysv_noise(nx,Ns,motion,tInt));
-
 TruncElecList = ~isnan(yk); 
 ykTrunc = yk(TruncElecList, :);
 % offsetC = 0.01; %140625 - 0.05
@@ -41,13 +40,16 @@ wk = wk./sum(wk);
 % xhk = sum((repmat(wk(wIdx(1:effPart))',nx,1).*xk(:,wIdx(1:effPart))),2);
 % xhk = sum((repmat(wk(wIdx(1:Neff))',nx,1).*xk(:,wIdx(1:Neff))),2);
 
-age_thresh = 3; %140625 - 6
+age_thresh = 0; %140625 - 6
 idx = find(xk(end,:) >= age_thresh); 
 idxm1 = find(xkm1(end,:) >= age_thresh); 
 
 xhk(1:2,1) = sum((repmat(wk(idx)',nx-1,1).*xk(1:2,idx)),2);
 % xhk(3,1)   = wrapTo2Pi(circ_mean(2*wrapTo2Pi(xk(3,idx)),wk(idx)',2));
-xhk(3,1)   = wrapTo2Pi(circ_mean(acos(cos(2*wrapTo2Pi(xk(3,idx))))/2,wk(idx)',2));
+% xhk(3,1)   = wrapTo2Pi(circ_mean(acos(cos(2*wrapTo2Pi(xk(3,idx))))/2,wk(idx)',2));
+xhk(3,1)   = wrapTo2Pi(circ_mean(xk(3,idx),wk(idx)',2));
+
+% rad2deg(wrapTo2Pi(xhk(3,1)))
 
 xhkm1(1:2,1) = sum((repmat(wkm1(idxm1)',nx-1,1).*xkm1(1:2,idxm1)),2);
 xhkm1(3,1)   = wrapTo2Pi(circ_mean(acos(cos(2*wrapTo2Pi((xkm1(3,idxm1)))))/2,wkm1(idxm1)',2));
@@ -73,7 +75,11 @@ ahk = FS_ObsvModel(xhk, gridcoord, tankcoord, motion)';
 Ns = length(wk);  % Ns = number of particles
 % Neff = floor(0.95*Ns); % Static
 % Neff = floor(0.95*Ns); % Moving 40 - 0.95 %140625.95 .99
-resampled_ratio = 1 ;
+if genLoop < 2
+    resampled_ratio = 0.9 ;
+else
+    resampled_ratio = 1 ;
+end
 
 Neff = floor(resampled_ratio*Ns); % SIm
 %     if Neff < resample_percentaje*Ns;
@@ -121,7 +127,7 @@ elseif strcmp(motion, 'random')
 
     % xNew_centered = repmat(xhk, 1, centered_particles) + repmat(wMatrix, 1, centered_particles).*FS_gen_sysv_noise(nx, centered_particles, motion, tInt);
 %     xNew_centered = [(xhk(1,1)+ 10*tInt*randn(1,centered_particles)); (xhk(2,1)+ 10*tInt*randn(1,centered_particles)); wrapToPi(xhk(3,1)+ 1*tInt*randn(1,centered_particles))];
-    xNew_centered = [(xhk(1,1)+ 5*randn(1,centered_particles)); (xhk(2,1)+ 5*randn(1,centered_particles)); wrapTo2Pi(xhk(3,1)+ .05*randn(1,centered_particles)); zeros(1,centered_particles)] ;
+    xNew_centered = [(xhk(1,1)+ 5*randn(1,centered_particles)); (xhk(2,1)+ 5*randn(1,centered_particles)); wrapTo2Pi(xhk(3,1)+ .5*randn(1,centered_particles)); zeros(1,centered_particles)] ;
     % 3.5 Static
     %4.5Moving
 elseif strcmp(motion, 'randomLineCharge')
