@@ -61,9 +61,9 @@ fishHist    = fishHist(sortIdx);
 
 
 tInt  = mean(diff(fishTime));
-nTime = length(fishTime);
+% nTime = length(fishTime);
 
-% nTime = 300;
+nTime = 300;
 [nx,sys] = FS_processEq(handles.motion);
 % nIter = 1;
 
