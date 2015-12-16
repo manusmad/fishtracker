@@ -215,7 +215,7 @@ end
 if get(handles.rawRadio,'Value')
     if ~get(handles.Wild,'Value') 
         try
-            handles.vidTracked = open(fullfile(handles.dir_path(1:end-10),'videotracks',[clipsname(1:end-4) '_videotracks.mat']));
+            handles.vidTracked = open(fullfile(handles.dir_path(1:end-10),'videotracks',[clipsname(1:end-4) '_clicktracks.mat']));
         catch ex
             errordlg(ex.getReport('basic'),'File Type Error','modal')
         end
@@ -291,7 +291,7 @@ handles.vidParams   = vidParams;
 
 
 if ~get(handles.Wild,'Value')
-    vidParams.nFrames   = length(vidParams.frameTime);
+    vidParams.nFrames   = length(vidParams.clickTimes);
     handles.nSteps = vidParams.nFrames;
 else    
     handles.nSteps = length(fishTime);

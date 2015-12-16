@@ -61,9 +61,9 @@ fishHist    = fishHist(sortIdx);
 
 
 tInt  = mean(diff(fishTime));
-% nTime = length(fishTime);
+nTime = length(fishTime);
 
-nTime = 300;
+% nTime = 300;
 [nx,sys] = FS_processEq(handles.motion);
 % nIter = 1;
 
@@ -130,11 +130,14 @@ for id = 1:nFish
     
     % Make maximum amplitude positive
     [~,Midx] = max(abs(amp));
-    for c = 1:size(amp,2)
-        if amp(Midx(c),c)<0
-            amp(:,c) = -amp(:,c);
-        end
-    end
+    
+%     for c = 1:size(amp,2)
+%         if amp(Midx(c),c)<0
+%             amp(:,c) = -amp(:,c);
+%         end
+%     end
+    
+    amp = amp.*repmat(sign(amp(sub2ind(size(amp),Midx,1:size(amp,2)))),size(amp,1),1);
     
     % Initialize pf(id) structure
     [pf(id).x ,pf(id).w] = FS_initParticles(nPart, nx+1, handles.motion, tankCoord);
@@ -287,14 +290,22 @@ else
     vidParams.fishTheta = tubeAng;
     %}
     
-    nFrames     = length(vidParams.frameTime);
-    elecTime    = fishTime + vidParams.elecTime(1);
+    %     nFrames     = length(vidParams.frameTime);
+    %     elecTime    = fishTime + vidParams.elecTime(1);
+    % %     elecTime    = fishTime;
+    %     timeIdx     = zeros(nFrames,1);
+    %     for n = 1:nFrames
+    %        [~,timeIdx(n)] = min(abs(elecTime - vidParams.frameTime(n)));
+    %     end
+
+    nFrames     = length(vidParams.clickTimes);
+    elecTime    = fishTime + vidParams.clickTimes(1);
 %     elecTime    = fishTime;
     timeIdx     = zeros(nFrames,1);
     for n = 1:nFrames
-       [~,timeIdx(n)] = min(abs(elecTime - vidParams.frameTime(n)));
+       [~,timeIdx(n)] = min(abs(elecTime - vidParams.clickTimes(n)));
     end
-
+    
     clear n
     for n = 1:nFrames
         ampActNormed(:,n) = xAmp(1,timeIdx(n),:,1);

@@ -132,5 +132,10 @@ elseif strcmp(motion, 'randomLineCharge')
   
   a = totalLineV;
 end
-    
+
+% Make maximum amplitude positive
+[~,Midx] = max(abs(a));
+% MidxElemList = Midx + (0:size(a,2)-1)*16;
+a = a.*repmat(sign(a(sub2ind(size(a),Midx,1:size(a,2)))),size(a,1),1);
+
 z = a - repmat(min(a), N, 1);

@@ -127,7 +127,7 @@ elseif strcmp(motion, 'random')
 
     % xNew_centered = repmat(xhk, 1, centered_particles) + repmat(wMatrix, 1, centered_particles).*FS_gen_sysv_noise(nx, centered_particles, motion, tInt);
 %     xNew_centered = [(xhk(1,1)+ 10*tInt*randn(1,centered_particles)); (xhk(2,1)+ 10*tInt*randn(1,centered_particles)); wrapToPi(xhk(3,1)+ 1*tInt*randn(1,centered_particles))];
-    xNew_centered = [(xhk(1,1)+ 5*randn(1,centered_particles)); (xhk(2,1)+ 5*randn(1,centered_particles)); wrapTo2Pi(xhk(3,1)+ .5*randn(1,centered_particles)); zeros(1,centered_particles)] ;
+    xNew_centered = [(xhk(1,1)+ 5*randn(1,centered_particles)); (xhk(2,1)+ 5*randn(1,centered_particles)); wrapTo2Pi(xhk(3,1)+ .05*randn(1,centered_particles)); zeros(1,centered_particles)] ;
     % 3.5 Static
     %4.5Moving
 elseif strcmp(motion, 'randomLineCharge')
