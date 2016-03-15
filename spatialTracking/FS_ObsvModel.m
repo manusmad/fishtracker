@@ -1,4 +1,4 @@
-function z = FS_ObsvModel(X, gridcoord, tankcoord, motion)
+function z = FS_ObsvModel(X, gridcoord, tankcoord, motion,fittedExpModel)
 % Observation model
 %
 % X is the state vector, can be P-columns
@@ -36,16 +36,22 @@ P = size(X,2);
 % rvec = @(X0,Y0,Z0) (repma
 % relang = @(rvec0,th0) 
 
+% distVar = (X(:,1:2) - repmat(vidTracked.gridcen(5,:),size(X,1),1));
+% distCen = ((distVar(:,1).^2 + distVar(:,2).^2).^0.5);
+
+rcen = @(X0,Y0) X0 + 1i*Y0;
 rvec = @(X0,Y0) (repmat(xD,1,P)-repmat(X0, N,1)) + 1i*(repmat(yD,1,P)-repmat(Y0, N,1));
 relang = @(rvec0,th0) angle(rvec0)-repmat(th0,N,1);
 
-c = 0.77;
-r07model = @(th0,r0) cos(th0) ./ abs(r0).^c;  %0.77
+c = 0.6374;
+% c = 0.77;
+r0cmodel = @(th0,r0,rC) cos(th0) ./ abs(r0).^c;  %0.77
+rfitmodel = @(th0,r0,rC) cos(th0) ./ abs(r0).^reshape(fittedExpModel(abs(repmat(rC,N,1))*6),[N,P]);  %0.77
 rmodel = @(th0,r0) cos(th0) ./ abs(r0);
 r2model = @(th0,r0) cos(th0) ./ abs(r0).^2;
 r3model = @(th0,r0) cos(th0) ./ abs(r0).^3;
 logrmodel = @(th0,r0) cos(th0) ./ log(abs(r0));  
-model = r07model;
+model = r0cmodel;
 
 dipMul = 1;
 
@@ -114,11 +120,12 @@ if boundaryOn
 end
 
 r = rvec(xF,yF);
+rC = rcen(xF,yF);
 th = relang(r,thF);
 
 if strcmp(motion, 'random') || strcmp(motion, 'uni')
 %     a = cos(th)./(r) + FS_gen_obs_noise(N,P);         % Partial Model
-    a = model(th,r) + boundaryVal;         % Partial Model
+    a = model(th,r,rC) + boundaryVal;         % Partial Model
 %     a = abs(a);
 elseif strcmp(motion, 'randomLineCharge')
   x = r.*cos(th);  
@@ -137,5 +144,4 @@ end
 [~,Midx] = max(abs(a));
 % MidxElemList = Midx + (0:size(a,2)-1)*16;
 a = a.*repmat(sign(a(sub2ind(size(a),Midx,1:size(a,2)))),size(a,1),1);
-
 z = a - repmat(min(a), N, 1);

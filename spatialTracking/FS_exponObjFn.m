@@ -26,8 +26,8 @@ zAct = amp - repmat(min(amp), N, 1);
 idx = find(~isnan(zAct));
 zAct = zAct(idx);
 zActScaled = zAct/max(abs(zAct));
-% zEst = a - repmat(a(vecIdx), N, 1);
-zEst = a - repmat(min(a), N, 1);
+zEst = a - repmat(a(vecIdx), N, 1);
+% zEst = a - repmat(min(a), N, 1);
 zEst = zEst(idx);
 zEstScaled = zEst/max(abs(zEst));
 

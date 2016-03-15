@@ -22,7 +22,7 @@ function varargout = spatialTracking(varargin)
 
 % Edit the above text to modify the response to help spatialTracking
 
-% Last Modified by GUIDE v2.5 29-Apr-2015 17:25:19
+% Last Modified by GUIDE v2.5 15-Mar-2016 09:51:47
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -119,12 +119,14 @@ handles.dir_path  = get(handles.data_path, 'String');
 folder_name       = handles.dir_path;
 lastFoldAddr      = fullfile(fileparts(which('spatialTracking.m')),'lastFold');
 save(lastFoldAddr,'folder_name');
+load(fullfile(fileparts(which('spatialTracking.m')),'fitData'));
+handles.fittedExpModel = fittedExpModel;
 
 if ~get(handles.Wild,'Value')
-    handles.vdata_path  = [handles.dir_path(1:end-6) 'clips'];
+    handles.vdata_path  = [handles.dir_path(1:end-6) 'videotracks'];
 end
 
-dir_struct                  = dir(handles.dir_path);
+dir_struct                  = dir(fullfile(handles.dir_path,'freqtracks'));
 [sorted_names,~]            = sortrows({dir_struct.name}');
 allFile_names               = sorted_names;
 
@@ -199,186 +201,267 @@ function push_track_Callback(hObject, eventdata, handles)
 particles           = str2double(get(handles.particles,'String'));
 numIter             = str2double(get(handles.numIter,'String'));
 
-index_selected      = get(handles.elecFiles,'Value');
-file_list           = get(handles.elecFiles,'String');
-% for index_selected = 1:length(file_list)
-filename            = file_list{index_selected};
-handles.elecFile    = filename;
-clipsname           = [filename([1:end-11]),filename([end-3:end])];
+handles.batchProc = get(handles.batchProcess,'Value');
 handles.motion = 'random';
-try
-    handles.elecTracked = open(fullfile(handles.dir_path,filename));
-catch ex
-    errordlg(ex.getReport('basic'),'File Type Error','modal')
-end
 
-if get(handles.rawRadio,'Value')
-    if ~get(handles.Wild,'Value') 
+if handles.batchProc && get(handles.rawRadio,'Value')
+    file_list           = get(handles.elecFiles,'String');
+    for index_selected = 1:length(file_list)
+        set(handles.elecFiles,'Value',index_selected)
+        handles.file_idx    = index_selected;
+        filename            = file_list{index_selected};
+        handles.elecFile    = filename;
+        
         try
-            handles.vidTracked = open(fullfile(handles.dir_path(1:end-10),'videotracks',[clipsname(1:end-4) '_clicktracks.mat']));
+            handles.elecTracked = open(fullfile(handles.dir_path,'freqtracks',filename));
         catch ex
             errordlg(ex.getReport('basic'),'File Type Error','modal')
         end
+            if ~get(handles.Wild,'Value') 
+                try
+%                     clickFileAddr = fullfile(handles.dir_path,'videotracks',[filename([1:end-11]),'_clicktracks',filename([end-3:end])]);
+                    trackFileAddr = fullfile(handles.dir_path,'videotracks',[filename([1:end-11]),'_videotracks',filename([end-3:end])]);
+%                     if exist(clickFileAddr,'file')
+%                         handles.vidTracked = open(clickFileAddr);
+%                     else
+                        handles.vidTracked = open(trackFileAddr);
+%                     end
+        %             handles.vidTracked = open(fullfile(handles.dir_path(1:end-10),'videotracks',[clipsname(1:end-4) '_clicktracks.mat']));
+                catch ex
+                    errordlg(ex.getReport('basic'),'File Type Error','modal')
+                end
+
+                handles.scaleFact   = 6;
+
+                gridTemp            = (handles.vidTracked.gridcen-repmat(handles.vidTracked.gridcen(5,:),9,1))/handles.scaleFact;
+                handles.gridCoord   = [gridTemp(:,1) -gridTemp(:,2)];
+                tankTemp            = (handles.vidTracked.tankcen-repmat(handles.vidTracked.gridcen(5,:),4,1))/handles.scaleFact;
+                handles.tankCoord   = [tankTemp(1:2,:);tankTemp(4:-1:3,:);tankTemp(1,:)];
+%                 set(handles.limMax,'Enable','on');
+%                 set(handles.limManual,'Enable','on');
+            else
+                [xD,yD]             = FS_testGridSim(get(handles.Wild,'Value'));
+                handles.gridCoord   = [xD yD];
+                bndry               = 200;
+                handles.tankCoord   = [-bndry -bndry;bndry -bndry;bndry bndry;-bndry bndry;-bndry -bndry];
+%                 set(handles.limMax,'Enable','on');
+%                 set(handles.limManual,'Enable','on');
+            end
+
+            [handles, dataFileName] = FS_Main(particles,numIter, handles);
+            handles.tempFileName    = dataFileName;
+
+        [~,fName,~] = fileparts(handles.elecFile);
+        dataFileName = fullfile(handles.dir_path,'freqtracks',[fName '_particle.mat']);
+
+        movefile(handles.tempFileName,dataFileName);
+        set(handles.figSaveText,'String',['Saved ' fName '_particle.mat at' datestr(now)]);
+    end
+
+else
+    index_selected      = get(handles.elecFiles,'Value');
+    handles.file_idx    = index_selected;
+    file_list           = get(handles.elecFiles,'String');
+    % for index_selected = 1:length(file_list)
+    filename            = file_list{index_selected};
+    handles.elecFile    = filename;
+    guidata(hObject, handles);
+    try
+        handles.elecTracked = open(fullfile(handles.dir_path,'freqtracks',filename));
+    catch ex
+        errordlg(ex.getReport('basic'),'File Type Error','modal')
+    end
+
+    if get(handles.rawRadio,'Value')
+        if ~get(handles.Wild,'Value') 
+            try
+%                 clickFileAddr = fullfile(handles.dir_path,'videotracks',[filename([1:end-11]),'_clicktracks',filename([end-3:end])]);
+                trackFileAddr = fullfile(handles.dir_path,'videotracks',[filename([1:end-11]),'_videotracks',filename([end-3:end])]);
+%                 if exist(clickFileAddr,'file')
+%                     handles.vidTracked = open(clickFileAddr);
+%                 else
+                    handles.vidTracked = open(trackFileAddr);
+%                 end
+    %             handles.vidTracked = open(fullfile(handles.dir_path(1:end-10),'videotracks',[clipsname(1:end-4) '_clicktracks.mat']));
+            catch ex
+                errordlg(ex.getReport('basic'),'File Type Error','modal')
+            end
+
+            handles.scaleFact   = 6;
+
+            gridTemp            = (handles.vidTracked.gridcen-repmat(handles.vidTracked.gridcen(5,:),9,1))/handles.scaleFact;
+            handles.gridCoord   = [gridTemp(:,1) -gridTemp(:,2)];
+            tankTemp            = (handles.vidTracked.tankcen-repmat(handles.vidTracked.gridcen(5,:),4,1))/handles.scaleFact;
+            handles.tankCoord   = [tankTemp(1:2,:);tankTemp(4:-1:3,:);tankTemp(1,:)];
+            set(handles.limMax,'Enable','on');
+            set(handles.limManual,'Enable','on');
+        else
+            [xD,yD]             = FS_testGridSim(get(handles.Wild,'Value'));
+            handles.gridCoord   = [xD yD];
+            bndry               = 200;
+            handles.tankCoord   = [-bndry -bndry;bndry -bndry;bndry bndry;-bndry bndry;-bndry -bndry];
+            set(handles.limMax,'Enable','on');
+            set(handles.limManual,'Enable','on');
+        end
+
+        [handles, dataFileName] = FS_Main(particles,numIter, handles);
+        handles.tempFileName    = dataFileName;
+        load(dataFileName)
+        set(handles.saveTrackData,'Enable','on');
+        set(handles.figSaveText,'String',['Finished Tracking!' ' at ' datestr(now)]);
+    else
+        load(fullfile(handles.dir_path, filesep,'freqtracks',filesep,filename));
+        if wildTag
+            set(handles.Wild,'Value',1);
+            set(handles.Tank,'Value',0);
+        end
+        set(handles.saveTrackData,'Enable','off');
+        set(handles.figSaveText,'String',['Finished Loading!' ' at ' datestr(now)]);
+    end
+
+    handles.dataType    = dataType;
+    handles.gridCoord   = gridCoord;
+    handles.tankCoord   = tankCoord; 
+    handles.xMean       = xMean;
+    handles.yMean       = yMean;
+    handles.thMean      = thMean;
+    handles.nFish       = nFish;
+    handles.fishTime    = fishTime;
+    handles.xPart       = xPart;
+    handles.nPart       = size(xPart,3);
+    handles.xWeight     = xWeight;
+    handles.xFishIter   = xFishIter;
     
-        handles.scaleFact   = 6;
+    handles.xFish       = [];
+    handles.yFish       = [];
+    handles.thFish      = [];
+    
+    for i = 1:nFish
+        handles.xFish(i,:) = (squeeze(mean(xFishIter(i,:,:,1))));
+        handles.yFish(i,:) = (squeeze(mean(xFishIter(i,:,:,2))));
+        handles.thFish(i,:) = (squeeze(mean(xFishIter(i,:,:,3))));
+    end
 
-        gridTemp            = (handles.vidTracked.gridcen-repmat(handles.vidTracked.gridcen(5,:),9,1))/handles.scaleFact;
-        handles.gridCoord   = [gridTemp(:,1) -gridTemp(:,2)];
-        tankTemp            = (handles.vidTracked.tankcen-repmat(handles.vidTracked.gridcen(5,:),4,1))/handles.scaleFact;
-        handles.tankCoord   = [tankTemp(1:2,:);tankTemp(4:-1:3,:);tankTemp(1,:)];
-        set(handles.limMax,'Enable','on');
-        set(handles.limManual,'Enable','on');
+    handles.sNo         = 1;
+    handles.ampAll      = ampAll;
+    handles.ampMean     = ampMean;
+    handles.freqCell    = freqCell;
+    handles.showNone        = get(handles.estNone,'Value');
+    handles.showPosition    = get(handles.estPosition,'Value');
+    handles.showAngle       = get(handles.estAngle,'Value');
+    handles.showTime        = get(handles.timeOverlay,'Value');
+    handles.showAllFish     = get(handles.plotAllFish,'Value');
+    handles.showHull        = get(handles.plotHull,'Value');
+    handles.showParticles   = get(handles.plotParticles,'Value');
+
+    handles.heatType = 'actual';
+
+    if ~get(handles.Wild,'Value')
+        set(handles.plotVidFish,'Enable','on');
+        handles.showVid = get(handles.plotVidFish,'Value');
     else
-        [xD,yD]             = FS_testGridSim(get(handles.Wild,'Value'));
-        handles.gridCoord   = [xD yD];
-        bndry               = 200;
-        handles.tankCoord   = [-bndry -bndry;bndry -bndry;bndry bndry;-bndry bndry;-bndry -bndry];
-        set(handles.limMax,'Enable','on');
-        set(handles.limManual,'Enable','on');
+        set(handles.plotVidFish,'Enable','off');
     end
-
-    [handles, dataFileName] = FS_Main(particles,numIter, handles);
-    handles.tempFileName    = dataFileName;
-    load(dataFileName)
-    set(handles.saveTrackData,'Enable','on');
-    set(handles.figSaveText,'String',['Finished Tracking!' ' at ' datestr(now)]);
-else
-    load(fullfile(handles.dir_path, filesep,filename));
-    if wildTag
-        set(handles.Wild,'Value',1);
-        set(handles.Tank,'Value',0);
-    end
-    set(handles.saveTrackData,'Enable','off');
-    set(handles.figSaveText,'String',['Finished Loading!' ' at ' datestr(now)]);
-end
-
-handles.dataType    = dataType;
-handles.gridCoord   = gridCoord;
-handles.tankCoord   = tankCoord; 
-handles.xMean       = xMean;
-handles.yMean       = yMean;
-handles.thMean      = thMean;
-handles.nFish       = nFish;
-handles.fishTime    = fishTime;
-handles.xPart       = xPart;
-handles.nPart       = size(xPart,3);
-handles.xWeight     = xWeight;
-
-handles.sNo         = 1;
-handles.ampAll      = ampAll;
-handles.freqCell    = freqCell;
-handles.showNone        = get(handles.estNone,'Value');
-handles.showPosition    = get(handles.estPosition,'Value');
-handles.showAngle       = get(handles.estAngle,'Value');
-handles.showTime        = get(handles.timeOverlay,'Value');
-handles.showAllFish     = get(handles.plotAllFish,'Value');
-handles.showHull        = get(handles.plotHull,'Value');
-handles.showParticles   = get(handles.plotParticles,'Value');
-
-if ~get(handles.Wild,'Value')
-    set(handles.plotVidFish,'Enable','on');
-    handles.showVid = get(handles.plotVidFish,'Value');
-else
-    set(handles.plotVidFish,'Enable','off');
-end
-if get(handles.Wild,'Value')
-   timeIdx = '';
-   vidParams = '';
-else 
-    handles.timeIdx = timeIdx;
-end
-handles.vidParams   = vidParams;
-
-
-if ~get(handles.Wild,'Value')
-    vidParams.nFrames   = length(vidParams.clickTimes);
-    handles.nSteps = vidParams.nFrames;
-else    
-    handles.nSteps = length(fishTime);
-    handles.timeIdx = 1:handles.nSteps;
-end
-
-set(handles.timeText,'String',['Time: ' num2str(handles.fishTime(1)) 's of ' num2str(handles.fishTime(end)) 's']);
-set(handles.totalStep, 'String',['of ' num2str(handles.nSteps)])
-set(handles.stepNo, 'String',num2str(1))
-set(handles.stepSlider,'Value',0)
-
-set(handles.dataName,'String', ['Dataset: ' filename]);
-set(handles.numFish,'String', ['Number of Fish: ' num2str(nFish)]);
-set(handles.vidFPS,'String', num2str(1/mean(diff(handles.fishTime))));
-
-handles.filename = filename(1:end-4);
-
-handles.fishList = cellfun(@num2str,num2cell(1:nFish),'uniformoutput',0);
-set(handles.elecFishList,'String',handles.fishList,'Value',1)
-set(handles.elecFishList,'Max',nFish,'Min',0);
-colrs = distinguishable_colors(nFish);
-
-
-ids = 1:nFish;
-list = cell(handles.nFish,1);
-col = distinguishable_colors(max(ids));
-
-for k = 1:handles.nFish
-    coltag = reshape(dec2hex(round(col(ids(k),:)*255))',1,6);           
-    list{k} = sprintf('<html><body bgcolor="%s">Fish %02d</body></html>',coltag,ids(k));
-end
-set(handles.elecFishList,'String',list);
-        
-set(handles.vidStartStep,'String',num2str(1));
-set(handles.vidStopStep,'String',num2str(handles.nSteps));
-
-if ~handles.showAllFish
-    C = get(handles.elecFishList,{'string','value'});
-    handles.fishSelect = C{2};
-else
-    handles.fishSelect = 1:nFish;
-end
-
-if get(handles.trackAll,'Value')
-    handles.showTrack = 1;
-elseif get(handles.trackNone,'Value')
-    handles.showTrack = 2;
-elseif get(handles.trackNone,'Value')
-    handles.showTrack = 3;
-end 
-
-if get(handles.limDefault,'Value')
     if get(handles.Wild,'Value')
-        handles.bndryX = [-200 200];
-        handles.bndryY = [-200 200];
-    elseif get(handles.Tank,'Value')
-        handles.bndryX = [vidParams.tankcen(1,1) vidParams.tankcen(2,1)];
-        handles.bndryY = [vidParams.tankcen(1,2) vidParams.tankcen(4,2)];
-    else
-        handles.bndryX = [-80 80];
-        handles.bndryY = [-80 80];
+       timeIdx = '';
+       vidParams = '';
+    else 
+        handles.timeIdx = timeIdx;
     end
-elseif get(handles.limMax,'Value')
-        maxLim = max([max(max(abs(handles.xMean))) max(max(abs(handles.yMean)))]);
-        handles.bndryX = [-maxLim maxLim];
-        handles.bndryY = [-maxLim maxLim];
-elseif get(handles.limManual,'Value')
-    handles.limScale = get(handles.limEdit,'Value');
-    if get(handles.Wild,'Value')
-        handles.bndryX = handles.limScale*[-200 200];
-        handles.bndryY = handles.limScale*[-200 200];
-    elseif get(handles.Tank,'Value')
-        xPxl = handles.limScale*abs(vidParams.tankcen(1,1)-vidParams.tankcen(2,1));
-        yPxl = handles.limScale*abs(vidParams.tankcen(1,2)-vidParams.tankcen(4,2));
-        handles.bndryX = [vidParams.tankcen(1,1)-xPxl vidParams.tankcen(2,1)+xPxl];
-        handles.bndryY = [vidParams.tankcen(1,2)-yPxl vidParams.tankcen(4,2)+yPxl];
-    else
-        handles.bndryX = handles.limScale*[-80 80];
-        handles.bndryY = handles.limScale*[-80 80];
+    handles.vidParams   = vidParams;
+
+
+    if ~get(handles.Wild,'Value')
+        vidParams.nFrames   = length(vidParams.frameTime);
+        handles.nSteps = vidParams.nFrames;
+    else    
+        handles.nSteps = length(fishTime);
+        handles.timeIdx = 1:handles.nSteps;
     end
+
+    set(handles.timeText,'String',['Time: ' num2str(handles.fishTime(1)) 's of ' num2str(handles.fishTime(end)) 's']);
+    set(handles.totalStep, 'String',['of ' num2str(handles.nSteps)])
+    set(handles.stepNo, 'String',num2str(1))
+    set(handles.stepSlider,'Value',0)
+
+    set(handles.dataName,'String', ['Dataset: ' filename]);
+    set(handles.numFish,'String', ['Number of Fish: ' num2str(nFish)]);
+    set(handles.vidFPS,'String', num2str(1/mean(diff(handles.fishTime))));
+
+    handles.filename = filename(1:end-4);
+
+    handles.fishList = cellfun(@num2str,num2cell(1:nFish),'uniformoutput',0);
+    set(handles.elecFishList,'String',handles.fishList,'Value',1)
+    set(handles.elecFishList,'Max',nFish,'Min',0);
+    colrs = distinguishable_colors(nFish);
+
+
+    ids = 1:nFish;
+    list = cell(handles.nFish,1);
+    col = distinguishable_colors(max(ids));
+
+    for k = 1:handles.nFish
+        coltag = reshape(dec2hex(round(col(ids(k),:)*255))',1,6);           
+        list{k} = sprintf('<html><body bgcolor="%s">Fish %02d</body></html>',coltag,ids(k));
+    end
+    set(handles.elecFishList,'String',list);
+
+    set(handles.vidStartStep,'String',num2str(1));
+    set(handles.vidStopStep,'String',num2str(handles.nSteps));
+
+    if ~handles.showAllFish
+        C = get(handles.elecFishList,{'string','value'});
+        handles.fishSelect = C{2};
+    else
+        handles.fishSelect = 1:nFish;
+    end
+
+    if get(handles.trackAll,'Value')
+        handles.showTrack = 1;
+    elseif get(handles.trackNone,'Value')
+        handles.showTrack = 2;
+    elseif get(handles.trackNone,'Value')
+        handles.showTrack = 3;
+    end 
+
+    if get(handles.limDefault,'Value')
+        if get(handles.Wild,'Value')
+            handles.bndryX = [-200 200];
+            handles.bndryY = [-200 200];
+        elseif get(handles.Tank,'Value')
+            handles.bndryX = [vidParams.tankcen(1,1) vidParams.tankcen(2,1)];
+            handles.bndryY = [vidParams.tankcen(1,2) vidParams.tankcen(4,2)];
+        else
+            handles.bndryX = [-80 80];
+            handles.bndryY = [-80 80];
+        end
+    elseif get(handles.limMax,'Value')
+            maxLim = max([max(max(abs(handles.xMean))) max(max(abs(handles.yMean)))]);
+            handles.bndryX = [-maxLim maxLim];
+            handles.bndryY = [-maxLim maxLim];
+    elseif get(handles.limManual,'Value')
+        handles.limScale = get(handles.limEdit,'Value');
+        if get(handles.Wild,'Value')
+            handles.bndryX = handles.limScale*[-200 200];
+            handles.bndryY = handles.limScale*[-200 200];
+        elseif get(handles.Tank,'Value')
+            xPxl = handles.limScale*abs(vidParams.tankcen(1,1)-vidParams.tankcen(2,1));
+            yPxl = handles.limScale*abs(vidParams.tankcen(1,2)-vidParams.tankcen(4,2));
+            handles.bndryX = [vidParams.tankcen(1,1)-xPxl vidParams.tankcen(2,1)+xPxl];
+            handles.bndryY = [vidParams.tankcen(1,2)-yPxl vidParams.tankcen(4,2)+yPxl];
+        else
+            handles.bndryX = handles.limScale*[-80 80];
+            handles.bndryY = handles.limScale*[-80 80];
+        end
+    end
+    guidata(hObject, handles);
+
+    FS_plotOverhead(handles)
+    FS_plotFreqTrack(handles)
+    FS_plotHeat(handles)
+
+    display(['Done loading']);
 end
-
-FS_plotOverhead(handles)
-FS_plotFreqTrack(handles)
-FS_plotHeat(handles)
-
-display(['Done loading']);
 
 guidata(hObject, handles);
 beep
@@ -675,11 +758,14 @@ function saveFig_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+fishStr = num2str(handles.fishSelect);
+fishStr(ismember(fishStr,' ,.:;!')) = [];
+
 if get(handles.rawRadio,'Value')
-    fName = [handles.elecFile(1:end-11) '_' num2str(handles.sNo) '.pdf'];
+    fName = [handles.elecFile(1:end-11) '_F' fishStr '_' handles.num2str(handles.sNo) '.pdf'];
     pdfName = fullfile(handles.dir_path, fName);
 else
-    fName = [handles.elecFile(1:end-13) '_' num2str(handles.sNo) '.pdf'];
+    fName = [handles.elecFile(1:end-20) '_F' fishStr '_' num2str(handles.sNo) '.pdf'];
     pdfName = fullfile(handles.dir_path, fName);
 end
 
@@ -907,7 +993,7 @@ function saveTrackData_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 [~,fName,~] = fileparts(handles.elecFile);
-dataFileName = fullfile(handles.dir_path,[fName '_particle.mat']);
+dataFileName = fullfile(handles.dir_path,'freqtracks',[fName '_particle.mat']);
 
 [FileName,PathName,~] = uiputfile('*.mat','Save tracked data as ..',dataFileName);
 
@@ -1076,7 +1162,7 @@ elseif get(handles.limMax,'Value')
         handles.bndryX = [-maxLim maxLim];
         handles.bndryY = [-maxLim maxLim];
 elseif get(handles.limManual,'Value')
-    handles.limScale = get(handles.limEdit,'Value');
+    handles.limScale = str2num(get(handles.limEdit,'String'));
     if get(handles.Wild,'Value')
         handles.bndryX = handles.limScale*[-200 200];
         handles.bndryY = handles.limScale*[-200 200];
@@ -1248,3 +1334,57 @@ function uipanel10_SelectionChangeFcn(hObject, eventdata, handles)
 %	OldValue: handle of the previously selected object or empty if none was selected
 %	NewValue: handle of the currently selected object
 % handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in switchHeat.
+function switchHeat_Callback(hObject, eventdata, handles)
+% hObject    handle to switchHeat (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+if strcmp(handles.heatType,'actual')
+    handles.heatType = 'theoretical';
+    set(handles.switchHeat,'String','Plot Frequency Tracks');
+    set(handles.freqPanel,'Title','Theoretical Heatmap');
+elseif strcmp(handles.heatType,'theoretical')
+    handles.heatType = 'actual';
+    set(handles.switchHeat,'String','Plot Theoretical Heat');
+    set(handles.freqPanel,'Title','Frequency Tracks');
+end
+
+% FS_plotHeat(handles);
+FS_plotFreqTrack(handles);
+
+guidata(hObject, handles);
+
+
+% --- Executes on button press in batchProcess.
+function batchProcess_Callback(hObject, eventdata, handles)
+% hObject    handle to batchProcess (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of batchProcess
+
+
+% --- Executes during object creation, after setting all properties.
+function push_track_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to push_track (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+
+% --------------------------------------------------------------------
+function uipanel17_ButtonDownFcn(hObject, eventdata, handles)
+% hObject    handle to uipanel17 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in limManual.
+function limManual_Callback(hObject, eventdata, handles)
+% hObject    handle to limManual (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of limManual

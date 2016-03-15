@@ -1,4 +1,4 @@
-function [particles,w] = FS_initParticles(Ns, nx, motion,tankCoord)
+function [particles,w] = FS_initParticles(Ns, nx, motion, partStart, partRange)
 
 % init_x = 90;
 % init_y = 90;
@@ -36,8 +36,10 @@ function [particles,w] = FS_initParticles(Ns, nx, motion,tankCoord)
 
 particles = zeros(nx,Ns);
 if strcmp(motion,'random')
-    particles(1,:) = rand(1,Ns)*(tankCoord(2,1)-tankCoord(1,1)) + tankCoord(1,1);
-    particles(2,:) = rand(1,Ns)*(tankCoord(4,2)-tankCoord(1,2)) + tankCoord(1,2);
+    particles(1,:) = rand(1,Ns)*(partRange(1)) + partStart(1);
+    particles(2,:) = rand(1,Ns)*(partRange(2)) + partStart(2);
+%     particles(1,:) = rand(1,Ns)*(tankCoord(2,1)-tankCoord(1,1)) + tankCoord(1,1);
+%     particles(2,:) = rand(1,Ns)*(tankCoord(4,2)-tankCoord(1,2)) + tankCoord(1,2);
 %     particles(3,:) = rand(1,Ns)*tankDepth;
 %     particles(3,:) = rand(1,Ns)*2*pi - pi;
      particles(3,:) = rand(1,Ns)*2*pi;
