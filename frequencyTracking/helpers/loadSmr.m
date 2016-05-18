@@ -12,7 +12,11 @@ function handles = loadSmr(handles)
     if smrFileName
         try
             tic;
-            elec = loadSmrFile(smrFilePath,smrFileName,handles.params.smrFilePrefix);
+            if ~isempty(regexp(smrFileName,'*.smr$', 'once'))
+                elec = loadSmrFile(smrFilePath,smrFileName,handles.params.smrFilePrefix);
+            else
+                elec = loadSmrxFile(smrFilePath,smrFileName,handles.params.smrFilePrefix);
+            end
             runTime = toc;
 
             % Verify that the loaded data conforms to the rest of the data
@@ -34,7 +38,7 @@ function handles = loadSmr(handles)
                 handles = writeLog(handles,'File %s not loaded',smrFileName);
             end
         catch
-            handles = writeLog(handles,'Could not load %s (%.2f s)',smrFileName,runTime);
+            handles = writeLog(handles,'Could not load %s',smrFileName);
             progressbar(1);
         end      
     end
