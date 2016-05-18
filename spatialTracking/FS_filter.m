@@ -1,4 +1,4 @@
-function [xk, xhk, wk,idxDesc,yk,ahk] = FS_filter(pf, sys, gAmp, motion, gridcoord, tankcoord, tInt)
+function [xk, xhk, wk,idxDesc,yk,ahk,wkPriorResample,xkPriorResamp] = FS_filter(pf, sys, gAmp, motion, gridcoord, tankcoord, tInt, genLoop,fittedExpModel)
 yk = gAmp - min(gAmp);
 [nx,Ns] = size(pf.x(1:(end-1),:));  
 
@@ -11,13 +11,12 @@ xkm1(3,:) = wrapTo2Pi(xkm1(3,:));
 % xkm1(3,:) = circ_mean(xkm1(3,:));
 
 xk = sys(xkm1, FS_gen_sysv_noise(nx,Ns,motion,tInt));
-
 TruncElecList = ~isnan(yk); 
 ykTrunc = yk(TruncElecList, :);
 % offsetC = 0.01; %140625 - 0.05
 offsetC = 0.00; %Sim
 if sum(TruncElecList)
-    aXk = FS_ObsvModel(xk, gridcoord, tankcoord, motion)';
+    aXk = FS_ObsvModel(xk, gridcoord, tankcoord, motion,fittedExpModel)';
     aXkTrunc = aXk(:,TruncElecList);
     InvKLDist = 1./(offsetC + abs(KLDiv(repmat(ykTrunc',Ns,1), aXkTrunc)));
 %     wk = InvKLDist;
@@ -35,19 +34,23 @@ if sum(wk) == 0 || any(isinf(wk)) || any(isnan(wk))
      wk = wkm1;
 end
 wk = wk./sum(wk);
-
+[~,idxDesc] = sort(wk,'descend'); 
+wkPriorResample = wk;
 %% Compute estimated state
 
 % xhk = sum((repmat(wk(wIdx(1:effPart))',nx,1).*xk(:,wIdx(1:effPart))),2);
 % xhk = sum((repmat(wk(wIdx(1:Neff))',nx,1).*xk(:,wIdx(1:Neff))),2);
 
-age_thresh = 3; %140625 - 6
+age_thresh = 0; %140625 - 6
 idx = find(xk(end,:) >= age_thresh); 
 idxm1 = find(xkm1(end,:) >= age_thresh); 
 
 xhk(1:2,1) = sum((repmat(wk(idx)',nx-1,1).*xk(1:2,idx)),2);
 % xhk(3,1)   = wrapTo2Pi(circ_mean(2*wrapTo2Pi(xk(3,idx)),wk(idx)',2));
-xhk(3,1)   = wrapTo2Pi(circ_mean(acos(cos(2*wrapTo2Pi(xk(3,idx))))/2,wk(idx)',2));
+% xhk(3,1)   = wrapTo2Pi(circ_mean(acos(cos(2*wrapTo2Pi(xk(3,idx))))/2,wk(idx)',2));
+xhk(3,1)   = wrapTo2Pi(circ_mean(xk(3,idx),wk(idx)',2));
+
+% rad2deg(wrapTo2Pi(xhk(3,1)))
 
 xhkm1(1:2,1) = sum((repmat(wkm1(idxm1)',nx-1,1).*xkm1(1:2,idxm1)),2);
 xhkm1(3,1)   = wrapTo2Pi(circ_mean(acos(cos(2*wrapTo2Pi((xkm1(3,idxm1)))))/2,wkm1(idxm1)',2));
@@ -55,7 +58,7 @@ xhkm1(3,1)   = wrapTo2Pi(circ_mean(acos(cos(2*wrapTo2Pi((xkm1(3,idxm1)))))/2,wkm
 % figure(5)
 % hist(wrapTo2Pi(xk(3,idx)),100)
 
-ahk = FS_ObsvModel(xhk, gridcoord, tankcoord, motion)';
+ahk = FS_ObsvModel(xhk, gridcoord, tankcoord, motion,fittedExpModel)';
 % rX = sqrt((xhk(1)-xhkm1(1))^2 + (xhk(2)-xhkm1(2))^2);
 % threshD = 1;
 % if rX > threshD*tInt
@@ -68,21 +71,26 @@ ahk = FS_ObsvModel(xhk, gridcoord, tankcoord, motion)';
 %% Resampling
 
 % % Calculate effective sample size: eq 48, Ref 1
-% resample_percentaje = 0.5;
+% resample_percentaje = 0.8;
 % Neff = floor(1/sum(wk.^2));
 Ns = length(wk);  % Ns = number of particles
 % Neff = floor(0.95*Ns); % Static
 % Neff = floor(0.95*Ns); % Moving 40 - 0.95 %140625.95 .99
-resampled_ratio = 1 ;
+if genLoop < 3
+    resampled_ratio = 0.9 ;
+else
+    resampled_ratio = 1 ;
+end
 
 Neff = floor(resampled_ratio*Ns); % SIm
 %     if Neff < resample_percentaje*Ns;
 %        disp('Resampling ...')
+xkPriorResamp = xk;
        [xk, wk] = resample(xk, wk, xhk, nx, motion, tInt,tankcoord, Neff);
 %        {xk, wk} is an approximate discrete representation of p(x_k | y_{1:k})
 %     end
 
-[~,idxDesc] = sort(wk,'descend');    
+% [~,idxDesc] = sort(wk,'descend');    
 return; %
 
 %% Resampling function
@@ -140,7 +148,12 @@ elseif strcmp(motion, 'randomLineCharge')
 end
 
 % New Particles with random x, y and th 
-[xNew_random, ~] = FS_initParticles(random_particles, nx+1, motion,tankcoord);
+scoutRange = [10;10];
+tankStart = [tankcoord(1,1);tankcoord(1,2)];
+tankRange = [(tankcoord(2,1)-tankcoord(1,1));(tankcoord(4,2)-tankcoord(1,2)) ];
+
+% [xNew_random, ~] = FS_initParticles(random_particles, nx+1, motion,xhk(1:2) - scoutRange/2,scoutRange);
+[xNew_random, ~] = FS_initParticles(random_particles, nx+1, tankStart,tankRange);
 %     size(xNew_random)
 
 xk      = [xk xNew_centered xNew_random];

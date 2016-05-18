@@ -18,7 +18,6 @@ function handles = loadSpec(handles)
             
             % Verify that the loaded data conforms to the rest of the data
             if compareMetaAll(handles,'spec',spec.meta)
-                set(handles.specFileTxt,'String',specFileName);
                 handles.specFileName = specFileName;
                 handles.specFilePath = specFilePath;
                 handles.lastOpenPath = specFilePath;
@@ -37,6 +36,8 @@ function handles = loadSpec(handles)
                 handles = computeResolutions(handles);
                 handles = computeThreshold(handles);
                 handles = refreshPlot(handles);
+                
+                set(handles.specFileTxt,'String',specFileName);
                 handles = writeLog(handles,'Loaded spectrogram file %s (%.2f s)',specFileName,runTime);
             else
                 handles = writeLog(handles,'File %s not loaded',specFileName);

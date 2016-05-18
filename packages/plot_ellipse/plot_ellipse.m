@@ -17,7 +17,7 @@ alpha=[cos(angle) -sin(angle)
  p1=p*alpha;
  
  
-h = patch(cx+p1(:,1),cy+p1(:,2),color,'EdgeColor',color);
+h = patch(cx+p1(:,1),cy+p1(:,2),color(1,:),'EdgeColor',color(2,:));
 
  
    
