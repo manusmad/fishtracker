@@ -12,9 +12,9 @@ tic;
 % Parameters
 ratio12 = 8;
 dF = diff(F(1:2));
-Fsep = dF*2;
-minf1 = 200;
-maxf1 = 800;
+Fsep = dF;
+minf1 = 300;
+maxf1 = 700;
 
 sigs = cell(nT,1);
 parfor_progress(nT);
@@ -69,7 +69,7 @@ parfor tstep = 1:nT
                 [a3,a3idx] = max(f3pks);
 
                 if ~isempty(a2) && ~isempty(a3)
-                    if  a1>=thresh && a2>=thresh/ratio12
+                    if  a1>=thresh && a2>=(thresh/ratio12)
                         nSigs = nSigs+1;
 
                         tSigs(nSigs).f1 = F(f1locs(a1idx));
@@ -107,6 +107,11 @@ progressbar(1,[],[]);
 
 toc;
 
+if isempty(sigs)
+    warning('No signatures found')
+    return;
+end
+
 %% Plot all signatures
 % figure,clf, hold on;
 % colormap('hot');
@@ -142,7 +147,7 @@ parfor tstep = 1:nT
         uF1 = unique([tSigs.f1]);
         
         for k = 1:length(uF1)
-            if sum([tSigs.f1]==uF1(k))>2
+            if sum([tSigs.f1]==uF1(k))>1
                 nCand = nCand+1;
                 tCand(nCand).t = T(tstep);
                 tCand(nCand).f1 = uF1(k);
@@ -177,6 +182,10 @@ parfor_progress(0);
 progressbar([],1,[]);
 toc;
 
+if isempty(cand)
+    warning('No candidates found')
+    return;
+end
 
 %% Plot all candidates
 % figure,clf, hold on;
@@ -202,14 +211,14 @@ fish = [];
 stray = [];
 
 cand = computeComparisonVec(cand);
-thresh = (nCh*0.1+22)/(T(2)-T(1));  % nCh*0.1/dT is for a1s, 10/dT for f1, 2/dT 
+thresh = 3*(nCh*0.1+22)/(T(2)-T(1));  % nCh*0.1/dT is for a1s, 10/dT for f1, 2/dT 
 
 activeFish = [];
 activeConfMin = 0;
 
 strayFish = [];
-strayConfMax = 10;
-strayConfMin = -5;
+strayConfMax = 50;
+strayConfMin = -50;
 
 nFish = 0;
 
@@ -304,13 +313,18 @@ end
 toc;
 progressbar(1);
 
+if isempty(fish)
+    warning('No fish found')
+    return;
+end
+
 %% Plot all fish
 % figure,clf, hold on;
 % colormap('hot');
 % caxis([0,1]);
 % col = distinguishable_colors(nFish,[0,0,0]);
 % 
-% imagesc(T,F,normSmag(:,:,1));
+% % imagesc(T,F,normSmag(:,:,1));
 % 
 % % plot([fish.t],[fish.f1],'.m');
 % for f = 1:nFish

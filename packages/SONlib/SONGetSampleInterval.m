@@ -20,7 +20,7 @@ case {1,6,7,9}
             interval=[];
         end;
         
-    case {6}                                                        % Version 6
+    case {6,7}                                                        % Version 6
         interval=Info.lChanDvd*FileH.usPerTime*FileH.dTimeBase;
         start=header(2,1)*FileH.usPerTime*FileH.dTimeBase;
     end;

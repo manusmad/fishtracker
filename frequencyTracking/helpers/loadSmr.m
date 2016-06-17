@@ -1,10 +1,8 @@
 function handles = loadSmr(handles)
     if isfield(handles,'smrFilePath')
-        [smrFileName,smrFilePath] = uigetfile({[handles.smrFilePath filesep '*.smr'];...
-            [handles.smrFilePath filesep '*.smrx']},'Choose smr file');
+        [smrFileName,smrFilePath] = uigetfile({'*.smr';'*.smrx'},'Choose smr file',handles.smrFilePath);
     elseif isfield(handles,'lastOpenPath')
-        [smrFileName,smrFilePath] = uigetfile({[handles.lastOpenPath filesep '*.smr'];...
-            [handles.lastOpenPath filesep '*.smrx']},'Choose smr file');
+        [smrFileName,smrFilePath] = uigetfile({'*.smr';'*.smrx'},'Choose smr file',handles.lastOpenPath);
     else
         [smrFileName,smrFilePath,~] = uigetfile({'*.smr';'*.smrx'},'Choose smr file');
     end
@@ -12,7 +10,7 @@ function handles = loadSmr(handles)
     if smrFileName
         try
             tic;
-            if ~isempty(regexp(smrFileName,'*.smr$', 'once'))
+            if ~isempty(regexp(smrFileName,'.smr$', 'once'))
                 elec = loadSmrFile(smrFilePath,smrFileName,handles.params.smrFilePrefix);
             else
                 elec = loadSmrxFile(smrFilePath,smrFileName,handles.params.smrFilePrefix);
