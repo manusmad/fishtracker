@@ -22,7 +22,7 @@ function varargout = frequencyTracking(varargin)
 
 % Edit the above text to modify the response to help frequencyTracking
 
-% Last Modified by GUIDE v2.5 27-Aug-2015 12:10:40
+% Last Modified by GUIDE v2.5 22-Jun-2016 07:58:24
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -172,7 +172,66 @@ function rangeT2Edit_Callback(hObject, ~, handles)
     end
     returnFocus(hObject);
     guidata(hObject,handles);
+    
+function minF1Edit_Callback(hObject, ~, handles)
+    num = str2double(get(hObject,'String'));
+    if isnan(num)
+        num = handles.params.minF1;
+        warndlg('Input must be numerical');
+    else
+        if isfield(handles,'spec')
+            if num < handles.spec.F(1)
+                num = handles.spec.F(1);
+            elseif num > handles.spec.F(end)
+                num = handles.spec.F(end);
+            end
+        end
+        
+        if num > handles.params.maxF1
+            num = handles.params.maxF1;
+        end
+    end       
+    handles.params.minF1 = num;
+    set(hObject,'String',num2str(num));
+    returnFocus(hObject);
+    guidata(hObject,handles);
 
+function maxF1Edit_Callback(hObject, ~, handles)
+    num = str2double(get(hObject,'String'));
+    if isnan(num)
+        num = handles.params.maxF1;
+        warndlg('Input must be numerical');
+    else
+        if isfield(handles,'spec')
+            if num < handles.spec.F(1)
+                num = handles.spec.F(1);
+            elseif num > handles.spec.F(end)
+                num = handles.spec.F(end);
+            end
+        end
+        
+        if num < handles.params.minF1
+            num = handles.params.minF1;
+        end
+    end       
+    handles.params.maxF1 = num;
+    set(hObject,'String',num2str(num));
+    returnFocus(hObject);
+    guidata(hObject,handles);
+
+
+function ratio12Edit_Callback(hObject, ~, handles)
+    num = str2double(get(hObject,'String'));
+    if isnan(num)
+        num = handles.params.ratio12;
+        warndlg('Input must be numerical');
+    end
+    
+    handles.params.ratio12 = abs(num);
+    set(hObject,'String',num2str(num));
+    returnFocus(hObject);
+    guidata(hObject,handles);
+    
 % --- Executes on button press in refreshPlotBtn.
 function refreshPlotBtn_Callback(hObject, ~, handles)
     handles = populateTracksList(handles);
@@ -238,7 +297,8 @@ function saveParamsBtn_Callback(hObject, ~, handles)
 function trackBtn_Callback(hObject, ~, handles)
     if isfield(handles,'spec')
         tic;
-        handles.tracks = findTracks(handles.spec.S,handles.spec.F,handles.spec.T,handles.params.thresh);
+        handles.tracks = findTracks(handles.spec.S,handles.spec.F,handles.spec.T,...
+            handles.params.minF1,handles.params.maxF1,handles.params.ratio12,handles.params.thresh);
         runTime = toc;
         
         handles = tracksView(handles);
@@ -497,14 +557,6 @@ function selectPointsBtn_Callback(hObject, ~, handles)
     returnFocus(hObject);
     guidata(hObject,handles);
 
-% --- Executes on button press in constCheckBox.
-function constCheckBox_Callback(hObject, eventdata, handles)
-% hObject    handle to constCheckBox (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of constCheckBox
-
 % --- Executes on button press in rangeRestoreBtn.
 function rangeRestoreBtn_Callback(hObject, ~, handles)
     if isfield(handles,'spec')
@@ -639,6 +691,24 @@ function tracksListBox_CreateFcn(hObject, ~, ~)
         set(hObject,'BackgroundColor','white');
     end
     
+% --- Executes during object creation, after setting all properties.
+function minF1Edit_CreateFcn(hObject, ~, ~)
+    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+        set(hObject,'BackgroundColor','white');
+    end
+    
+% --- Executes during object creation, after setting all properties.
+function maxF1Edit_CreateFcn(hObject, ~, ~)
+    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+        set(hObject,'BackgroundColor','white');
+    end
+
+% --- Executes during object creation, after setting all properties.
+function ratio12Edit_CreateFcn(hObject, ~, ~)
+    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+        set(hObject,'BackgroundColor','white');
+    end
+    
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% KEYPRESS CALLBACKS FOR KEYBOARD SHORTCUTS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -661,6 +731,8 @@ function figure1_KeyPressFcn(hObject, eventdata, handles)
 function log_KeyPressFcn(hObject, eventdata, handles)
     handles = manageKeyPresses(handles,eventdata);
     guidata(hObject,handles);
+    
+ 
 
 function returnFocus(hObject)
     set(hObject, 'Enable', 'off');

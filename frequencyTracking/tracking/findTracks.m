@@ -1,4 +1,4 @@
-function fish = findTracks(S,F,T,thresh)
+function fish = findTracks(S,F,T,minF1,maxF1,ratio12,thresh)
 
 dF = F(2)-F(1);
 dT = T(2)-T(1);
@@ -7,6 +7,18 @@ normSmag = normSpecMag(S);
 Smag = abs(S);
 Sphs = angle(S);
 [~,nT,nCh] = size(S);
+
+% Default values for parameters
+if nargin<4 || isempty(minF1) 
+    minF1 = 200;
+elseif nargin<5 || isempty(maxF1)
+    maxF1 = 800;
+elseif nargin<6 || isempty(ratio12)
+    ratio12 = 8;
+elseif nargin<7 || isempty(thresh)
+    thresh = 0.2;
+end
+
 
 progressbar('Finding Signatures...','Clustering Candidates...','Tracing Tracks...');
 
@@ -47,12 +59,8 @@ progressbar('Finding Signatures...','Clustering Candidates...','Tracing Tracks..
 
 %% Find signatures (electrode-by-electrode fft peak analysis)
 tic;
-% Parameters
-ratio12 = 8;
-Fsep = dF;
-minf1 = 290;
-maxf1 = 450;
 
+Fsep = dF;
 sigs = cell(nT,1);
 parfor_progress(nT);
 parfor tstep = 1:nT    
@@ -92,7 +100,7 @@ parfor tstep = 1:nT
                 harmIdx(:,harm) = abs(F(locs)-harm*f1) <= Fsep;
             end
             
-            if f1>minf1 && f1<maxf1 && nHarm>=3
+            if f1>minF1 && f1<maxF1 && nHarm>=3
                 f1pks = pks(harmIdx(:,1));
                 f1locs = locs(harmIdx(:,1));
                 [a1,a1idx] = max(f1pks);
@@ -277,7 +285,7 @@ for j = 1:n
 end
 
 
-%% Step 2: Join all the tracks with the same end points
+% Step 2: Join all the tracks with the same end points
 tracks2 = mat2cell(tracks,2,ones(1,size(tracks,2)));
 
 k = 1;
@@ -299,7 +307,7 @@ while k<length(tracks2)
     flag = 1;
 end
 
-%% Step3: Try to combine tracks together with distance metric
+% Step3: Try to combine tracks together with distance metric
 tracks3 = tracks2;
 
 k = 1;
@@ -307,7 +315,7 @@ flag = 1;
 
 while k<length(tracks3)
     while flag
-        dist = cellfun(@(x) pdist2(cand(tracks3{k}(end)).vec',cand(x(1)).vec') + (0.1/dT)*abs(cand(tracks3{k}(end)).t - cand(x(1)).t),tracks3(k+1:end));
+        dist = cellfun(@(x) pdist2(cand(tracks3{k}(end)).vec',cand(x(1)).vec') + (0.05/dT)*abs(cand(tracks3{k}(end)).t - cand(x(1)).t),tracks3(k+1:end));
         lt = cellfun(@(x) cand(tracks3{k}(end)).t < cand(x(1)).t,tracks3(k+1:end));
         nextIdx = find(dist<thresh & lt,1);
         flag = ~isempty(nextIdx);
@@ -323,8 +331,7 @@ end
 len = cellfun(@(x) length(x),tracks3);
 tracks3(len<(1/dT)) = [];
 
-%% Arrange into structure
-
+% Arrange into structure
 fish = [];
 for k = 1:length(tracks3)
     trackCands = cand(tracks3{k});
