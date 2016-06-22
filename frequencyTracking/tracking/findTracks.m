@@ -1,5 +1,8 @@
 function fish = findTracks(S,F,T,thresh)
 
+dF = F(2)-F(1);
+dT = T(2)-T(1);
+
 normSmag = normSpecMag(S);
 Smag = abs(S);
 Sphs = angle(S);
@@ -7,14 +10,48 @@ Sphs = angle(S);
 
 progressbar('Finding Signatures...','Clustering Candidates...','Tracing Tracks...');
 
+%% Sigmatures and candidates by edge detection
+
+% minf1 = 290;
+% maxf1 = 450;
+% [~,minf1idx] = min(abs(F-minf1));
+% [~,maxf1idx] = min(abs(F-maxf1));
+% minf1 = F(minf1idx);
+% maxf1 = F(maxf1idx);
+% [~,minf2idx] = min(abs(F-2*minf1));
+% [~,maxf2idx] = min(abs(F-2*maxf1));
+% 
+% normSmag1 = normSpecMag(S(minf1idx:maxf1idx,:,:));
+% normSmag2 = normSpecMag(S(minf2idx:2:maxf2idx,:,:));
+% 
+% [BW1,BW2] = deal(zeros(size(normSmag1)));
+% for c = 1:nCh
+%     BW1(:,:,c) = edge(normSmag1(:,:,c),'canny',[],1);
+%     BW2(:,:,c) = edge(normSmag2(:,:,c),'canny',[],1);
+% end
+% 
+% Sthresh = zeros(size(S));
+% Sthresh(minf1idx:maxf1idx,:,:) = BW1 & BW2;
+% 
+% Scand = sum(Sthresh,3)>2;
+% 
+% figure,clf, hold on;
+% 
+% imagesc(T,F(minf1idx:maxf1idx),Scand(minf1idx:maxf1idx,:));
+% 
+% xlim([T(1),T(end)]);
+% ylim([minf1,maxf1]);
+% set(gca, 'YDir', 'normal');
+% hold off;
+
+
 %% Find signatures (electrode-by-electrode fft peak analysis)
 tic;
 % Parameters
 ratio12 = 8;
-dF = diff(F(1:2));
 Fsep = dF;
-minf1 = 300;
-maxf1 = 700;
+minf1 = 290;
+maxf1 = 450;
 
 sigs = cell(nT,1);
 parfor_progress(nT);
@@ -201,96 +238,242 @@ end
 % ylim([minf1,maxf1]);
 % set(gca, 'YDir', 'normal');
 % hold off;
-
-
-%% Find fish (assign id to each candidate)
+    
+%% Step 1: Find all 1-step connections between candidates and add them as tracks
 disp('Finding fish...');
 tic;
 
-fish = [];
-stray = [];
-
 cand = computeComparisonVec(cand);
-thresh = 3*(nCh*0.1+22)/(T(2)-T(1));  % nCh*0.1/dT is for a1s, 10/dT for f1, 2/dT 
+thresh = 30;
+tracks = [];
 
-activeFish = [];
-activeConfMin = 0;
+n = round(5/dT);
 
-strayFish = [];
-strayConfMax = 50;
-strayConfMin = -50;
-
-nFish = 0;
-
-for tstep = 1:nT
-    progressbar([],[],tstep/nT);
-    tCand = cand([cand.t]==T(tstep));
-    
-    % If there are candidates at this timestep
-    if ~isempty(tCand)
-        % If there are active fish, match candidates with them
-        if ~isempty(activeFish)
-            % Match with activeFish
-            [R,C] = matchHungarian(activeFish,tCand,thresh);
-            activeFish(R) = updateFishWithCandidate(activeFish(R),tCand(C));
-            activeFish(R) = increaseConfidence(activeFish(R));
-            NR = find(~ismember(1:length(activeFish),R));
-            activeFish(NR) = decreaseConfidence(activeFish(NR));
-            
-            % Add to fish list and eliminate those candidates
-            fish = [fish activeFish(R)];
-            tCand(C) = [];
-            
-            % Discard bad active
-            activeFish([activeFish.conf]<activeConfMin) = [];
-        end
-    end
-        
-    % Match remaining candidates with strays
-    if ~isempty(tCand)
-        if ~isempty(strayFish)
-            % Match with strays
-            [R,C] = matchHungarian(strayFish,tCand,thresh);
-
-            strayFish(R) = updateFishWithCandidate(strayFish(R),tCand(C));
-            strayFish(R) = increaseConfidence(strayFish(R));
-            NR = find(~ismember(1:length(strayFish),R));
-            strayFish(NR) = decreaseConfidence(strayFish(NR));
-
-            stray = [stray strayFish(R)]; 
-            tCand(C) = [];
-        else
-            strayFish = fishFromCandidate(tCand,nFish+1:nFish+length(tCand),zeros(1,length(tCand)));
-            nFish = nFish + length(tCand);
-            
-            tCand = [];
-        end
-    end  
-        
-    % Still remaining, add all to stray
-    if ~isempty(tCand)
-        newStrays = fishFromCandidate(tCand,nFish+1:nFish+length(tCand),zeros(1,length(tCand)));
-        nFish = nFish + length(tCand);
-        strayFish = [strayFish newStrays];
-    end
-         
-    if ~isempty(strayFish)
-        % Integrate good strays into active
-        goodIdx = find([strayFish.conf]>=strayConfMax);
-        for g = 1:length(goodIdx)
-            idx = [stray.id]==strayFish(goodIdx(g)).id;
-            fish = [fish stray(idx)];
-            stray(idx) = [];
-        end
-        activeFish = [activeFish strayFish(goodIdx)];
-        strayFish(goodIdx) = [];
-
-        % Discard bad strays
-        badIdx = [strayFish.conf]<=strayConfMin;
-        strayFish(badIdx) = [];
-    end
+tCandIdx = cell(nT,1);
+for k = 1:nT
+    tCandIdx{k} = find([cand.t]==T(k));
 end
 
+for j = 1:n
+    fprintf('\nLooking for %d-connected tracks\n',j);
+    tic;
+    for k = 1:(nT-j)
+        cand1idx = tCandIdx{k};
+        cand2idx = tCandIdx{k+j};
+
+        if ~isempty(tracks)
+            cand1idx = cand1idx(~ismember(cand1idx,tracks(1,:)));
+            cand2idx = cand2idx(~ismember(cand2idx,tracks(2,:)));
+        end
+        
+        if ~isempty(cand1idx) && ~isempty(cand2idx)
+            [R,C] = matchHungarian(cand(cand1idx),cand(cand2idx),thresh);
+            
+            tracks = [tracks,[cand1idx(R);cand2idx(C)]];
+        end
+    end
+    toc;
+    fprintf('%d tracks found so far\n',length(tracks))
+end
+
+
+%% Step 2: Join all the tracks with the same end points
+tracks2 = mat2cell(tracks,2,ones(1,size(tracks,2)));
+
+k = 1;
+flag = 1;
+
+trackStart = cellfun(@(x) x(1),tracks2);
+
+while k<length(tracks2)
+    while flag
+        nextIdx = find(tracks2{k}(end)==trackStart(k+1:end),1);
+        flag = ~isempty(nextIdx);
+        if flag
+            tracks2{k} = [tracks2{k}(1:end-1);tracks2{nextIdx+k}];
+            tracks2(nextIdx+k) = [];
+            trackStart(nextIdx+k) = [];
+        end
+    end
+    k = k+1;
+    flag = 1;
+end
+
+%% Step3: Try to combine tracks together with distance metric
+tracks3 = tracks2;
+
+k = 1;
+flag = 1;
+
+while k<length(tracks3)
+    while flag
+        dist = cellfun(@(x) pdist2(cand(tracks3{k}(end)).vec',cand(x(1)).vec') + (0.1/dT)*abs(cand(tracks3{k}(end)).t - cand(x(1)).t),tracks3(k+1:end));
+        lt = cellfun(@(x) cand(tracks3{k}(end)).t < cand(x(1)).t,tracks3(k+1:end));
+        nextIdx = find(dist<thresh & lt,1);
+        flag = ~isempty(nextIdx);
+        if flag
+            tracks3{k} = [tracks3{k}(1:end-1);tracks3{nextIdx+k}];
+            tracks3(nextIdx+k) = [];
+        end
+    end
+    k = k+1;
+    flag = 1;
+end
+
+len = cellfun(@(x) length(x),tracks3);
+tracks3(len<(1/dT)) = [];
+
+%% Arrange into structure
+
+fish = [];
+for k = 1:length(tracks3)
+    trackCands = cand(tracks3{k});
+    [trackCands.id] = deal(k);
+    [trackCands.conf] = deal(length(trackCands));
+    fish = [fish,trackCands];
+end
+
+
+%% Plot all tracks
+% figure,clf, hold on;
+% colormap('hot');
+% caxis([0,1]);
+% 
+% imagesc(T,F,normSmag(:,:,1));
+% 
+% % col = distinguishable_colors(length(tracks2),'k');
+% % for k = 1:length(tracks2)
+% %     plot([cand(tracks2{k}).t],[cand(tracks2{k}).f1],'.-','MarkerSize',20,'LineWidth',1,'Color',col(k,:));
+% % end
+% 
+% col = distinguishable_colors(length(tracks3),'k');
+% for k = 1:length(tracks3)
+%     plot([cand(tracks3{k}).t],[cand(tracks3{k}).f1],'.-','MarkerSize',20,'LineWidth',1,'Color',col(k,:));
+% end
+% 
+% xlim([T(1),T(end)]);
+% ylim([minf1,maxf1]);
+% set(gca, 'YDir', 'normal');
+% hold off;
+
+
+%% Find fish (assign id to each candidate)
+% disp('Finding fish...');
+% tic;
+% 
+% fish = [];
+% stray = [];
+% 
+% cand = computeComparisonVec(cand);
+% thresh = 30;%3*(nCh*0.1+22)/(T(2)-T(1));  % nCh*0.1/dT is for a1s, 10/dT for f1, 2/dT 
+% 
+% activeFish = [];
+% activeConfMin = 0;
+% 
+% strayFish = [];
+% strayConfMax = 30;
+% strayConfMin = -50;
+% 
+% nFish = 0;
+% 
+% for tstep = 1:nT
+%     progressbar([],[],tstep/nT);
+%     tCand = cand([cand.t]==T(tstep));
+%     
+%     % If there are candidates at this timestep
+%     if ~isempty(tCand)
+%         % If there are active fish, match candidates with them
+%         if ~isempty(activeFish)
+%             % Match with activeFish
+%             [R,C] = matchHungarian(activeFish,tCand,thresh);
+%             activeFish(R) = updateFishWithCandidate(activeFish(R),tCand(C));
+%             activeFish(R) = increaseConfidence(activeFish(R));
+%             NR = find(~ismember(1:length(activeFish),R));
+%             activeFish(NR) = decreaseConfidence(activeFish(NR));
+%             
+%             % Add to fish list and eliminate those candidates
+%             fish = [fish activeFish(R)];
+%             tCand(C) = [];
+%             
+%             % Discard bad active
+%             activeFish([activeFish.conf]<activeConfMin) = [];
+%         end
+%     end
+%         
+%     % Match remaining candidates with strays
+%     if ~isempty(tCand)
+%         if ~isempty(strayFish)
+%             % Match with strays
+%             [R,C] = matchHungarian(strayFish,tCand,thresh);
+% 
+%             strayFish(R) = updateFishWithCandidate(strayFish(R),tCand(C));
+%             strayFish(R) = increaseConfidence(strayFish(R));
+%             NR = find(~ismember(1:length(strayFish),R));
+%             strayFish(NR) = decreaseConfidence(strayFish(NR));
+% 
+%             stray = [stray strayFish(R)]; 
+%             tCand(C) = [];
+%         else
+%             strayFish = fishFromCandidate(tCand,nFish+1:nFish+length(tCand),zeros(1,length(tCand)));
+%             nFish = nFish + length(tCand);
+%             
+%             tCand = [];
+%         end
+%     end  
+%         
+%     % Still remaining, add all to stray
+%     if ~isempty(tCand)
+%         newStrays = fishFromCandidate(tCand,nFish+1:nFish+length(tCand),zeros(1,length(tCand)));
+%         nFish = nFish + length(tCand);
+%         strayFish = [strayFish newStrays];
+%     end
+%          
+%     if ~isempty(strayFish)
+%         % Integrate good strays into active
+%         goodIdx = find([strayFish.conf]>=strayConfMax);
+%         for g = 1:length(goodIdx)
+%             idx = [stray.id]==strayFish(goodIdx(g)).id;
+%             fish = [fish stray(idx)];
+%             stray(idx) = [];
+%         end
+%         activeFish = [activeFish strayFish(goodIdx)];
+%         strayFish(goodIdx) = [];
+% 
+%         % Discard bad strays
+%         badIdx = [strayFish.conf]<=strayConfMin;
+%         strayFish(badIdx) = [];
+%     end
+%     
+%     % Plot all fish
+% %     figure(1),clf, hold on;
+% %     colormap('hot');
+% %     caxis([0,1]);
+% %     col = distinguishable_colors(nFish,[0,0,0]);
+% % 
+% %     imagesc(T,F,normSmag(:,:,1));
+% %     
+% %     if ~isempty(stray)
+% %         for f = unique([stray.id])
+% %             idx = [stray.id]==f;
+% %             plot([stray(idx).t],[stray(idx).f1],'.','Color','w','MarkerSize',25);
+% %         end
+% %     end
+% %     
+% %     if ~isempty(fish)
+% %         for f = unique([fish.id])
+% %             idx = [fish.id]==f;
+% %             plot([fish(idx).t],[fish(idx).f1],'.','Color',col(f,:),'MarkerSize',25);
+% %         end
+% %     end
+% %     
+% %     xlim([T(1),T(end)]);
+% %     ylim([minf1,maxf1]);
+% %     set(gca, 'YDir', 'normal');
+% %     hold off;
+% %     waitforbuttonpress;
+% end
+
+%%
 % Before returning, re-assign and sort ids by mean frequency
 if ~isempty(fish)
     uId = unique([fish.id]);
