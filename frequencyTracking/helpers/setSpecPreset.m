@@ -9,6 +9,9 @@ function handles = setSpecPreset(handles)
     elseif strcmp(preset,'Tank')
         handles.params.nFFT = 16384;
         handles.params.overlap = 0.9375;
+    elseif strcmp(preset,'Wild')
+        handles.params.nFFT = 32768;
+        handles.params.overlap = 0.96875;
     end
     set(handles.nFFTEdit,'String',num2str(handles.params.nFFT));
     set(handles.overlapEdit,'String',num2str(handles.params.overlap));

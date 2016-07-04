@@ -146,7 +146,7 @@ parfor tstep = 1:nT
 end
 
 sigs = [sigs{:}];
-nSigs = length(sigs);
+% nSigs = length(sigs);
 parfor_progress(0);
 progressbar(1,[],[]);
 
@@ -221,7 +221,7 @@ parfor tstep = 1:nT
 end
 
 cand = [cand{:}];
-nCand = length(cand);
+% nCand = length(cand);
 
 parfor_progress(0);
 progressbar([],1,[]);
