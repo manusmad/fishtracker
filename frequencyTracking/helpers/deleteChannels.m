@@ -12,6 +12,7 @@ function handles = deleteChannels(handles)
     if isfield(handles,'spec')
         handles.spec.S(:,:,delidx) = [];
         handles.Smag(:,:,delidx) = [];
+        handles.normSmag(:,:,delidx) = [];
         handles.Sthresh(:,:,delidx) = [];
         handles.spec.meta = handles.meta;
     end

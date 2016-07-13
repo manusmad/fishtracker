@@ -22,7 +22,7 @@ function varargout = frequencyTracking(varargin)
 
 % Edit the above text to modify the response to help frequencyTracking
 
-% Last Modified by GUIDE v2.5 22-Jun-2016 07:58:24
+% Last Modified by GUIDE v2.5 12-Jul-2016 22:24:50
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -229,6 +229,9 @@ function ratio12Edit_Callback(hObject, ~, handles)
     
     handles.params.ratio12 = abs(num);
     set(hObject,'String',num2str(num));
+    
+    handles = computeThreshold(handles);
+    handles = refreshPlot(handles);
     returnFocus(hObject);
     guidata(hObject,handles);
     
@@ -494,7 +497,13 @@ function deleteTracksBtn_Callback(hObject, ~, handles)
 function cleanTracksBtn_Callback(hObject, ~, handles)
     handles = cleanTracksAction(handles);
     returnFocus(hObject);
-    guidata(hObject,handles); 
+    guidata(hObject,handles);
+
+% --- Executes on button press in interpolateTracksBtn.
+function interpolateTracksBtn_Callback(hObject, ~, handles)
+    handles = interpolateTracksAction(handles);
+    returnFocus(hObject);
+    guidata(hObject,handles);
 
 % --- Executes on button press in joinTracksBtn.
 function joinTracksBtn_Callback(hObject, ~, handles)

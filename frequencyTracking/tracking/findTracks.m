@@ -16,7 +16,7 @@ elseif nargin<5 || isempty(maxF1)
 elseif nargin<6 || isempty(ratio12)
     ratio12 = 8;
 elseif nargin<7 || isempty(thresh)
-    thresh = 0.2;
+    thresh = 0.5;
 end
 
 
@@ -69,7 +69,7 @@ parfor tstep = 1:nT
     'p1',cell(1),'p2',cell(1));
     nSigs = 0;
     
-    za = squeeze(normSmag(:,tstep,:));
+    za = squeeze(Smag(:,tstep,:));
     zm = squeeze(Smag(:,tstep,:));
     zp = squeeze(Sphs(:,tstep,:));
   
@@ -94,13 +94,13 @@ parfor tstep = 1:nT
         while(~isempty(locs))
             % If this is the fundamental, find all the peaks at harmonics
             f1 = F(locs(1));
-            nHarm = 3;%floor(F(end)/f1);
+            nHarm = 2;%floor(F(end)/f1);
             harmIdx = false(length(locs),nHarm);
             for harm = 1:nHarm             
                 harmIdx(:,harm) = abs(F(locs)-harm*f1) <= Fsep;
             end
             
-            if f1>minF1 && f1<maxF1 && nHarm>=3
+            if f1>minF1 && f1<maxF1 %&& nHarm>=2
                 f1pks = pks(harmIdx(:,1));
                 f1locs = locs(harmIdx(:,1));
                 [a1,a1idx] = max(f1pks);
@@ -109,11 +109,11 @@ parfor tstep = 1:nT
                 f2locs = locs(harmIdx(:,2));
                 [a2,a2idx] = max(f2pks);
                 
-                f3pks = pks(harmIdx(:,3));
-                f3locs = locs(harmIdx(:,3));
-                [a3,a3idx] = max(f3pks);
+%                 f3pks = pks(harmIdx(:,3));
+%                 f3locs = locs(harmIdx(:,3));
+%                 [a3,a3idx] = max(f3pks);
 
-                if ~isempty(a2) && ~isempty(a3)
+                if ~isempty(a2)% && ~isempty(a3)
                     if  a1>=thresh && a2>=(thresh/ratio12)
                         nSigs = nSigs+1;
 
@@ -125,8 +125,8 @@ parfor tstep = 1:nT
                         tSigs(nSigs).a2 = zm(f2locs(a2idx),c);
                         tSigs(nSigs).p2 = zp(f2locs(a2idx),c);
 
-                        tSigs(nSigs).a3 = zm(f3locs(a3idx),c);
-                        tSigs(nSigs).p3 = zp(f3locs(a3idx),c);
+%                         tSigs(nSigs).a3 = zm(f3locs(a3idx),c);
+%                         tSigs(nSigs).p3 = zp(f3locs(a3idx),c);
 % 
                         tSigs(nSigs).ch = c;
                         tSigs(nSigs).t = T(tstep);                
@@ -163,16 +163,16 @@ end
 % caxis([0,1]);
 % 
 % imagesc(T,F,normSmag(:,:,1));
+% % plot([sigs([sigs.ch]==5).t],[sigs([sigs.ch]==5).f1],'.g');
 % plot([sigs.t],[sigs.f1],'.g');
 % 
 % xlim([T(1),T(end)]);
-% ylim([minf1,maxf1]);
+% ylim([minF1,maxF1]);
 % set(gca, 'YDir', 'normal');
 % hold off;
 
 
 %% Find candidates
-
 tic;
 cand = cell(nT,1);
    
@@ -243,7 +243,7 @@ end
 % plot([cand.t],[cand.f1],'.m');
 % 
 % xlim([T(1),T(end)]);
-% ylim([minf1,maxf1]);
+% ylim([minF1,maxF1]);
 % set(gca, 'YDir', 'normal');
 % hold off;
     
@@ -252,7 +252,7 @@ disp('Finding fish...');
 tic;
 
 cand = computeComparisonVec(cand);
-thresh = 30;
+thresh = 50;
 tracks = [];
 
 n = round(5/dT);
@@ -315,7 +315,7 @@ flag = 1;
 
 while k<length(tracks3)
     while flag
-        dist = cellfun(@(x) pdist2(cand(tracks3{k}(end)).vec',cand(x(1)).vec') + (0.05/dT)*abs(cand(tracks3{k}(end)).t - cand(x(1)).t),tracks3(k+1:end));
+        dist = cellfun(@(x) pdist2(cand(tracks3{k}(end)).vec',cand(x(1)).vec') + (0.5/dT)*abs(cand(tracks3{k}(end)).t - cand(x(1)).t),tracks3(k+1:end));
         lt = cellfun(@(x) cand(tracks3{k}(end)).t < cand(x(1)).t,tracks3(k+1:end));
         nextIdx = find(dist<thresh & lt,1);
         flag = ~isempty(nextIdx);
@@ -328,6 +328,7 @@ while k<length(tracks3)
     flag = 1;
 end
 
+% Delete tiny tracks
 len = cellfun(@(x) length(x),tracks3);
 tracks3(len<(1/dT)) = [];
 
@@ -339,7 +340,6 @@ for k = 1:length(tracks3)
     [trackCands.conf] = deal(length(trackCands));
     fish = [fish,trackCands];
 end
-
 
 %% Plot all tracks
 % figure,clf, hold on;
@@ -508,22 +508,24 @@ if isempty(fish)
     return;
 end
 
+nFish = length(fish);
+
 %% Plot all fish
 % figure,clf, hold on;
 % colormap('hot');
 % caxis([0,1]);
-% col = distinguishable_colors(nFish,[0,0,0]);
+% % col = distinguishable_colors(nFish,[0,0,0]);
 % 
-% % imagesc(T,F,normSmag(:,:,1));
+% imagesc(T,F,normSmag(:,:,1));
 % 
 % % plot([fish.t],[fish.f1],'.m');
 % for f = 1:nFish
 %     idx = [fish.id]==f;
-%     plot([fish(idx).t],[fish(idx).f1],'.','Color',col(f,:));
+%     plot([fish(idx).t],[fish(idx).f1],'.');%,'Color',col(f,:));
 % end
 % 
 % xlim([T(1),T(end)]);
-% ylim([minf1,maxf1]);
+% ylim([minF1,maxF1]);
 % set(gca, 'YDir', 'normal');
 % hold off;
 

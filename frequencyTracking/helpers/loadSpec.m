@@ -28,7 +28,8 @@ function handles = loadSpec(handles)
                 set(handles.nFFTEdit,'String',num2str(spec.meta.nFFT));
                 handles.params.overlap = spec.meta.overlap;
                 set(handles.overlapEdit,'String',num2str(spec.meta.overlap));
-                handles.Smag = normSpecMag(spec.S);
+                handles.normSmag = normSpecMag(spec.S);
+                handles.Smag = abs(spec.S);
 
                 handles = setRanges(handles,spec.F(1),spec.F(end),spec.T(1),spec.T(end));
                 handles = createSubplots(handles);

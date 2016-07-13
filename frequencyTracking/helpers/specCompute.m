@@ -5,8 +5,9 @@ function handles = specCompute(handles)
         spec.meta.nFFT = handles.params.nFFT;
         spec.meta.overlap = handles.params.overlap;
         handles.meta = spec.meta;
-        handles.Smag = normSpecMag(spec.S);
-
+        handles.normSmag = normSpecMag(spec.S);
+        handles.Smag = abs(spec.S);
+        
         runTime = toc;
         handles.spec = spec;
         handles = setRanges(handles,spec.F(1),spec.F(end),spec.T(1),spec.T(end));

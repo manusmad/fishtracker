@@ -22,6 +22,7 @@ function handles = trimRange(handles)
         
         handles.spec = spec;
         handles.meta = spec.meta;
-        handles.Smag = normSpecMag(spec.S);
+        handles.normSmag = normSpecMag(spec.S);
+        handles.Smag = abs(spec.S);
     end
     handles = computeResolutions(handles);

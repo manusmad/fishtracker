@@ -61,7 +61,7 @@ function handles = refreshPlot(handles)
                 if handles.params.viewSpec && isfield(handles,'spec')
                     chan = get(handles.channelListBox,'Value');
                     chan = chan(1);
-                    [plotFlag,handles.hSpec] = plotSpectrogram(handles.hSingle,handles.spec.T,handles.spec.F,handles.Smag(:,:,chan));
+                    [plotFlag,handles.hSpec] = plotSpectrogram(handles.hSingle,handles.spec.T,handles.spec.F,handles.normSmag(:,:,chan));
                 end
 
                 % Plot tracks
@@ -85,7 +85,7 @@ function handles = refreshPlot(handles)
 
                 % Plot spectrogram
                 if handles.params.viewSpec && isfield(handles,'spec')
-                    [plotFlag,handles.hSpec] = plotSpectrogram(handles.hSingle,handles.spec.T,handles.spec.F,mean(handles.Smag,3));
+                    [plotFlag,handles.hSpec] = plotSpectrogram(handles.hSingle,handles.spec.T,handles.spec.F,mean(handles.normSmag,3));
                 end
 
                 % Plot tracks
@@ -110,7 +110,7 @@ function handles = refreshPlot(handles)
 
                     % Plot spectrogram
                     if handles.params.viewSpec && isfield(handles,'spec')
-                        [plotFlag,handles.hSpec] = plotSpectrogram(handles.hSub(k),handles.spec.T,handles.spec.F,handles.Smag(:,:,k));
+                        [plotFlag,handles.hSpec] = plotSpectrogram(handles.hSub(k),handles.spec.T,handles.spec.F,handles.normSmag(:,:,k));
                         
                         % Set callback function for image clicking
                         set(handles.hSpec,'ButtonDownFcn',{@subFigClickCallBack,handles});
