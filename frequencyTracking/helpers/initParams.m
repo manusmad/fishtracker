@@ -29,9 +29,6 @@ function handles = initParams(handles)
    
     handles.params.thresh = 0.2;
    
-    handles = setParams(handles);
-    handles = setUndoVisibility(handles);
-    
     handles.params.viewMode = 'Normal';
     handles.viewModePanel.SelectedObject = handles.viewNormalRadioBtn;
     handles = viewModeChanged(handles);
@@ -41,3 +38,6 @@ function handles = initParams(handles)
     handles = viewChannelsChanged(handles);
 
     uistack(handles.multiPlotPanel,'top');
+    
+    handles = setParams(handles);
+    handles = setUndoVisibility(handles);

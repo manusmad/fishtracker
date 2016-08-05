@@ -177,7 +177,7 @@ tic;
 cand = cell(nT,1);
    
 parfor_progress(nT);
-parfor tstep = 1:nT
+for tstep = 1:nT
     tCand = struct('t',cell(1),'f1',cell(1),...
         'a1',cell(1),'a2',cell(1),'a3',cell(1),...
         'p1',cell(1),'p2',cell(1),'p3',cell(1));
@@ -189,7 +189,46 @@ parfor tstep = 1:nT
     tSigs = sigs([sigs.t]==T(tstep));
 
     if ~isempty([tSigs.f1])
+        % There should not be peaks in adjacent frequency bins. If so,
+        % combine them.
+        [~,fidx] = sort([tSigs.f1]);
+        tSigs = tSigs(fidx);
+        
         uF1 = unique([tSigs.f1]);
+        
+        ddF1 = diff([0,diff(uF1)<3*dF,0]);        
+        fBlockStart = find(ddF1==1);
+        fBlockEnd = find(ddF1==-1);
+        nFBlocks = length(fBlockStart);
+        
+        f1Count = ones(size(uF1));
+        
+        % Resolve continuous blocks
+        for k = 1:nFBlocks
+            nCand = nCand+1;
+            tCand(nCand).t = T(tstep);
+            
+            tSigsF = tSigs(ismember([tSigs.f1],uF1(fBlockStart(k):fBlockEnd(k))));
+            [~,maxidx] = max([tSigsF.a1]);
+            
+            tCand(nCand).f1 = tSigsF(maxidx).f1;
+            
+            [~,f1idx] = min(abs(F-tCand(nCand).f1));
+            [~,f2idx] = min(abs(F-tCand(nCand).f1*2));
+            [~,f3idx] = min(abs(F-tCand(nCand).f1*3));
+            
+            tCand(nCand).a1 = squeeze(zm(f1idx,:))';
+            tCand(nCand).a2 = squeeze(zm(f2idx,:))';
+            tCand(nCand).a3 = squeeze(zm(f3idx,:))';
+
+            tCand(nCand).p1 = squeeze(zp(f1idx,:))';
+            tCand(nCand).p2 = squeeze(zp(f2idx,:))';
+            tCand(nCand).p3 = squeeze(zp(f3idx,:))';
+            
+            f1Count(fBlockStart(k):fBlockEnd(k)) = 0;
+        end
+        
+        uF1 = uF1(logical(f1Count));
         
         for k = 1:length(uF1)
             if sum([tSigs.f1]==uF1(k))>1
@@ -252,7 +291,7 @@ disp('Finding fish...');
 tic;
 
 cand = computeComparisonVec(cand);
-thresh = 50;
+thresh = 200;
 tracks = [];
 
 n = round(5/dT);
@@ -283,7 +322,7 @@ for j = 1:n
     toc;
     fprintf('%d tracks found so far\n',length(tracks))
 end
-
+%%
 
 % Step 2: Join all the tracks with the same end points
 tracks2 = mat2cell(tracks,2,ones(1,size(tracks,2)));
@@ -307,7 +346,7 @@ while k<length(tracks2)
     flag = 1;
 end
 
-% Step3: Try to combine tracks together with distance metric
+%% Step3: Try to combine tracks together with distance metric
 tracks3 = tracks2;
 
 k = 1;
@@ -316,8 +355,9 @@ flag = 1;
 while k<length(tracks3)
     while flag
         dist = cellfun(@(x) pdist2(cand(tracks3{k}(end)).vec',cand(x(1)).vec') + (0.5/dT)*abs(cand(tracks3{k}(end)).t - cand(x(1)).t),tracks3(k+1:end));
+        fdist = cellfun(@(x) pdist2(cand(tracks3{k}(end)).f1',cand(x(1)).f1'),tracks3(k+1:end));
         lt = cellfun(@(x) cand(tracks3{k}(end)).t < cand(x(1)).t,tracks3(k+1:end));
-        nextIdx = find(dist<thresh & lt,1);
+        nextIdx = find(dist<thresh & fdist<1 & lt,1);
         flag = ~isempty(nextIdx);
         if flag
             tracks3{k} = [tracks3{k}(1:end-1);tracks3{nextIdx+k}];
@@ -329,8 +369,8 @@ while k<length(tracks3)
 end
 
 % Delete tiny tracks
-len = cellfun(@(x) length(x),tracks3);
-tracks3(len<(1/dT)) = [];
+% len = cellfun(@(x) length(x),tracks3);
+% tracks3(len<(1/dT)) = [];
 
 % Arrange into structure
 fish = [];
@@ -348,18 +388,22 @@ end
 % 
 % imagesc(T,F,normSmag(:,:,1));
 % 
+% % for k = 1:length(tracks)
+% %     plot([cand(tracks(:,k)).t],[cand(tracks(:,k)).f1],'.-','MarkerSize',20,'LineWidth',1);
+% % end
+% 
 % % col = distinguishable_colors(length(tracks2),'k');
 % % for k = 1:length(tracks2)
 % %     plot([cand(tracks2{k}).t],[cand(tracks2{k}).f1],'.-','MarkerSize',20,'LineWidth',1,'Color',col(k,:));
 % % end
-% 
-% col = distinguishable_colors(length(tracks3),'k');
-% for k = 1:length(tracks3)
-%     plot([cand(tracks3{k}).t],[cand(tracks3{k}).f1],'.-','MarkerSize',20,'LineWidth',1,'Color',col(k,:));
-% end
+% % 
+% % col = distinguishable_colors(length(tracks3),'k');
+% % for k = 1:length(tracks3)
+% %     plot([cand(tracks3{k}).t],[cand(tracks3{k}).f1],'.-','MarkerSize',20,'LineWidth',1,'Color',col(k,:));
+% % end
 % 
 % xlim([T(1),T(end)]);
-% ylim([minf1,maxf1]);
+% ylim([minF1,maxF1]);
 % set(gca, 'YDir', 'normal');
 % hold off;
 
@@ -521,7 +565,7 @@ nFish = length(fish);
 % % plot([fish.t],[fish.f1],'.m');
 % for f = 1:nFish
 %     idx = [fish.id]==f;
-%     plot([fish(idx).t],[fish(idx).f1],'.');%,'Color',col(f,:));
+%     plot([fish(idx).t],[fish(idx).f1],'.','MarkerSize',20);%,'Color',col(f,:));
 % end
 % 
 % xlim([T(1),T(end)]);

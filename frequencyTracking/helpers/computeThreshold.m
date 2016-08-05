@@ -22,4 +22,3 @@ function handles = computeThreshold(handles)
         handles.Sthresh = zeros(size(handles.Smag));
         handles.Sthresh(minF1Idx:maxF1Idx,:,:) = handles.Smag(minF1Idx:maxF1Idx,:,:)>handles.params.thresh & handles.Smag(minf2idx:2:maxf2idx,:,:)>(handles.params.thresh/handles.params.ratio12);
     end
-    handles.params.viewMode
