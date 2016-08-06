@@ -126,14 +126,16 @@ if ~get(handles.Wild,'Value')
     handles.vdata_path  = [handles.dir_path(1:end-6) 'videotracks'];
 end
 
-dir_struct                  = dir(fullfile(handles.dir_path,'freqtracks'));
-[sorted_names,~]            = sortrows({dir_struct.name}');
-allFile_names               = sorted_names;
-
 if get(handles.rawRadio,'Value')
+    dir_struct                  = dir(fullfile(handles.dir_path,'freqtracks'));
+    [sorted_names,~]            = sortrows({dir_struct.name}');
+    allFile_names               = sorted_names;
     tracks_search               = strfind(allFile_names,'tracks.mat');
     set(handles.push_track,'String','Track');
 else
+    dir_struct                  = dir(fullfile(handles.dir_path,'tracked'));
+    [sorted_names,~]            = sortrows({dir_struct.name}');
+    allFile_names               = sorted_names;
     tracks_search               = strfind(allFile_names,'particle.mat');
     set(handles.push_track,'String','Load Tracked File');
 end
