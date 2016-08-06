@@ -6,17 +6,17 @@ clc
 addpath('../packages/addpath_recurse');
 addpath_recurse('../packages');
 addpath_recurse('.');
-%% Select datafolder - select the folder that contains the subfolders freqtracks,videotracks, raw etc
+%% Select datafolder - select the folder that contains the subfolders tracked,videotracks, raw etc
 folder_name = uigetdir(pwd,'Select dataset folder ...');
 %% Single Free
 
 % Uncomment one of the following
-% file_name = '140406_002_01m07s_01m27s_tracks_particle.mat';
-% file_name = '140406_002_03m34s_03m54s_tracks_particle.mat';
-% file_name = '140406_002_07m05s_07m55s_tracks_particle.mat';
+% file_name = '140406_002_01m07s_01m27s_particle.mat';
+% file_name = '140406_002_03m34s_03m54s_particle.mat';
+% file_name = '140406_002_07m05s_07m55s_particle.mat';
 
 % Uncomment the following lines
-% freqtracks_dir_path     = fullfile(folder_name,'freqtracks');
+% tracked_dir_path     = fullfile(folder_name,'tracked');
 % videotracks_dir_path    = fullfile(folder_name,'videotracks');
 % trackedVideo_dir_path   = fullfile(folder_name,'tracked_video');
 % video_file_path         = fullfile(folder_name,'raw','140406_002.mp4');
@@ -25,21 +25,21 @@ folder_name = uigetdir(pwd,'Select dataset folder ...');
 %% Three Free
 
 % Uncomment one of the following
-% file_name = '140422_001_05m50s_06m09s_tracks_particle.mat';
-% file_name = '140422_001_08m40s_09m05s_tracks_particle.mat';
-% file_name = '140422_001_09m12s_09m37s_tracks_particle.mat'; 
-file_name = '140422_001_09m50s_11m00s_tracks_particle.mat'; 
+% file_name = '140422_001_05m50s_06m09s_particle.mat';
+% file_name = '140422_001_08m40s_09m05s_particle.mat';
+% file_name = '140422_001_09m12s_09m37s_particle.mat'; 
+file_name = '140422_001_09m50s_11m00s_particle.mat'; 
 
 % Uncomment the following lines
-freqtracks_dir_path     = fullfile(folder_name,'freqtracks');
+tracked_dir_path        = fullfile(folder_name,'tracked');
 videotracks_dir_path    = fullfile(folder_name,'videotracks');
 trackedVideo_dir_path   = fullfile(folder_name,'tracked_video');
 video_file_path         = fullfile(folder_name,'raw','140422_001.mp4');
-videotracks_file_name   = strrep(file_name,'tracks_particle','videotracks');
-trackedVideo_file_name  = strrep(file_name,'tracks_particle','video');
+videotracks_file_name   = strrep(file_name,'particle','videotracks');
+trackedVideo_file_name  = strrep(file_name,'particle','video');
 %% Load files
     
-particleTracked         = load(fullfile(freqtracks_dir_path, file_name),'xMean', 'yMean','thMean');
+particleTracked         = load(fullfile(tracked_dir_path, file_name),'xMean', 'yMean','thMean');
 vidTracked              = load(fullfile(videotracks_dir_path, videotracks_file_name),'gridcen', 'tankcen','xcrop','ycrop','nFish','frameIdx');            
 vObj                    = VideoReader(video_file_path);  
 

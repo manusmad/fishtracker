@@ -13,6 +13,9 @@ addpath_recurse('.');
 C = strsplit(path_name,filesep);
 baseFolder = strjoin(C(1:end-2),filesep);
 
+tempStr = strsplit(file_name,'_');
+datasetName = strjoin(tempStr(1:end-1),'_');
+
 file_parts              = strsplit(file_name, '_');
 imageFileName           = [strjoin(file_parts(1:3),'_') '.jpg'];
 handClickFileName       = [strjoin(file_parts(1:3),'_') '_handclickTube.mat'];
@@ -78,4 +81,4 @@ if plotFig
     end
 end
 
-export_fig(fullfile(baseFolder,'figures','freeFish_TerraRonca_01_covar95ellipse'),'-pdf','-nocrop','-painters')
+export_fig(fullfile(baseFolder,'figures',datasetName),'-pdf','-nocrop','-painters')
