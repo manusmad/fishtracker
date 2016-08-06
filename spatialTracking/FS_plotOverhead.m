@@ -6,23 +6,39 @@ gridCoord   = handles.gridCoord;
 tankCoord   = handles.tankCoord;
 xMean       = handles.xMean;
 yMean       = handles.yMean;
+zMean       = handles.zMean;
+
 thMean      = handles.thMean;
 nFish       = handles.nFish;
 vidParams   = handles.vidParams; 
 stepNo      = handles.sNo;
-fishSelect  = handles.fishSelect; 
-xPart       = handles.xPart;
-xWeight     = handles.xWeight;
-nPart       = handles.nPart;
+fishSelect  = handles.fishSelect;
+fishTime    = handles.fishTime;
+
+% xPart       = handles.xPart;
+% xPartRev       = handles.xPartRev;
+% xWeight     = handles.xWeight;
+% nPart       = handles.nPart;
 file_idx    = handles.file_idx; 
 numFish     = length(fishSelect); 
 xFish       = handles.xFish;
 yFish       = handles.yFish;
 thFish      = handles.thFish;
 
-axes(handles.ax_overhead)
-cla
 colrs = distinguishable_colors(nFish);
+
+if strcmp(handles.motion, 'random3D') && handles.sNo == 1
+    figure(1);
+    cla
+    for i = 1:length(fishSelect) 
+        plot((zMean(fishSelect(i),:)),'.','Color',colrs(fishSelect(i),:));
+        hold on
+    end
+end
+
+axes(handles.ax_overhead)
+% figure()
+cla
 
 ThreeFishMap = [3 2 1;
                 3 2	1;
@@ -94,7 +110,7 @@ else
 end
 
 % plot(tankCoord(:,1),'ob','LineWidth',1.01),hold on;
-plot(tankCoord(:,1),tankCoord(:,2),'COlor',[0.4,0.4,0.4],'LineWidth',10.01),hold on;
+plot(tankCoord(:,1),tankCoord(:,2),'Color',[0.4,0.4,0.4],'LineWidth',10.01),hold on;
 % plot(tankCoord(:,1),tankCoord(:,2),'+b','LineWidth',1.01);
 % plot(tankCoord(:,1),tankCoord(:,2),'Color','k','LineWidth',5)
 plot(gridCoord(:,1),gridCoord(:,2),'ok','LineWidth',3.01);
@@ -121,7 +137,7 @@ if strcmp(type,'wild')
 
 %     xlim([-handles.bndry,handles.bndry]);
 %     ylim([-handles.bndry,handles.bndry]);  
-    
+    set(gca,'YDir','normal');
     % set(gca,'YDir','reverse');
     %  axis off
 elseif  strcmp(type,'sim')
@@ -141,7 +157,7 @@ elseif  strcmp(type,'sim')
             scatter(xMean(fishLoop,1:stepNo,1),yMean(fishLoop,1:stepNo,1),20,colrs(fishLoop,:),'fill');
         end
     end
-
+set(gca,'YDir','normal');
 %     xlim([-handles.bndry,handles.bndry]);
 %     ylim([-handles.bndry,handles.bndry]);   
     % set(gca,'YDir','reverse');
@@ -171,9 +187,9 @@ else
             y = vidParams.fishCen(ia,2,mapFish);
 %             xx = min(x):1:max(x);
 %             yy = spline(x,y,xx);
-%             plot(x,y,'Color',colrs(iFish,:), 'LineWidth',1.5);
+            plot(x,y,'Color',colrs(iFish,:), 'LineWidth',1.5);
 %             plot(x,y,'Color','r', 'LineWidth',2);
-            plot_ellipse(fW/2,fL,vidParams.fishCen(stepNo,1,mapFish),vidParams.fishCen(stepNo,2,mapFish),rad2deg(vidParams.fishTheta(stepNo,mapFish)-pi/2),[colrs(iFish,:); 0 0 0]);
+            plot_ellipse(fW/2,fL,vidParams.fishCen(stepNo,1,mapFish),vidParams.fishCen(stepNo,2,mapFish),rad2deg(vidParams.fishTheta(stepNo,mapFish)),[colrs(iFish,:); 0 0 0]);
 %             plot_ellipse(fW/2,fL,vidParams.fishCen(stepNo,1,mapFish),vidParams.fishCen(stepNo,2,mapFish),rad2deg(vidParams.fishTheta(stepNo,mapFish)-pi/2),[1 0 0; 0 0 0]);
             hold on
         end
@@ -235,9 +251,11 @@ elseif handles.showAngle == 1
             colrsMat = [colrs(fID,:);colrs(fID,:)];
         else
             colrsMat = [1 1 1;colrs(fID,:)];
+%             colrsMat = [0.92 0.97 1;0.92 0.97 1];
         end
 %         plot_ellipse(fW,fL,xMean(fID,stepNo),yMean(fID,stepNo),rad2deg(thMean(fID,stepNo)-pi/2),colrsMat);
-        plot_ellipse(fW,fL,xMean(fID,stepNo),yMean(fID,stepNo),rad2deg(thMean(fID,stepNo)-pi/2),colrsMat);
+% rad2deg(wrapToPi(thMean(fID,stepNo)))
+        plot_ellipse(fW,fL,xMean(fID,stepNo),yMean(fID,stepNo),rad2deg(thMean(fID,stepNo)),colrsMat);
     end
 end
 
@@ -251,6 +269,7 @@ if handles.showTime == 1
    text(xBound(2) - (diff(xBound)/2), yBound(1) + (diff(yBound)/20), filename, 'interpreter', 'none');
 end
 
+handles.showHull = 0;
 if handles.showHull == 1
 %     if strcmp(type,'tank')
 %         stepNo      = handles.timeIdx(handles.sNo);
@@ -273,6 +292,7 @@ if handles.showHull == 1
     end
 end
 
+handles.showParticles = 0; 
 if handles.showParticles == 1   
 %     if strcmp(type,'tank')
 %         stepNo      = handles.timeIdx(handles.sNo);
@@ -285,6 +305,10 @@ if handles.showParticles == 1
         pb=patch(xPatch,yPatch,colrs(fID,:),'EdgeColor','none');
         alpha(pb,0.08);
         hold on;
+        xPatchRev = repmat(sin(t)',1,nPart)+repmat(reshape(xPartRev(fID,stepNoFish,:,1),1,nPart),length(t),1);
+        yPatchRev = repmat(cos(t)',1,nPart)+repmat(reshape(xPartRev(fID,stepNoFish,:,2),1,nPart),length(t),1);  
+        pb=patch(xPatchRev,yPatchRev,'r','EdgeColor','none');
+        alpha(pb,0.08);
     end
 end
     

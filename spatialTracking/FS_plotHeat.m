@@ -62,16 +62,16 @@ plot(imGridCoord(:,1),imGridCoord(:,2),'+w');
 set (gca, 'xtick', [],'ytick', []);
 axis tight
 
-actHeat = vq;
-actHeat(isnan(actHeat)) = 0;
+% actHeat = vq;
+% actHeat(isnan(actHeat)) = 0;
+% 
+% 
+% notNanIdx = find(~isnan(ampTheoret));
+% vqTh = griddata(gridCoord(notNanIdx,1),gridCoord(notNanIdx,2),ampTheoret(notNanIdx),xq,yq);
+% vqTh = flipdim(vqTh ,1);
+% vqTh(isnan(vqTh)) = 0;
 
-
-notNanIdx = find(~isnan(ampTheoret));
-vqTh = griddata(gridCoord(notNanIdx,1),gridCoord(notNanIdx,2),ampTheoret(notNanIdx),xq,yq);
-vqTh = flipdim(vqTh ,1);
-vqTh(isnan(vqTh)) = 0;
-
-ssimval = ssim(vqTh,actHeat)
+% ssimval = ssim(vqTh,actHeat)
 
 %%
 % clc

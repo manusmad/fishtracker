@@ -4,6 +4,9 @@ function [nx,sys] = FS_processEq(motion)
 if strcmp(motion,'random')
     nx = 3; % Random - number of states
     sys = @(xk, uk) xk + uk;
+elseif strcmp(motion,'random3D')
+    nx = 4; % Random - number of states
+    sys = @(xk, uk) xk + uk;
 elseif strcmp(motion,'randomLineCharge')
     nx = 4;
     sys = @(xk, uk) xk + uk;

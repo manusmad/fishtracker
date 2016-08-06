@@ -202,7 +202,7 @@ particles           = str2double(get(handles.particles,'String'));
 numIter             = str2double(get(handles.numIter,'String'));
 
 handles.batchProc = get(handles.batchProcess,'Value');
-handles.motion = 'random';
+handles.motion = 'random3D';
 
 if handles.batchProc && get(handles.rawRadio,'Value')
     file_list           = get(handles.elecFiles,'String');
@@ -242,8 +242,13 @@ if handles.batchProc && get(handles.rawRadio,'Value')
             else
                 [xD,yD]             = FS_testGridSim(get(handles.Wild,'Value'));
                 handles.gridCoord   = [xD yD];
-                bndry               = 200;
-                handles.tankCoord   = [-bndry -bndry;bndry -bndry;bndry bndry;-bndry bndry;-bndry -bndry];
+%                 bndry               = 200;
+                bndry               = 0.25*max(max(xD)-min(xD),max(yD)-min(yD));
+                handles.tankCoord   = [min(xD)-bndry min(yD)-bndry;
+                                       max(xD)+bndry min(yD)-bndry;
+                                       max(xD)+bndry max(yD)+bndry;
+                                       min(xD)-bndry max(yD)+bndry;
+                                       min(xD)-bndry min(yD)-bndry];
 %                 set(handles.limMax,'Enable','on');
 %                 set(handles.limManual,'Enable','on');
             end
@@ -252,10 +257,10 @@ if handles.batchProc && get(handles.rawRadio,'Value')
             handles.tempFileName    = dataFileName;
 
         [~,fName,~] = fileparts(handles.elecFile);
-        dataFileName = fullfile(handles.dir_path,'freqtracks',[fName '_particle.mat']);
+        dataFileName = fullfile(handles.dir_path,'freqtracks',[fName '_100kFinVar_particle.mat']);
 
         movefile(handles.tempFileName,dataFileName);
-        set(handles.figSaveText,'String',['Saved ' fName '_particle.mat at' datestr(now)]);
+        set(handles.figSaveText,'String',['Saved ' fName '_100kFinVar_particle.mat at' datestr(now)]);
     end
 
 else
@@ -298,8 +303,14 @@ else
         else
             [xD,yD]             = FS_testGridSim(get(handles.Wild,'Value'));
             handles.gridCoord   = [xD yD];
-            bndry               = 200;
-            handles.tankCoord   = [-bndry -bndry;bndry -bndry;bndry bndry;-bndry bndry;-bndry -bndry];
+%             bndry               = 200;
+%             handles.tankCoord   = [-bndry -bndry;bndry -bndry;bndry bndry;-bndry bndry;-bndry -bndry];
+            bndry               = 0.25*max(max(xD)-min(xD),max(yD)-min(yD));
+            handles.tankCoord   = [min(xD)-bndry min(yD)-bndry;
+                                       max(xD)+bndry min(yD)-bndry;
+                                       max(xD)+bndry max(yD)+bndry;
+                                       min(xD)-bndry max(yD)+bndry;
+                                       min(xD)-bndry min(yD)-bndry];
             set(handles.limMax,'Enable','on');
             set(handles.limManual,'Enable','on');
         end
@@ -324,12 +335,16 @@ else
     handles.tankCoord   = tankCoord; 
     handles.xMean       = xMean;
     handles.yMean       = yMean;
+    handles.zMean       = zMean;
     handles.thMean      = thMean;
     handles.nFish       = nFish;
     handles.fishTime    = fishTime;
-    handles.xPart       = xPart;
-    handles.nPart       = size(xPart,3);
-    handles.xWeight     = xWeight;
+    
+%     handles.xPart       = xPart;
+%     handles.xPartRev       = xPartRev;
+    
+%     handles.nPart       = size(xPart,3);
+%     handles.xWeight     = xWeight;
     handles.xFishIter   = xFishIter;
     
     handles.xFish       = [];

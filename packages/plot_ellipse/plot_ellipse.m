@@ -1,6 +1,6 @@
 function h = plot_ellipse(a,b,cx,cy,angle,color)
-%a: width in pixels
-%b: height in pixels
+%a: minor axis in pixels
+%b: major axis in pixels
 %cx: horizontal center
 %cy: vertical center
 %angle: orientation ellipse in degrees
@@ -9,7 +9,7 @@ function h = plot_ellipse(a,b,cx,cy,angle,color)
 angle=angle/180*pi;
 
 r=0:0.01:2*pi+0.1;
-p=[(a*cos(r))' (b*sin(r))'];
+p=[(b*cos(r))' (a*sin(r))'];
 
 alpha=[cos(angle) -sin(angle)
        sin(angle) cos(angle)];

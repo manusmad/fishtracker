@@ -27,7 +27,9 @@ if strcmp(handles.heatType,'theoretical')
 
     notNanIdx = find(~isnan(amp));
     vq = griddata(gridCoord(notNanIdx,1),gridCoord(notNanIdx,2),amp(notNanIdx),xq,yq);
-    vq = flipdim(vq ,1);
+    if ~get(handles.Wild,'value')
+        vq = flipdim(vq ,1);
+    end
 
     axes(handles.ax_freqTrack); cla
 
@@ -65,7 +67,7 @@ else
 
     axis tight
     ylim(ylim + [-1 1]*0.1*diff(ylim));
-    line([freqCell{i}(stepNo,1),freqCell{i}(stepNo,1)],ylim,'Color', 'w','LineWidth',1.2);
+    line([freqCell{i}(stepNo,1),freqCell{i}(stepNo,1)],ylim,'Color', 'k','LineWidth',1.2);
     set(gca, 'fontsize',8)
-    set(gca,'Color',[0 0 0]);
+    set(gca,'Color',[1 1 1]);
 end
