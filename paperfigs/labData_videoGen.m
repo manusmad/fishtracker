@@ -1,49 +1,60 @@
-% function FS_errorPlot
-clear
-clc
-
 % Add all Mathworks folders
 addpath('../packages/addpath_recurse');
-addpath_recurse('../packages');
-addpath_recurse('.');
+addpath_recurse('..');
+
 %% Select datafolder - select the folder that contains the subfolders tracked,videotracks, raw etc
 folder_name = uigetdir(pwd,'Select dataset folder ...');
+
 %% Single Free
 
-% Uncomment one of the following
-% file_name = '140406_002_01m07s_01m27s_particle.mat';
-% file_name = '140406_002_03m34s_03m54s_particle.mat';
-% file_name = '140406_002_07m05s_07m55s_particle.mat';
-
+% % Uncomment one of the following
+% particle_file_name = '140406_002_01m07s_01m27s_particle.mat';
+% particle_file_name = '140406_002_03m34s_03m54s_particle.mat';
+% particle_file_name = '140406_002_07m05s_07m55s_particle.mat';
+% 
 % Uncomment the following lines
 % tracked_dir_path     = fullfile(folder_name,'tracked');
 % videotracks_dir_path    = fullfile(folder_name,'videotracks');
 % trackedVideo_dir_path   = fullfile(folder_name,'tracked_video');
 % video_file_path         = fullfile(folder_name,'raw','140406_002.mp4');
-% videotracks_file_name   = strrep(file_name,'tracks_particle','videotracks');
-% trackedVideo_file_name  = strrep(file_name,'tracks_particle','video');
-%% Three Free
+% videotracks_file_name   = strrep(particle_file_name,'tracks_particle','videotracks');
+% trackedVideo_file_name  = strrep(particle_file_name,'tracks_particle','video');
 
+%% Three Free
+% 
 % Uncomment one of the following
-% file_name = '140422_001_05m50s_06m09s_particle.mat';
-% file_name = '140422_001_08m40s_09m05s_particle.mat';
-% file_name = '140422_001_09m12s_09m37s_particle.mat'; 
-file_name = '140422_001_09m50s_11m00s_particle.mat'; 
+% particle_file_name = '140422_001_05m50s_06m09s_particle.mat';
+% particle_file_name = '140422_001_08m40s_09m05s_particle.mat';
+% particle_file_name = '140422_001_09m12s_09m37s_particle.mat'; 
+particle_file_name = '140422_001_09m50s_11m00s_particle.mat'; 
 
 % Uncomment the following lines
-tracked_dir_path        = fullfile(folder_name,'tracked');
-videotracks_dir_path    = fullfile(folder_name,'videotracks');
-trackedVideo_dir_path   = fullfile(folder_name,'tracked_video');
-video_file_path         = fullfile(folder_name,'raw','140422_001.mp4');
-videotracks_file_name   = strrep(file_name,'particle','videotracks');
-trackedVideo_file_name  = strrep(file_name,'particle','video');
+tracked_dir_path        = fullfile(folder_name,'140422_threeFreeTrials','tracked');
+videotracks_dir_path    = fullfile(folder_name,'140422_threeFreeTrials','videotracks');
+trackedVideo_dir_path   = fullfile(folder_name,'140422_threeFreeTrials','tracked_video');
+spec_dir_path           = fullfile(folder_name,'140422_threeFreeTrials','spec');
+freqtracks_dir_path     = fullfile(folder_name,'140422_threeFreeTrials','freqtracks');
+video_file_path         = fullfile(folder_name,'140422_threeFreeTrials','raw','140422_001.mp4');
+
+videotracks_file_name   = strrep(particle_file_name,'particle','videotracks');
+trackedVideo_file_name  = strrep(particle_file_name,'particle','video');
+spec_file_name          = strrep(particle_file_name,'particle','spec');
+freqtracks_file_name    = strrep(particle_file_name,'particle','tracks');
+
 %% Load files
     
-particleTracked         = load(fullfile(tracked_dir_path, file_name),'xMean', 'yMean','thMean');
-vidTracked              = load(fullfile(videotracks_dir_path, videotracks_file_name),'gridcen', 'tankcen','xcrop','ycrop','nFish','frameIdx');            
+particleTracked         = load(fullfile(tracked_dir_path, particle_file_name),'xMean', 'yMean','thMean');
+vidTracked              = load(fullfile(videotracks_dir_path, videotracks_file_name),'gridcen', 'tankcen','xcrop','ycrop','nFish','frameIdx','frameTime');            
 vObj                    = VideoReader(video_file_path);  
 
+spec                    = load(fullfile(spec_dir_path, spec_file_name),'spec');
+freqtracks              = load(fullfile(freqtracks_dir_path, freqtracks_file_name),'tracks');
+
+spec = hlp_deserialize(spec.spec);
+Smag = mean(normSpecMag(spec.S),3);
+
 %%
+
 fW                  = 3;
 fL                  = 20;
 colrs               = distinguishable_colors(vidTracked.nFish);
@@ -53,10 +64,36 @@ set(gcf,'color',[0 0 0]);
 
 writerObj           = VideoWriter(fullfile(trackedVideo_dir_path, trackedVideo_file_name),'MPEG-4');
 writerObj.FrameRate = 9;
-open(writerObj);  
-for timeLoop = 1:size(vidTracked.frameIdx,2)
+nFrames = size(vidTracked.frameIdx,2);
+
+progressbar('Writing Video');
+open(writerObj);
+for timeLoop = 1:nFrames
+        progressbar(timeLoop/nFrames);
+        
         frame = read(vObj,vidTracked.frameIdx(timeLoop));
         frame = frame(vidTracked.ycrop(1):vidTracked.ycrop(2),vidTracked.xcrop(1):vidTracked.xcrop(2),:);
+        
+        time = vidTracked.frameTime(timeLoop);
+        
+        figure(hAxis), cla;
+        
+        subplot(1,2,1);
+        hold on;
+        [~,hSpec] = plotSpectrogram(gca,spec.T,spec.F,Smag);
+        [~,hTracks] = plotTracks(gca,freqtracks.tracks,[]);
+        
+        ylimits = [280,400];
+        plot([time,time],ylimits,'--y','LineWidth',1);
+        
+        ylim(ylimits);
+        xlim([spec.T(1),spec.T(end)]);
+        
+        xlabel('Time (s)');
+        ylabel('Frequency (Hz)');
+        hold off;
+        
+        subplot(1,2,2);
         imshow(frame,'InitialMagnification',100), 
         hold on;
         plot(vidTracked.tankcen(:,1),vidTracked.tankcen(:,2),'+b','LineWidth',1.01);
@@ -68,8 +105,9 @@ for timeLoop = 1:size(vidTracked.frameIdx,2)
         end
         f = getframe(hAxis);
         writeVideo(writerObj,f);
-        cla(hAxis)
 end
 close(writerObj);
+progressbar(1);
+
 display('Done')
 
