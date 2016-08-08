@@ -69,7 +69,7 @@ for timeLoop = 1:nFrames
         [~,hSpec] = plotSpectrogram(gca,spec.T,spec.F,Smag);
         [~,hTracks] = plotTracks(gca,freqtracks.tracks,[]);
         
-        ylimits = [280,400];
+        ylimits = [380,420];
         plot([time,time],ylimits,'--y','LineWidth',1);
         
         ylim(ylimits);
