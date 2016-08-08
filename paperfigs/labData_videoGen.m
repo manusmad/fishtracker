@@ -34,12 +34,13 @@ videotracks_dir_path    = fullfile(folder_name,'140422_threeFreeTrials','videotr
 trackedVideo_dir_path   = fullfile(folder_name,'140422_threeFreeTrials','tracked_video');
 spec_dir_path           = fullfile(folder_name,'140422_threeFreeTrials','spec');
 freqtracks_dir_path     = fullfile(folder_name,'140422_threeFreeTrials','freqtracks');
-video_file_path         = fullfile(folder_name,'140422_threeFreeTrials','raw','140422_001.mp4');
 
 videotracks_file_name   = strrep(particle_file_name,'particle','videotracks');
 trackedVideo_file_name  = strrep(particle_file_name,'particle','video');
 spec_file_name          = strrep(particle_file_name,'particle','spec');
 freqtracks_file_name    = strrep(particle_file_name,'particle','tracks');
+
+video_file_path         = fullfile(folder_name,'140422_threeFreeTrials','raw','140422_001.mp4');
 
 %% Load files
     

@@ -1,12 +1,9 @@
-clear
-clc
-
 % Add all Mathworks folders
 addpath('../packages/addpath_recurse');
-addpath_recurse('../packages');
-addpath_recurse('.');
+addpath_recurse('..');
+
 %% Select datafolder - select the folder that contains the subfolders freqtracks,videotracks, raw etc
-[file_name,path_name]   = uigetfile({'*particle.mat'},'Select tracked wild file ...',pwd, ...
+[file_name,path_name]  = uigetfile({'*particle.mat'},'Select tracked wild file ...',pwd, ...
                                     'MultiSelect', 'off');
 
 %%                                
