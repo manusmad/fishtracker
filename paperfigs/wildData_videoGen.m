@@ -3,10 +3,6 @@ addpath('../packages/addpath_recurse');
 addpath_recurse('..');
 
 folder_name = uigetdir(pwd,'Select dataset folder ...');
-
-% %% Select datafolder - select the folder that contains the subfolders freqtracks,videotracks, raw etc
-% [file_name,path_name]  = uigetfile({'*particle.mat'},'Select tracked wild file ...',pwd, ...
-%                                     'MultiSelect', 'off');
             
 %% Choose which file to generate video for
 particle_file_name = 'TerraRonca_Calibration_01_100s_particle.mat';

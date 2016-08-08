@@ -69,6 +69,7 @@ if plotFig
         quiver(xFish(iLoop),yFish(iLoop),2*posStd(iLoop)*cos(thFish(iLoop)+pi-2*thStd(iLoop)),2*posStd(iLoop)*sin(thFish(iLoop)+pi-2*thStd(iLoop)),'LineWidth',1.5,'Color','r');
         quiver(xFish(iLoop),yFish(iLoop),2*posStd(iLoop)*cos(thFish(iLoop)+pi),2*posStd(iLoop)*sin(thFish(iLoop)+pi),'LineWidth',1.5,'Color','g');
     end
+    hold off;
 end
 
 export_fig(fullfile(fig_dir_path,strrep(particle_file_name,'_particle.mat','')),'-pdf','-nocrop','-painters')

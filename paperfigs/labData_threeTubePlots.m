@@ -3,12 +3,12 @@ addpath('../packages/addpath_recurse');
 addpath_recurse('..');
 
 baseFolder = uigetdir(pwd,'Select dataset folder ...');
-trialFolder = '140403_singleTubeTrials';
+trialFolder = '140417_threeTubeTrials';
 
 %% Single tube files
-% particle_file_name = '140403_003_particle.mat';
-particle_file_name = '140403_004_particle.mat';
-% particle_file_name = '140403_011_particle.mat';
+particle_file_name = '140417_001_particle.mat';
+% particle_file_name = '140417_025_particle.mat';
+% particle_file_name = '140417_038_particle.mat';
 
 fig_dir_path            = fullfile(baseFolder,trialFolder,'figures');
 videotracks_dir_path    = fullfile(baseFolder,trialFolder,'videotracks');
@@ -47,7 +47,7 @@ if plotFig
     [~,hSpec] = plotSpectrogram(gca,spec.T,spec.F,Smag);
     [~,hTracks] = plotTracks(gca,freqtracks.tracks,[]);
         
-    ylim([330,360]);
+    ylim([280,400]);
     xlim([spec.T(1),spec.T(end)]);
     xlabel('Time (s)');
     ylabel('Frequency (Hz)');
@@ -69,6 +69,7 @@ if plotFig
         quiver(xFish(iLoop),yFish(iLoop),2*posStd(iLoop)*cos(thFish(iLoop)+pi-2*thStd(iLoop)),2*posStd(iLoop)*sin(thFish(iLoop)+pi-2*thStd(iLoop)),'LineWidth',1.5,'Color','r');
         quiver(xFish(iLoop),yFish(iLoop),2*posStd(iLoop)*cos(thFish(iLoop)+pi),2*posStd(iLoop)*sin(thFish(iLoop)+pi),'LineWidth',1.5,'Color','g');
     end
+    hold off;
 end
 
 export_fig(fullfile(fig_dir_path,strrep(particle_file_name,'_particle.mat','')),'-pdf','-nocrop','-painters')
