@@ -2,7 +2,7 @@
 addpath('../packages/addpath_recurse');
 addpath_recurse('..');
 
-baseFolder = uigetdir(pwd,'Select dataset folder ...');
+% baseFolder = uigetdir(pwd,'Select dataset folder ...');
 trialFolder = '140403_singleTubeTrials';
 
 %% Single tube files
@@ -47,7 +47,7 @@ ids = unique([tracks.id]);
 nTracks = length(ids);
 colrs = distinguishable_colors(nTracks,{'r','k','y'});
 
-subplot(1,2,1);
+h1 = subplot(1,2,1);
 hold on;
 plotSpectrogram(gca,spec.T,spec.F,Smag);
 
@@ -60,6 +60,7 @@ for k = 1:nTracks
 end
 
 ylim([330,360]);
+h1.FontSize = 12;
 xlim([spec.T(1),spec.T(end)]);
 
 xlabel('Time (s)','FontSize',12);

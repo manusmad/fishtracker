@@ -2,23 +2,20 @@
 addpath('../packages/addpath_recurse');
 addpath_recurse('..');
 
-folder_name = uigetdir(pwd,'Select dataset folder ...');
-            
+% baseFolder = uigetdir(pwd,'Select dataset folder ...');
+trialFolder = 'terraronca';          
+
 %% Choose which file to generate video for
-particle_file_name = 'TerraRonca_Calibration_01_100s_particle.mat';
-% particle_file_name = 'TerraRonca_Calibration_02_100s_particle.mat';
-% particle_file_name = 'TerraRonca_Calibration_03_100s_particle.mat';
-% particle_file_name = 'TerraRonca_Calibration_04_100s_particle.mat';
+particle_file_name = 'TerraRonca_PostCalibration_05_100s_particle.mat';
 
-tracked_dir_path        = fullfile(folder_name,'terraronca','tracked');
-trackedVideo_dir_path   = fullfile(folder_name,'terraronca','tracked_video');
-spec_dir_path           = fullfile(folder_name,'terraronca','spec');
-freqtracks_dir_path     = fullfile(folder_name,'terraronca','freqtracks');
+tracked_dir_path        = fullfile(baseFolder,trialFolder,'tracked');
+trackedVideo_dir_path   = fullfile(baseFolder,trialFolder,'tracked_video');
+spec_dir_path           = fullfile(baseFolder,trialFolder,'spec');
+freqtracks_dir_path     = fullfile(baseFolder,trialFolder,'freqtracks');
 
-trackedVideo_file_name  = strrep(particle_file_name,'particle','video');
+trackedVideo_file_name  = strrep(particle_file_name,'particle.mat','video');
 spec_file_name          = strrep(particle_file_name,'particle','spec');
 freqtracks_file_name    = strrep(particle_file_name,'particle','tracks');
-
 
 %% Load files
     
@@ -27,8 +24,8 @@ spec                    = load(fullfile(spec_dir_path, spec_file_name),'spec');
 freqtracks              = load(fullfile(freqtracks_dir_path, freqtracks_file_name),'tracks');
 
 spec = hlp_deserialize(spec.spec);
+tracks = freqtracks.tracks;
 Smag = mean(normSpecMag(spec.S),3);
-
 
 %% Video parameters
 
@@ -38,16 +35,21 @@ frameRate               = 8;
 fishSelect              = [9 10];
 nFrames                 = frameInterval(end)-frameInterval(1)+1;
 
-%%
+%% Plot
+subplot = @(m,n,p) subtightplot (m, n, p, [0.01 0.01], [0.125 0.125], [0.03 0.01]);
+
 fW                  = 1;
 fL                  = 7;
-colrs               = distinguishable_colors(particleTracked.nFish);
+colrs               = distinguishable_colors(particleTracked.nFish,{'r','k','y'});
 scrsz               = get(groot,'ScreenSize');
-hAxis               = figure('Position',[1 scrsz(4)/2 scrsz(3)/1.6 scrsz(4)]);
-set(gcf,'color',[0 0 0]);
+hAxis               = figure('Position',[1 scrsz(4)/2 scrsz(3) scrsz(4)]);
+set(gcf,'color',[1 1 1]);
 
 writerObj           = VideoWriter(fullfile(trackedVideo_dir_path, trackedVideo_file_name),'MPEG-4');
 writerObj.FrameRate = frameRate;
+
+ids = unique([tracks.id]);
+nTracks = length(ids);
 
 progressbar('Writing Video');
 open(writerObj);  
@@ -61,20 +63,29 @@ for frameIdx = frameInterval
     
     figure(hAxis), cla;
     
-    subplot(1,2,1), hold on;
+    h1 = subplot(1,2,1);
+    hold on;
 
-    [~,hSpec] = plotSpectrogram(gca,spec.T,spec.F,Smag);
-    [~,hTracks] = plotTracks(gca,freqtracks.tracks,[]);
+    plotSpectrogram(gca,spec.T,spec.F,Smag);
+    
+    for k = 1:length(fishSelect)
+        idTrack = tracks([tracks.id]==ids(fishSelect(k)));
+        [~,idx] = sort([idTrack.t]);
+        idTrack = idTrack(idx);
 
+        plot([idTrack.t],[idTrack.f1],'.-','Color',colrs(k,:),'LineWidth',3);
+    end
+    
     ylimits = [290,450];
     plot([time,time],ylimits,'--y','LineWidth',1);
 
     ylim(ylimits);
+    h1.FontSize = 12;
     xlim([spec.T(1),spec.T(end)]);
 
-    xlabel('Time (s)');
-    ylabel('Frequency (Hz)');
-    
+    xlabel('Time (s)','FontSize',12);
+    ylabel('Frequency (Hz)','FontSize',12);
+    title('Spectrogram with Frequency Tracks','FontSize',18);
     hold off;
     
     subplot(1,2,2), hold on;
@@ -99,6 +110,10 @@ for frameIdx = frameInterval
     end
     xlim([-125 125])
     ylim([-125 125])
+    set(gca,'YTick',[]);
+    title('Overhead View with Spatial Estimates','FontSize',18);
+    hold off;
+    
     f = getframe(hAxis);
     writeVideo(writerObj,f);
 
@@ -107,4 +122,3 @@ close(writerObj);
 progressbar(1);
 
 display('Done')
-

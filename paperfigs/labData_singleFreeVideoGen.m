@@ -82,10 +82,10 @@ for timeLoop = 1:nFrames
         end
         
         ylimits = [380,420];
-        h1.FontSize = 12;
         plot([time,time],ylimits,'--y','LineWidth',1);
         
         ylim(ylimits);
+        h1.FontSize = 12;
         xlim([spec.T(1),spec.T(end)]);
         
         xlabel('Time (s)','FontSize',12);
@@ -113,4 +113,3 @@ close(writerObj);
 progressbar(1);
 
 display('Done')
-
