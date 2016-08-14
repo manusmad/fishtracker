@@ -2,7 +2,7 @@
 addpath('../packages/addpath_recurse');
 addpath_recurse('..');
 
-% baseFolder = uigetdir(pwd,'Select dataset folder ...');
+baseFolder = uigetdir(pwd,'Select dataset folder ...');
 trialFolder = 'terraronca';          
 
 %% Choose which file to generate video for
@@ -40,7 +40,7 @@ subplot = @(m,n,p) subtightplot (m, n, p, [0.01 0.01], [0.125 0.125], [0.03 0.01
 
 fW                  = 1;
 fL                  = 7;
-colrs               = distinguishable_colors(particleTracked.nFish,{'r','k','y'});
+colrs               = distinguishable_colors(length(fishSelect),{'r','k','y'});
 scrsz               = get(groot,'ScreenSize');
 hAxis               = figure('Position',[1 scrsz(4)/2 scrsz(3) scrsz(4)]);
 set(gcf,'color',[1 1 1]);
@@ -56,6 +56,9 @@ open(writerObj);
 
 flag = zeros(1,particleTracked.nFish);
 dispStep = ones(1,particleTracked.nFish);
+time1 = particleTracked.fishTime(frameInterval(1));
+time2 = particleTracked.fishTime(frameInterval(end));
+
 for frameIdx = frameInterval
     progressbar((frameIdx-frameInterval(1))/nFrames);
 
@@ -76,10 +79,11 @@ for frameIdx = frameInterval
         plot([idTrack.t],[idTrack.f1],'.-','Color',colrs(k,:),'LineWidth',3);
     end
     
-    ylimits = [290,450];
+    ylimits = [370,410];
     plot([time,time],ylimits,'--y','LineWidth',1);
 
     ylim(ylimits);
+    xlim([time1,time2]);
     h1.FontSize = 12;
     xlim([spec.T(1),spec.T(end)]);
 
@@ -88,18 +92,18 @@ for frameIdx = frameInterval
     title('Spectrogram with Frequency Tracks','FontSize',18);
     hold off;
     
-    subplot(1,2,2), hold on;
+    h2 = subplot(1,2,2), hold on;
     plot(particleTracked.gridCoord(:,1),particleTracked.gridCoord(:,2),'ok','LineWidth',3.01);
     plot(particleTracked.gridCoord(:,1),particleTracked.gridCoord(:,2),'+k','LineWidth',3.01);
     
     for i = 1:length(fishSelect)
         fID = fishSelect(i);
         if sum(~isnan(squeeze(particleTracked.ampAll(fID,:,frameIdx))))
-            colrsMat = [colrs(fID,:);colrs(fID,:)];
+            colrsMat = [colrs(i,:);colrs(i,:)];
             dispStep(fID) = frameIdx;
             flag(fID) = 0;
         else
-            colrsMat = [1 1 1;colrs(fID,:)];
+            colrsMat = [1 1 1;colrs(i,:)];
             if flag(fID) == 0
                 dispStep(fID) = frameIdx-1;
                 flag(fID) = 1;
@@ -110,7 +114,9 @@ for frameIdx = frameInterval
     end
     xlim([-125 125])
     ylim([-125 125])
+    h2.FontSize = 12;
     set(gca,'YTick',[]);
+    xlabel('Distance (cm)','FontSize',12);
     title('Overhead View with Spatial Estimates','FontSize',18);
     hold off;
     
