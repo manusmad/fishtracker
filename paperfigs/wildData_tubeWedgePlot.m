@@ -1,36 +1,47 @@
-clear 
-clc
-
-    % Add all Mathworks folders
+% Add all Mathworks folders
 addpath('../packages/addpath_recurse');
-addpath_recurse('../packages');
-addpath_recurse('.');
+addpath_recurse('..');
 
-%%
-[file_name,path_name]   = uigetfile({'Terraronca_Calibration*particle.mat'},'Select datafile ...',pwd, ...
-                                    'MultiSelect', 'on');
-%%  
-C = strsplit(path_name,filesep);
-baseFolder = strjoin(C(1:end-2),filesep);
+baseFolder = uigetdir(pwd,'Select dataset folder ...');
+trialFolder = 'terraronca';
 
-tempStr = strsplit(file_name,'_');
-datasetName = strjoin(tempStr(1:end-1),'_');
+%% Choose which file to plot
+% particle_file_name = 'TerraRonca_Calibration_01_100s_particle.mat';
+% iFishVec = [6,9,10];
 
-file_parts              = strsplit(file_name, '_');
-imageFileName           = [strjoin(file_parts(1:3),'_') '.jpg'];
-handClickFileName       = [strjoin(file_parts(1:3),'_') '_handclickTube.mat'];
+% particle_file_name = 'TerraRonca_Calibration_02_100s_particle.mat';
+% iFishVec = [8 10 12];
 
-%Tube fish in freqtracks: 3 tubes in each dataset, rows 1 thru 4 -->
-%datasets 1 thru 4
-iFishMat = [6 9 10;...
-            8 10 12;...
-            8 12 15;...
-            9 12 14]; 
+% particle_file_name = 'TerraRonca_Calibration_03_100s_particle.mat';
+% iFishVec = [8 12 15];
 
-iFishVec = iFishMat(str2double(file_parts{3}),:);        
-%%
-load(fullfile(path_name, file_name),'xMean', 'yMean','thMean','gridCoord');
-load(fullfile(baseFolder,handClickFileName));
+particle_file_name = 'TerraRonca_Calibration_04_100s_particle.mat';
+iFishVec = [9 12 14];
+
+tracked_dir_path        = fullfile(baseFolder,trialFolder,'tracked');
+handclick_dir_path      = fullfile(baseFolder,trialFolder,'handclick');
+spec_dir_path           = fullfile(baseFolder,trialFolder,'spec');
+freqtracks_dir_path     = fullfile(baseFolder,trialFolder,'freqtracks');
+photo_dir_path          = fullfile(baseFolder,trialFolder,'rectified_photos');
+
+handclick_file_name     = strrep(particle_file_name,'100s_particle','handclickTube');
+spec_file_name          = strrep(particle_file_name,'particle','spec');
+freqtracks_file_name    = strrep(particle_file_name,'particle','tracks');
+photo_file_name         = strrep(particle_file_name,'_100s_particle.mat','.jpg');
+
+fig_dir_path          = fullfile(baseFolder,trialFolder,'figures');
+fig_file_name         = strrep(particle_file_name,'_particle.mat','.pdf');
+
+%% Load files
+load(fullfile(tracked_dir_path, particle_file_name),'xMean', 'yMean','thMean','gridCoord','nFish');
+load(fullfile(handclick_dir_path,handclick_file_name));
+spec                    = load(fullfile(spec_dir_path, spec_file_name),'spec');
+freqtracks              = load(fullfile(freqtracks_dir_path, freqtracks_file_name),'tracks');
+
+spec = hlp_deserialize(spec.spec);
+tracks = freqtracks.tracks;
+Smag = mean(normSpecMag(spec.S),3);
+
 %%
 gridCenter = [1983 1452];
 scaleFact = 23.8;
@@ -60,25 +71,60 @@ errorTh(flipNegIdx) = errorTh(flipNegIdx) +180;
 errorThDeg = abs(errorTh)
 thStdDeg = rad2deg(thStd)
 %}
-%%
-plotFig = 1;
-if plotFig
-    imageMat = imread(fullfile(baseFolder,imageFileName));
-    imshow(imageMat,'InitialMagnification',50);
-    hold on;
-    scatter(scaleFact*gridCoord(1:end,1)+gridCenter(1),scaleFact*gridCoord(1:end,2)+gridCenter(2),100,'filled')
-    for iLoop = 1:length(iFishVec)
-        viscircles([xFish(iLoop) yFish(iLoop)],2*scaleFact*posStd(iLoop));
 
-        quiver(xFish(iLoop),yFish(iLoop),2*scaleFact*posStd(iLoop)*cos(thFish(iLoop)+2*thStd(iLoop)),2*scaleFact*posStd(iLoop)*sin(thFish(iLoop)+2*thStd(iLoop)),'LineWidth',1.5,'Color','r');
-        quiver(xFish(iLoop),yFish(iLoop),2*scaleFact*posStd(iLoop)*cos(thFish(iLoop)-2*thStd(iLoop)),2*scaleFact*posStd(iLoop)*sin(thFish(iLoop)-2*thStd(iLoop)),'LineWidth',1.5,'Color','r');
-        quiver(xFish(iLoop),yFish(iLoop),2*scaleFact*posStd(iLoop)*cos(thFish(iLoop)),2*scaleFact*posStd(iLoop)*sin(thFish(iLoop)),'LineWidth',1.5,'Color','g');
+%% Plot
+subplot = @(m,n,p) subtightplot (m, n, p, [0.01 0.01], [0.125 0.125], [0.03 0.01]);
 
-        quiver(xFish(iLoop),yFish(iLoop),2*scaleFact*posStd(iLoop)*cos(thFish(iLoop)+pi+2*thStd(iLoop)),2*scaleFact*posStd(iLoop)*sin(thFish(iLoop)+pi+2*thStd(iLoop)),'LineWidth',1.5,'Color','r');
-        quiver(xFish(iLoop),yFish(iLoop),2*scaleFact*posStd(iLoop)*cos(thFish(iLoop)+pi-2*thStd(iLoop)),2*scaleFact*posStd(iLoop)*sin(thFish(iLoop)+pi-2*thStd(iLoop)),'LineWidth',1.5,'Color','r');
-        quiver(xFish(iLoop),yFish(iLoop),2*scaleFact*posStd(iLoop)*cos(thFish(iLoop)+pi),2*scaleFact*posStd(iLoop)*sin(thFish(iLoop)+pi),'LineWidth',1.5,'Color','g');
-        scatter(tubeCen(1,iLoop),tubeCen(2,iLoop),200,'filled')
-    end
+colrs               = distinguishable_colors(nFish,{'r','k','y'});
+scrsz               = get(groot,'ScreenSize');
+hAxis               = figure('Position',[1 scrsz(4)/2 scrsz(3) scrsz(4)]);
+set(gcf,'color',[1 1 1]);
+
+ids = unique([tracks.id]);
+nTracks = length(ids);
+
+h1 = subplot(1,2,1);
+hold on;
+plotSpectrogram(gca,spec.T,spec.F,Smag);
+
+for k = 1:nTracks
+    idTrack = tracks([tracks.id]==ids(k));
+    [~,idx] = sort([idTrack.t]);
+    idTrack = idTrack(idx);
+
+    plot([idTrack.t],[idTrack.f1],'.-','Color',colrs(k,:),'LineWidth',3);
 end
 
-export_fig(fullfile(baseFolder,'figures',datasetName),'-pdf','-nocrop','-painters')
+ylim([290,450]);
+h1.FontSize = 12;
+xlim([spec.T(1),spec.T(end)]);
+
+xlabel('Time (s)','FontSize',12);
+ylabel('Frequency (Hz)','FontSize',12);
+title('Spectrogram with Frequency Tracks','FontSize',18);
+hold off;
+
+subplot(1,2,2), hold on;
+imageMat = imread(fullfile(photo_dir_path,photo_file_name));
+imshow(imageMat,'InitialMagnification',50);
+hold on;
+plot(scaleFact*gridCoord(1:end,1)+gridCenter(1),scaleFact*gridCoord(1:end,2)+gridCenter(2),'ok','LineWidth',3.01)
+plot(scaleFact*gridCoord(1:end,1)+gridCenter(1),scaleFact*gridCoord(1:end,2)+gridCenter(2),'+k','LineWidth',3.01)
+for iLoop = 1:length(iFishVec)
+    viscircles([xFish(iLoop) yFish(iLoop)],2*scaleFact*posStd(iLoop),'Color',colrs(iFishVec(iLoop),:));
+
+    quiver(xFish(iLoop),yFish(iLoop),2*scaleFact*posStd(iLoop)*cos(thFish(iLoop)+2*thStd(iLoop)),2*scaleFact*posStd(iLoop)*sin(thFish(iLoop)+2*thStd(iLoop)),'LineWidth',1.5,'Color',colrs(iFishVec(iLoop),:));
+    quiver(xFish(iLoop),yFish(iLoop),2*scaleFact*posStd(iLoop)*cos(thFish(iLoop)-2*thStd(iLoop)),2*scaleFact*posStd(iLoop)*sin(thFish(iLoop)-2*thStd(iLoop)),'LineWidth',1.5,'Color',colrs(iFishVec(iLoop),:));
+    quiver(xFish(iLoop),yFish(iLoop),2*scaleFact*posStd(iLoop)*cos(thFish(iLoop)),2*scaleFact*posStd(iLoop)*sin(thFish(iLoop)),'LineWidth',1.5,'Color',colrs(iFishVec(iLoop),:));
+
+    quiver(xFish(iLoop),yFish(iLoop),2*scaleFact*posStd(iLoop)*cos(thFish(iLoop)+pi+2*thStd(iLoop)),2*scaleFact*posStd(iLoop)*sin(thFish(iLoop)+pi+2*thStd(iLoop)),'LineWidth',1.5,'Color',colrs(iFishVec(iLoop),:));
+    quiver(xFish(iLoop),yFish(iLoop),2*scaleFact*posStd(iLoop)*cos(thFish(iLoop)+pi-2*thStd(iLoop)),2*scaleFact*posStd(iLoop)*sin(thFish(iLoop)+pi-2*thStd(iLoop)),'LineWidth',1.5,'Color',colrs(iFishVec(iLoop),:));
+    quiver(xFish(iLoop),yFish(iLoop),2*scaleFact*posStd(iLoop)*cos(thFish(iLoop)+pi),2*scaleFact*posStd(iLoop)*sin(thFish(iLoop)+pi),'LineWidth',1.5,'Color',colrs(iFishVec(iLoop),:));
+    
+    plot(tubeCen(1,iLoop),tubeCen(2,iLoop),'.','MarkerSize',20,'Color',colrs(iFishVec(iLoop),:))
+end
+
+title('Overhead View with Spatial Estimates','FontSize',18);
+hold off;
+
+export_fig(fullfile(fig_dir_path,fig_file_name),'-pdf','-nocrop','-painters')
