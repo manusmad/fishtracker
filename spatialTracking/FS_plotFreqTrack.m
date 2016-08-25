@@ -1,22 +1,23 @@
 function FS_plotFreqTrack(handles)
 
-type        = handles.dataType;
 fishSelect  = handles.fishSelect; 
 numFish     = length(fishSelect);
 
+if ~handles.particle.wildTag
+    stepNo      = handles.timeIdx(handles.sNo);
+else
+    stepNo      = handles.sNo;
+end
+
 if strcmp(handles.heatType,'theoretical')
-    amp = zeros(1,size(squeeze(handles.ampMean(1,:,handles.sNo)),2));
+    amp = zeros(handles.particle.nChannels,1);
     for fID = 1:numFish
         i = fishSelect(fID);
-        if sum(isnan(squeeze(handles.ampMean(i,:,handles.sNo)))) < size(squeeze(handles.ampMean(1,:,handles.sNo)),2)
-           amp = amp + squeeze(handles.ampMean(i,:,handles.sNo));
+        if sum(isnan(handles.particle.fish(i).ampTheor(:,stepNo))) < handles.particle.nChannels
+           amp = amp + handles.particle.fish(i).ampTheor(:,stepNo);
         end   
     end
-% theoretAmp = amp;
-
-
     gridCoord   = handles.gridCoord;
-    tankCoord   = handles.tankCoord;
     divNo = 100;
 
     xRange = max(gridCoord(:,1))- min(gridCoord(:,1));
@@ -43,31 +44,19 @@ if strcmp(handles.heatType,'theoretical')
     set (gca, 'xtick', [],'ytick', []);
     axis tight
 else
-    type        = handles.dataType;
-    fishSelect  = handles.fishSelect; 
-    numFish     = length(fishSelect);
-
-    freqCell    = handles.freqCell;
-    nFish       = handles.nFish;
-    if strcmp(type,'tank')
-        stepNo      = handles.timeIdx(handles.sNo);
-    else
-        stepNo      = handles.sNo;
-    end
-
     axes(handles.ax_freqTrack)
     reset(handles.ax_freqTrack);
     cla
-    colrs = distinguishable_colors(nFish); 
+    colrs = distinguishable_colors(handles.particle.nFish); 
 
     for fID = 1:numFish
         i = fishSelect(fID);
-        plot(freqCell{i}(:,1),freqCell{i}(:,2),'Color',colrs(i,:),'LineWidth',1.5);hold on
+        plot(handles.particle.fish(i).freq(:,1),handles.particle.fish(i).freq(:,2),'Color',colrs(i,:),'LineWidth',1.5);hold on
     end
 
     axis tight
     ylim(ylim + [-1 1]*0.1*diff(ylim));
-    line([freqCell{i}(stepNo,1),freqCell{i}(stepNo,1)],ylim,'Color', 'k','LineWidth',1.2);
+    line([handles.particle.t(stepNo),handles.particle.t(stepNo)],ylim,'Color', 'k','LineWidth',1.2);
     set(gca, 'fontsize',8)
     set(gca,'Color',[1 1 1]);
 end

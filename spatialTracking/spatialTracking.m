@@ -22,7 +22,7 @@ function varargout = spatialTracking(varargin)
 
 % Edit the above text to modify the response to help spatialTracking
 
-% Last Modified by GUIDE v2.5 15-Mar-2016 09:51:47
+% Last Modified by GUIDE v2.5 22-Aug-2016 13:02:26
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -60,6 +60,11 @@ addpath('../packages/addpath_recurse');
 addpath_recurse('../packages');
 addpath_recurse('.');
 
+set(handles.plotParticles,'Visible','off');
+set(handles.plotParticles,'Value',0);
+set(handles.plotHull,'Visible','off')
+set(handles.plotHull,'Value',0);
+
 lastFoldAddr = fullfile(fileparts(which('spatialTracking.m')),'lastFold.mat');
 
 if exist(lastFoldAddr,'file') == 2
@@ -86,44 +91,40 @@ function varargout = spatialTracking_OutputFcn(hObject, eventdata, handles)
 varargout{1} = handles.output;
 
 
-
-function data_path_Callback(hObject, eventdata, handles)
-% hObject    handle to data_path (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of data_path as text
-%        str2double(get(hObject,'String')) returns contents of data_path as a double
-
-
-% --- Executes during object creation, after setting all properties.
-function data_path_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to data_path (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
 % --- Executes on button press in push_load.
 function push_load_Callback(hObject, eventdata, handles)
 % hObject    handle to push_load (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+% Save the current datasetfolder as the last opened folder
 handles.dir_path  = get(handles.data_path, 'String');
 folder_name       = handles.dir_path;
 lastFoldAddr      = fullfile(fileparts(which('spatialTracking.m')),'lastFold');
 save(lastFoldAddr,'folder_name');
-load(fullfile(fileparts(which('spatialTracking.m')),'fitData'));
-handles.fittedExpModel = fittedExpModel;
+
+% Read grid config file and plot grid
+M = dlmread(fullfile(handles.dir_path,'gridConfig.txt'),'',2,0);
+xD = M(:,1);
+yD = M(:,2);
+handles.gridCoord   = [xD yD];
+bndry               = 0.25*max(max(xD)-min(xD),max(yD)-min(yD));
+handles.tankCoord   = [min(xD)-bndry min(yD)-bndry;
+                       max(xD)+bndry min(yD)-bndry;
+                       max(xD)+bndry max(yD)+bndry;
+                       min(xD)-bndry max(yD)+bndry;
+                       min(xD)-bndry min(yD)-bndry];
+                   
+axes(handles.ax_overhead)
+cla;
+plot(handles.tankCoord(:,1),handles.tankCoord(:,2),'Color',[0.4,0.4,0.4],'LineWidth',10.01),hold on;
+plot(handles.gridCoord(:,1),handles.gridCoord(:,2),'ok','LineWidth',3.01);
+plot(handles.gridCoord(:,1),handles.gridCoord(:,2),'+k','LineWidth',3.01);
+set(gca,'xcolor','w','ycolor','w','xtick',[],'ytick',[])
+set(gca,'Color',[0.92 0.97 1]);
 
 if ~get(handles.Wild,'Value')
-    handles.vdata_path  = [handles.dir_path(1:end-6) 'videotracks'];
+    handles.vdata_path  = fullfile(handles.dir_path, 'videotracks');
 end
 
 if get(handles.rawRadio,'Value')
@@ -148,148 +149,46 @@ set(handles.elecFiles,'String',tracksList,'Value',1)
 guidata(hObject, handles);
 
 
-% --- Executes on selection change in elecFiles.
-function elecFiles_Callback(hObject, eventdata, handles)
-% hObject    handle to elecFiles (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: contents = cellstr(get(hObject,'String')) returns elecFiles contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from elecFiles
-
-
-% --- Executes during object creation, after setting all properties.
-function elecFiles_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to elecFiles (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: listbox controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-
-function particles_Callback(hObject, eventdata, handles)
-% hObject    handle to particles (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of particles as text
-%        str2double(get(hObject,'String')) returns contents of particles as a double
-
-
-% --- Executes during object creation, after setting all properties.
-function particles_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to particles (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
 % --- Executes on button press in push_track.
 function push_track_Callback(hObject, eventdata, handles)
 % hObject    handle to push_track (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-particles           = str2double(get(handles.particles,'String'));
-numIter             = str2double(get(handles.numIter,'String'));
+handles.nPart               = str2double(get(handles.particles,'String'));
+batchProc                   = get(handles.batchProcess,'Value');
+handles.motion              = 'random3D';
+file_list                   = get(handles.elecFiles,'String');
 
-handles.batchProc = get(handles.batchProcess,'Value');
-handles.motion = 'random3D';
+execFlag                    = 1;
+index_selected              = 0;
 
-if handles.batchProc && get(handles.rawRadio,'Value')
-    file_list           = get(handles.elecFiles,'String');
-    for index_selected = 1:length(file_list)
+if get(handles.rawRadio,'Value')
+    while execFlag
+        if batchProc
+            index_selected = index_selected + 1;
+            if index_selected == length(file_list)
+                execFlag = 0;
+            end
+        else
+            index_selected  = get(handles.elecFiles,'Value');
+            execFlag = 0;
+        end
+
         set(handles.elecFiles,'Value',index_selected)
         handles.file_idx    = index_selected;
         filename            = file_list{index_selected};
         handles.elecFile    = filename;
-        
+
         try
             handles.elecTracked = open(fullfile(handles.dir_path,'freqtracks',filename));
         catch ex
             errordlg(ex.getReport('basic'),'File Type Error','modal')
         end
-            if ~get(handles.Wild,'Value') 
-                try
-%                     clickFileAddr = fullfile(handles.dir_path,'videotracks',[filename([1:end-11]),'_clicktracks',filename([end-3:end])]);
-                    trackFileAddr = fullfile(handles.dir_path,'videotracks',[filename([1:end-11]),'_videotracks',filename([end-3:end])]);
-%                     if exist(clickFileAddr,'file')
-%                         handles.vidTracked = open(clickFileAddr);
-%                     else
-                        handles.vidTracked = open(trackFileAddr);
-%                     end
-        %             handles.vidTracked = open(fullfile(handles.dir_path(1:end-10),'videotracks',[clipsname(1:end-4) '_clicktracks.mat']));
-                catch ex
-                    errordlg(ex.getReport('basic'),'File Type Error','modal')
-                end
-
-                handles.scaleFact   = 6;
-
-                gridTemp            = (handles.vidTracked.gridcen-repmat(handles.vidTracked.gridcen(5,:),9,1))/handles.scaleFact;
-                handles.gridCoord   = [gridTemp(:,1) -gridTemp(:,2)];
-                tankTemp            = (handles.vidTracked.tankcen-repmat(handles.vidTracked.gridcen(5,:),4,1))/handles.scaleFact;
-                handles.tankCoord   = [tankTemp(1:2,:);tankTemp(4:-1:3,:);tankTemp(1,:)];
-%                 set(handles.limMax,'Enable','on');
-%                 set(handles.limManual,'Enable','on');
-            else
-                [xD,yD]             = FS_testGridSim(get(handles.Wild,'Value'));
-                handles.gridCoord   = [xD yD];
-%                 bndry               = 200;
-                bndry               = 0.25*max(max(xD)-min(xD),max(yD)-min(yD));
-                handles.tankCoord   = [min(xD)-bndry min(yD)-bndry;
-                                       max(xD)+bndry min(yD)-bndry;
-                                       max(xD)+bndry max(yD)+bndry;
-                                       min(xD)-bndry max(yD)+bndry;
-                                       min(xD)-bndry min(yD)-bndry];
-%                 set(handles.limMax,'Enable','on');
-%                 set(handles.limManual,'Enable','on');
-            end
-
-            [handles, dataFileName] = FS_Main(particles,numIter, handles);
-            handles.tempFileName    = dataFileName;
-
-        [~,fName,~] = fileparts(handles.elecFile);
-        dataFileName = fullfile(handles.dir_path,'freqtracks',[fName '_100kFinVar_particle.mat']);
-
-        movefile(handles.tempFileName,dataFileName);
-        set(handles.figSaveText,'String',['Saved ' fName '_100kFinVar_particle.mat at' datestr(now)]);
-    end
-
-else
-    index_selected      = get(handles.elecFiles,'Value');
-    handles.file_idx    = index_selected;
-    file_list           = get(handles.elecFiles,'String');
-    % for index_selected = 1:length(file_list)
-    filename            = file_list{index_selected};
-    handles.elecFile    = filename;
-    guidata(hObject, handles);
-    try
-        handles.elecTracked = open(fullfile(handles.dir_path,'freqtracks',filename));
-    catch ex
-        errordlg(ex.getReport('basic'),'File Type Error','modal')
-    end
-
-    if get(handles.rawRadio,'Value')
         if ~get(handles.Wild,'Value') 
             try
-%                 clickFileAddr = fullfile(handles.dir_path,'videotracks',[filename([1:end-11]),'_clicktracks',filename([end-3:end])]);
-                trackFileAddr = fullfile(handles.dir_path,'videotracks',[filename([1:end-11]),'_videotracks',filename([end-3:end])]);
-%                 if exist(clickFileAddr,'file')
-%                     handles.vidTracked = open(clickFileAddr);
-%                 else
-                    handles.vidTracked = open(trackFileAddr);
-%                 end
-    %             handles.vidTracked = open(fullfile(handles.dir_path(1:end-10),'videotracks',[clipsname(1:end-4) '_clicktracks.mat']));
+                trackFileAddr = fullfile(handles.dir_path,'videotracks',strrep(filename,'tracks','videotracks'));
+                handles.vidTracked = open(trackFileAddr);
             catch ex
                 errordlg(ex.getReport('basic'),'File Type Error','modal')
             end
@@ -297,72 +196,60 @@ else
             handles.scaleFact   = 6;
 
             gridTemp            = (handles.vidTracked.gridcen-repmat(handles.vidTracked.gridcen(5,:),9,1))/handles.scaleFact;
-            handles.gridCoord   = [gridTemp(:,1) -gridTemp(:,2)];
+            handles.gridCoord   = [gridTemp(:,1) gridTemp(:,2)];
             tankTemp            = (handles.vidTracked.tankcen-repmat(handles.vidTracked.gridcen(5,:),4,1))/handles.scaleFact;
             handles.tankCoord   = [tankTemp(1:2,:);tankTemp(4:-1:3,:);tankTemp(1,:)];
-            set(handles.limMax,'Enable','on');
-            set(handles.limManual,'Enable','on');
-        else
-            [xD,yD]             = FS_testGridSim(get(handles.Wild,'Value'));
-            handles.gridCoord   = [xD yD];
-%             bndry               = 200;
-%             handles.tankCoord   = [-bndry -bndry;bndry -bndry;bndry bndry;-bndry bndry;-bndry -bndry];
-            bndry               = 0.25*max(max(xD)-min(xD),max(yD)-min(yD));
-            handles.tankCoord   = [min(xD)-bndry min(yD)-bndry;
-                                       max(xD)+bndry min(yD)-bndry;
-                                       max(xD)+bndry max(yD)+bndry;
-                                       min(xD)-bndry max(yD)+bndry;
-                                       min(xD)-bndry min(yD)-bndry];
-            set(handles.limMax,'Enable','on');
-            set(handles.limManual,'Enable','on');
         end
-
-        [handles, dataFileName] = FS_Main(particles,numIter, handles);
+        
+        [handles, dataFileName] = FS_Main(handles);
         handles.tempFileName    = dataFileName;
-        load(dataFileName)
-        set(handles.saveTrackData,'Enable','on');
-        set(handles.figSaveText,'String',['Finished Tracking!' ' at ' datestr(now)]);
-    else
-        load(fullfile(handles.dir_path, filesep,'freqtracks',filesep,filename));
-        if wildTag
-            set(handles.Wild,'Value',1);
-            set(handles.Tank,'Value',0);
+        if batchProc
+            dataFileName        = fullfile(handles.dir_path,'freqtracks',strrep(handles.elecFile,'tracks','particle'));
+            movefile(handles.tempFileName,dataFileName);
+            set(handles.figSaveText,'String',['Saved ' strrep(handles.elecFile,'tracks','particle') ' at ' datestr(now)]);
+        else 
+            load(dataFileName)
+            if ~particle.wildTag 
+                if particle.nFish >1
+                    load(fullfile(handles.dir_path,'fishMap'));
+                    handles.fishMap = fishMap;
+                end
+            end
+            set(handles.saveTrackData,'Enable','on');
+            set(handles.limMax,'Enable','on');
+            set(handles.limManual,'Enable','on');
+            set(handles.figSaveText,'String',['Finished Tracking ' strrep(handles.elecFile,'tracks','particle') ' at ' datestr(now)]);
         end
-        set(handles.saveTrackData,'Enable','off');
-        set(handles.figSaveText,'String',['Finished Loading!' ' at ' datestr(now)]);
+    end       
+else
+    index_selected              = get(handles.elecFiles,'Value');
+    filename                    = file_list{index_selected};
+    load(fullfile(handles.dir_path,'tracked',filename));
+    
+    if ~particle.wildTag 
+        try
+            trackFileAddr       = fullfile(handles.dir_path,'videotracks',strrep(filename,'particle','videotracks'));
+            handles.vidTracked  = open(trackFileAddr);
+        catch ex
+            errordlg(ex.getReport('basic'),'File Type Error','modal')
+        end
+        if particle.nFish >1
+            load(fullfile(handles.dir_path,'fishMap'));
+            handles.fishMap     = fishMap;
+        end
     end
-
-    handles.dataType    = dataType;
-    handles.gridCoord   = gridCoord;
-    handles.tankCoord   = tankCoord; 
-    handles.xMean       = xMean;
-    handles.yMean       = yMean;
-    handles.zMean       = zMean;
-    handles.thMean      = thMean;
-    handles.nFish       = nFish;
-    handles.fishTime    = fishTime;
     
-%     handles.xPart       = xPart;
-%     handles.xPartRev       = xPartRev;
-    
-%     handles.nPart       = size(xPart,3);
-%     handles.xWeight     = xWeight;
-    handles.xFishIter   = xFishIter;
-    
-    handles.xFish       = [];
-    handles.yFish       = [];
-    handles.thFish      = [];
-    
-    for i = 1:nFish
-        handles.xFish(i,:) = (squeeze(mean(xFishIter(i,:,:,1))));
-        handles.yFish(i,:) = (squeeze(mean(xFishIter(i,:,:,2))));
-        handles.thFish(i,:) = (squeeze(mean(xFishIter(i,:,:,3))));
+    if particle.wildTag
+        set(handles.Wild,'Value',1);
+        set(handles.Tank,'Value',0);
     end
+    set(handles.saveTrackData,'Enable','off');
+    set(handles.figSaveText,'String',['Finished Loading ' filename ' at ' datestr(now)]);
+end
 
-    handles.sNo         = 1;
-    handles.ampAll      = ampAll;
-    handles.ampMean     = ampMean;
-    handles.freqCell    = freqCell;
+if ~batchProc
+    handles.particle        = particle;
+    handles.sNo             = 1;
     handles.showNone        = get(handles.estNone,'Value');
     handles.showPosition    = get(handles.estPosition,'Value');
     handles.showAngle       = get(handles.estAngle,'Value');
@@ -370,106 +257,81 @@ else
     handles.showAllFish     = get(handles.plotAllFish,'Value');
     handles.showHull        = get(handles.plotHull,'Value');
     handles.showParticles   = get(handles.plotParticles,'Value');
+    handles.heatType        = 'actual';
 
-    handles.heatType = 'actual';
-
-    if ~get(handles.Wild,'Value')
+    if ~handles.particle.wildTag
         set(handles.plotVidFish,'Enable','on');
-        handles.showVid = get(handles.plotVidFish,'Value');
+        handles.showVid     = get(handles.plotVidFish,'Value');
+        handles.nSteps      = length(handles.vidTracked.frameTime);
+        elecTime            = handles.particle.t;
+        handles.timeIdx     = zeros(handles.nSteps,1);
+        for n = 1:handles.nSteps
+           [~,handles.timeIdx(n)] = min(abs(elecTime - handles.vidTracked.frameTime(n)));
+        end
     else
         set(handles.plotVidFish,'Enable','off');
+        handles.nSteps      = length(handles.particle.t);
+        handles.timeIdx     = 1:handles.nSteps;
     end
-    if get(handles.Wild,'Value')
-       timeIdx = '';
-       vidParams = '';
-    else 
-        handles.timeIdx = timeIdx;
-    end
-    handles.vidParams   = vidParams;
-
-
-    if ~get(handles.Wild,'Value')
-        vidParams.nFrames   = length(vidParams.frameTime);
-        handles.nSteps = vidParams.nFrames;
-    else    
-        handles.nSteps = length(fishTime);
-        handles.timeIdx = 1:handles.nSteps;
-    end
-
-    set(handles.timeText,'String',['Time: ' num2str(handles.fishTime(1)) 's of ' num2str(handles.fishTime(end)) 's']);
+%%%
+    set(handles.timeText,'String',['Time: ' num2str(handles.particle.t(1)) 's of ' num2str(handles.particle.t(end)) 's']);
     set(handles.totalStep, 'String',['of ' num2str(handles.nSteps)])
     set(handles.stepNo, 'String',num2str(1))
     set(handles.stepSlider,'Value',0)
 
     set(handles.dataName,'String', ['Dataset: ' filename]);
-    set(handles.numFish,'String', ['Number of Fish: ' num2str(nFish)]);
-    set(handles.vidFPS,'String', num2str(1/mean(diff(handles.fishTime))));
+    set(handles.numFish,'String', ['Number of Fish: ' num2str(handles.particle.nFish)]);
+    set(handles.vidFPS,'String', num2str(1/mean(diff(handles.particle.t))));
 
-    handles.filename = filename(1:end-4);
+    handles.filename        = filename(1:end-4);
 
-    handles.fishList = cellfun(@num2str,num2cell(1:nFish),'uniformoutput',0);
+    handles.fishList = cellfun(@num2str,num2cell(1:handles.particle.nFish),'uniformoutput',0);
     set(handles.elecFishList,'String',handles.fishList,'Value',1)
-    set(handles.elecFishList,'Max',nFish,'Min',0);
-    colrs = distinguishable_colors(nFish);
+    set(handles.elecFishList,'Max',handles.particle.nFish,'Min',0);
+    
+    ids                     = 1:handles.particle.nFish;
+    list                    = cell(handles.particle.nFish,1);
+    col                     = distinguishable_colors(handles.particle.nFish);
 
-
-    ids = 1:nFish;
-    list = cell(handles.nFish,1);
-    col = distinguishable_colors(max(ids));
-
-    for k = 1:handles.nFish
-        coltag = reshape(dec2hex(round(col(ids(k),:)*255))',1,6);           
-        list{k} = sprintf('<html><body bgcolor="%s">Fish %02d</body></html>',coltag,ids(k));
+    for k = 1:handles.particle.nFish
+        coltag              = reshape(dec2hex(round(col(ids(k),:)*255))',1,6);           
+        list{k}             = sprintf('<html><body bgcolor="%s">Fish %02d</body></html>',coltag,ids(k));
     end
     set(handles.elecFishList,'String',list);
-
     set(handles.vidStartStep,'String',num2str(1));
     set(handles.vidStopStep,'String',num2str(handles.nSteps));
 
     if ~handles.showAllFish
-        C = get(handles.elecFishList,{'string','value'});
-        handles.fishSelect = C{2};
+        C                   = get(handles.elecFishList,{'string','value'});
+        handles.fishSelect  = C{2};
     else
-        handles.fishSelect = 1:nFish;
+        handles.fishSelect  = 1:handles.particle.nFish;
     end
 
     if get(handles.trackAll,'Value')
-        handles.showTrack = 1;
+        handles.showTrack   = 1;
     elseif get(handles.trackNone,'Value')
-        handles.showTrack = 2;
+        handles.showTrack   = 2;
     elseif get(handles.trackNone,'Value')
-        handles.showTrack = 3;
+        handles.showTrack   = 3;
     end 
-
+%%%
     if get(handles.limDefault,'Value')
-        if get(handles.Wild,'Value')
-            handles.bndryX = [-200 200];
-            handles.bndryY = [-200 200];
-        elseif get(handles.Tank,'Value')
-            handles.bndryX = [vidParams.tankcen(1,1) vidParams.tankcen(2,1)];
-            handles.bndryY = [vidParams.tankcen(1,2) vidParams.tankcen(4,2)];
-        else
-            handles.bndryX = [-80 80];
-            handles.bndryY = [-80 80];
-        end
+        handles.bndryX      = [min(handles.particle.tankCoord(:,1)) max(handles.particle.tankCoord(:,1))];
+        handles.bndryY      = [min(handles.particle.tankCoord(:,2)) max(handles.particle.tankCoord(:,2))];
     elseif get(handles.limMax,'Value')
-            maxLim = max([max(max(abs(handles.xMean))) max(max(abs(handles.yMean)))]);
-            handles.bndryX = [-maxLim maxLim];
-            handles.bndryY = [-maxLim maxLim];
+        xMaxAbs             = max(abs([min([handles.particle.fish(:).x]) max([handles.particle.fish(:).x])]));
+        yMaxAbs             = max(abs([min([handles.particle.fish(:).y]) max([handles.particle.fish(:).y])]));
+        xtankMaxAbs         = max(abs([min(handles.particle.tankCoord(:,1)) max(handles.particle.tankCoord(:,1))]));
+        ytankMaxAbs         = max(abs([min(handles.particle.tankCoord(:,2)) max(handles.particle.tankCoord(:,2))]));
+        maxLim              = max([xMaxAbs yMaxAbs xtankMaxAbs ytankMaxAbs]);
+
+        handles.bndryX      = [-maxLim maxLim];
+        handles.bndryY      = [-maxLim maxLim];        
     elseif get(handles.limManual,'Value')
-        handles.limScale = get(handles.limEdit,'Value');
-        if get(handles.Wild,'Value')
-            handles.bndryX = handles.limScale*[-200 200];
-            handles.bndryY = handles.limScale*[-200 200];
-        elseif get(handles.Tank,'Value')
-            xPxl = handles.limScale*abs(vidParams.tankcen(1,1)-vidParams.tankcen(2,1));
-            yPxl = handles.limScale*abs(vidParams.tankcen(1,2)-vidParams.tankcen(4,2));
-            handles.bndryX = [vidParams.tankcen(1,1)-xPxl vidParams.tankcen(2,1)+xPxl];
-            handles.bndryY = [vidParams.tankcen(1,2)-yPxl vidParams.tankcen(4,2)+yPxl];
-        else
-            handles.bndryX = handles.limScale*[-80 80];
-            handles.bndryY = handles.limScale*[-80 80];
-        end
+        str2double(get(handles.limEdit,'String'))
+        handles.bndryX      = handles.limScale*[min(handles.particle.tankCoord(:,1)) max(handles.particle.tankCoord(:,1))];
+        handles.bndryY      = handles.limScale*[min(handles.particle.tankCoord(:,2)) max(handles.particle.tankCoord(:,2))];
     end
     guidata(hObject, handles);
 
@@ -477,7 +339,7 @@ else
     FS_plotFreqTrack(handles)
     FS_plotHeat(handles)
 
-    display(['Done loading']);
+    display('Done loading');
 end
 
 guidata(hObject, handles);
@@ -493,13 +355,13 @@ function stepSlider_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
 
-stepScale = get(handles.stepSlider,'Value');
-curr_step      = floor(stepScale*(handles.nSteps));
+stepScale       = get(handles.stepSlider,'Value');
+curr_step       = floor(stepScale*(handles.nSteps));
 if ~curr_step 
-    curr_step = 1;
+    curr_step   = 1;
 end
 
-handles.sNo = curr_step;
+handles.sNo     = curr_step;
 
 FS_plotOverhead(handles)
 FS_plotFreqTrack(handles)
@@ -508,24 +370,11 @@ FS_plotHeat(handles)
 set(handles.stepNo,'String',num2str(curr_step));
 
 if ~get(handles.Wild,'Value')
-    curr_step = handles.timeIdx(curr_step);
+    curr_step   = handles.timeIdx(curr_step);
 end
 
-set(handles.timeText,'String',['Time: ' num2str(handles.fishTime(curr_step)) 's of ' num2str(handles.fishTime(end)) 's']);
-% handles.showVF = get(handles.enableVFish,'Value');
-% handles.showEF = get(handles.enableEFish,'Value');
+set(handles.timeText,'String',['Time: ' num2str(handles.particle.t(curr_step)) 's of ' num2str(handles.particle.t(end)) 's']);
 guidata(hObject, handles);
-
-% --- Executes during object creation, after setting all properties.
-function stepSlider_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to stepSlider (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: slider controls usually have a light gray background.
-if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor',[.9 .9 .9]);
-end
 
 
 % --- Executes on button press in playPause.
@@ -534,43 +383,49 @@ function playPause_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-k          = 0;
-stepNo    = str2double(get(handles.stepNo,'String'));
+k           = 0;
+stepNo      = str2double(get(handles.stepNo,'String'));
+tMult       = str2double(get(handles.pSpeed,'String'));
+tMult       = floor(tMult);
+set(handles.pSpeed,'String',num2str(tMult));
 
-while (get(handles.playPause,'Value') == 1 && strcmp(get(handles.playPause,'String'),'Play') ...
+while ((get(handles.playPause,'Value') == 1 && strcmp(get(handles.playPause,'String'),'Play')) ...
         || (get(handles.playPause,'Value') == 0 && strcmp(get(handles.playPause,'String'),'Pause')))
     
-    tMult      = str2double(get(handles.pSpeed,'String'));
-    
     set(handles.stepNo,'String',num2str(stepNo));  
-    set(handles.timeText,'String',['Time: ' num2str(handles.fishTime(stepNo)) 's of ' num2str(handles.fishTime(end)) 's']);
+    set(handles.timeText,'String',['Time: ' num2str(handles.particle.t(stepNo)) 's of ' num2str(handles.particle.t(end)) 's']);
     handles.sNo = stepNo;
+    guidata(hObject, handles);
     
+    if ~get(handles.Wild,'Value')
+        curr_step = handles.timeIdx(stepNo);
+    else
+        curr_step = stepNo;
+    end
+
+    set(handles.timeText,'String',['Time: ' num2str(handles.particle.t(curr_step)) 's of ' num2str(handles.particle.t(end)) 's']);
+
     FS_plotOverhead(handles)
     FS_plotFreqTrack(handles)
     FS_plotHeat(handles)
     
-%     handles.frameIdx = floor(stepNo/handles.nSkip)+1;
-    
-    stepScale = (stepNo-1)/handles.nSteps;
+    pause(0.2)
+    stepScale       = (stepNo)/handles.nSteps;
     set(handles.stepSlider,'Value',stepScale);
     
-%     stepScale = get(handles.stepSlider,'Value');
-%     stepNo      = 1 + floor(stepScale*(handles.nSteps));
-    
-    if (stepNo+tMult*1) < handles.nSteps
-        stepNo = stepNo+tMult*1;    
+    if (stepNo+tMult*1) <= handles.nSteps
+        stepNo      = stepNo+tMult*1;    
     else
         break
     end
     
     if k == 0
-%         set(handles.stepSlider,'Value',stepScale);
         set(handles.playPause,'Value',0);
         set(handles.playPause,'String','Pause');
-        k = 1;
+        k           = 1;
         guidata(hObject, handles);
     end
+
 end
 set(handles.playPause,'Value', 0);
 set(handles.playPause,'String', 'Play');
@@ -584,9 +439,8 @@ function stepNo_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of stepNo as text
 %        str2double(get(hObject,'String')) returns contents of stepNo as a double
-stepNo = str2double(get(handles.stepNo,'String'));
-    
-handles.sNo = stepNo;
+stepNo              = str2double(get(handles.stepNo,'String'));
+handles.sNo         = stepNo;
 
 FS_plotOverhead(handles)
 FS_plotFreqTrack(handles)
@@ -601,46 +455,14 @@ elseif stepScale > 1
 end
 
 set(handles.stepSlider,'Value',stepScale);
-set(handles.timeText,'String',['Time: ' num2str(handles.fishTime(stepNo)) 's of ' num2str(handles.fishTime(end)) 's']);
-    
-%     handles.showVF = get(handles.enableVFish,'Value');
-%     handles.showEF = get(handles.enableEFish,'Value');
+if ~get(handles.Wild,'Value')
+    curr_step = handles.timeIdx(stepNo);
+else
+    curr_step = stepNo;
+end
+
+set(handles.timeText,'String',['Time: ' num2str(handles.particle.t(curr_step)) 's of ' num2str(handles.particle.t(end)) 's']);
 guidata(hObject, handles);
-
-% --- Executes during object creation, after setting all properties.
-function stepNo_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to stepNo (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-
-function pSpeed_Callback(hObject, eventdata, handles)
-% hObject    handle to pSpeed (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of pSpeed as text
-%        str2double(get(hObject,'String')) returns contents of pSpeed as a double
-
-
-% --- Executes during object creation, after setting all properties.
-function pSpeed_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to pSpeed (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
 
 
 % --- Executes on button press in prevPush.
@@ -652,15 +474,25 @@ function prevPush_Callback(hObject, eventdata, handles)
 % handles.showEF = get(handles.enableEFish,'Value');
 
 stepNo    = str2double(get(handles.stepNo,'String'));
-tMult      = str2double(get(handles.pSpeed,'String'));
+tMult     = str2double(get(handles.pSpeed,'String'));
+tMult     = floor(tMult);
+set(handles.pSpeed,'String',num2str(tMult));
     
 if (stepNo-tMult*1) > 1
     stepNo = stepNo-tMult*1;    
 else
     stepNo = 1;
 end    
+
 set(handles.stepNo,'String',num2str(stepNo)); 
-set(handles.timeText,'String',['Time: ' num2str(handles.fishTime(stepNo)) 's of ' num2str(handles.fishTime(end)) 's']);
+
+if ~get(handles.Wild,'Value')
+    curr_step = handles.timeIdx(stepNo);
+else
+    curr_step = stepNo;
+end
+
+set(handles.timeText,'String',['Time: ' num2str(handles.particle.t(curr_step)) 's of ' num2str(handles.particle.t(end)) 's']);
 
 handles.sNo = stepNo;
 
@@ -690,7 +522,7 @@ else
     stepNo = handles.nSteps;
 end
 set(handles.stepNo,'String',num2str(stepNo));
-set(handles.timeText,'String',['Time: ' num2str(handles.fishTime(stepNo)) 's of ' num2str(handles.fishTime(end)) 's']);
+set(handles.timeText,'String',['Time: ' num2str(handles.particle.t(stepNo)) 's of ' num2str(handles.particle.t(end)) 's']);
 handles.sNo = stepNo;
 
 FS_plotOverhead(handles)
@@ -711,7 +543,6 @@ function elecFishList_Callback(hObject, eventdata, handles)
 % Hints: contents = cellstr(get(hObject,'String')) returns elecFishList contents as cell array
 %        contents{get(hObject,'Value')} returns selected item from elecFishList
 
-
 if ~handles.showAllFish
     C = get(handles.elecFishList,{'string','value'});
     handles.fishSelect = C{2};
@@ -719,23 +550,10 @@ if ~handles.showAllFish
     FS_plotFreqTrack(handles)
     FS_plotHeat(handles)
 else
-    handles.fishSelect = 1:handles.nFish;
+    handles.fishSelect = 1:handles.particle.nFish;
 end
 
 guidata(hObject, handles);
-
-
-% --- Executes during object creation, after setting all properties.
-function elecFishList_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to elecFishList (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: listbox controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
 
 
 % --- Executes on button press in plotAllFish.
@@ -751,7 +569,7 @@ if ~handles.showAllFish
     C = get(handles.elecFishList,{'string','value'});
     handles.fishSelect = C{2};
 else
-    handles.fishSelect = 1:handles.nFish;
+    handles.fishSelect = 1:handles.particle.nFish;
 end
 FS_plotOverhead(handles)
 FS_plotHeat(handles)
@@ -769,6 +587,8 @@ handles.showVid = get(handles.plotVidFish,'Value');
 
 FS_plotOverhead(handles)
 guidata(hObject, handles);
+
+
 % --- Executes on button press in saveFig.
 function saveFig_Callback(hObject, eventdata, handles)
 % hObject    handle to saveFig (see GCBO)
@@ -779,7 +599,7 @@ fishStr = num2str(handles.fishSelect);
 fishStr(ismember(fishStr,' ,.:;!')) = [];
 
 if get(handles.rawRadio,'Value')
-    fName = [handles.elecFile(1:end-11) '_F' fishStr '_' handles.num2str(handles.sNo) '.pdf'];
+    fName = [handles.elecFile(1:end-11) '_F' fishStr '_' num2str(handles.sNo) '.pdf'];
     pdfName = fullfile(handles.dir_path, fName);
 else
     fName = [handles.elecFile(1:end-20) '_F' fishStr '_' num2str(handles.sNo) '.pdf'];
@@ -846,7 +666,7 @@ else
             FS_plotFreqTrack(handles)
 
             set(handles.stepNo,'String',num2str(i));
-            set(handles.timeText,'String',['Time: ' num2str(handles.fishTime(i)) 's of ' num2str(handles.fishTime(end)) 's']);
+            set(handles.timeText,'String',['Time: ' num2str(handles.particle.t(i)) 's of ' num2str(handles.particle.t(end)) 's']);
             stepScale = (i-1)/handles.nSteps;
             set(handles.stepSlider,'Value',stepScale);
 
@@ -957,6 +777,291 @@ FS_plotOverhead(handles)
 guidata(hObject, handles);
 
 
+% --- Executes on button press in saveTrackData.
+function saveTrackData_Callback(hObject, eventdata, handles)
+% hObject    handle to saveTrackData (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+dataFileName = fullfile(handles.dir_path,'freqtracks',strrep(handles.elecFile,'tracks','particle'));
+
+[FileName,PathName,~] = uiputfile('*.mat','Save tracked data as ..',dataFileName);
+
+if FileName ~= 0
+    userFileName = fullfile(PathName, FileName);
+    movefile(handles.tempFileName,userFileName);
+    set(handles.figSaveText,'String',['Saved ' strrep(handles.elecFile,'tracks','particle') ' at' datestr(now)]);
+    set(handles.saveTrackData,'Enable','off');
+end
+
+guidata(hObject, handles);
+
+
+% --- Executes on button press in plotParticles.
+function plotParticles_Callback(hObject, eventdata, handles)
+% hObject    handle to plotParticles (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of plotParticles
+
+handles.showParticles   = get(handles.plotParticles,'Value');
+
+FS_plotOverhead(handles)
+
+guidata(hObject, handles);
+
+
+
+% --- Executes on key press with focus on data_path and none of its controls.
+function data_path_KeyPressFcn(hObject, eventdata, handles)
+% hObject    handle to data_path (see GCBO)
+% eventdata  structure with the following fields (see UICONTROL)
+%	Key: name of the key that was pressed, in lower case
+%	Character: character interpretation of the key(s) that was pressed
+%	Modifier: name(s) of the modifier key(s) (i.e., control, shift) pressed
+% handles    structure with handles and user data (see GUIDATA)
+handles.dir_path  = get(handles.data_path, 'String');
+folder_name = uigetdir(handles.dir_path,'Select dataset folder ...');
+if folder_name ~= 0
+    set(handles.data_path,'String',folder_name);
+    set(handles.data_path,'ToolTipString',['Dataset Directory: ' folder_name]);
+    lastFoldAddr = fullfile(fileparts(which('spatialTracking.m')),'lastFold');
+    save(lastFoldAddr,'folder_name');
+end
+
+guidata(hObject, handles);
+
+
+% --- Executes on button press in selDir.
+function selDir_Callback(hObject, eventdata, handles)
+% hObject    handle to selDir (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+handles.dir_path  = get(handles.data_path, 'String');
+folder_name = uigetdir(handles.dir_path,'Select dataset folder ...');
+if folder_name ~= 0
+    set(handles.data_path,'String',folder_name);
+    set(handles.data_path,'ToolTipString',['Dataset Directory: ' folder_name]);
+    lastFoldAddr = fullfile(fileparts(which('spatialTracking.m')),'lastFold');
+    save(lastFoldAddr,'folder_name');
+end
+
+% exist lastFoldAddr var
+
+guidata(hObject, handles);
+
+% --- Executes when selected object is changed in uipanel17.
+function uipanel17_SelectionChangeFcn(hObject, eventdata, handles)
+% hObject    handle to the selected object in uipanel17 
+% eventdata  structure with the following fields (see UIBUTTONGROUP)
+%	EventName: string 'SelectionChanged' (read only)
+%	OldValue: handle of the previously selected object or empty if none was selected
+%	NewValue: handle of the currently selected object
+% handles    structure with handles and user data (see GUIDATA)
+
+if get(handles.limDefault,'Value')
+        handles.bndryX      = [min(handles.particle.tankCoord(:,1)) max(handles.particle.tankCoord(:,1))];
+        handles.bndryY      = [min(handles.particle.tankCoord(:,2)) max(handles.particle.tankCoord(:,2))];
+    elseif get(handles.limMax,'Value')
+        xMaxAbs             = max(abs([min([handles.particle.fish(:).x]) max([handles.particle.fish(:).x])]));
+        yMaxAbs             = max(abs([min([handles.particle.fish(:).y]) max([handles.particle.fish(:).y])]));
+        xtankMaxAbs         = max(abs([min(handles.particle.tankCoord(:,1)) max(handles.particle.tankCoord(:,1))]));
+        ytankMaxAbs         = max(abs([min(handles.particle.tankCoord(:,2)) max(handles.particle.tankCoord(:,2))]));
+        maxLim              = max([xMaxAbs yMaxAbs xtankMaxAbs ytankMaxAbs]);
+
+        handles.bndryX      = [-maxLim maxLim];
+        handles.bndryY      = [-maxLim maxLim];        
+    elseif get(handles.limManual,'Value')
+        handles.limScale    = str2double(get(handles.limEdit,'String'));
+        handles.bndryX      = handles.limScale*[min(handles.particle.tankCoord(:,1)) max(handles.particle.tankCoord(:,1))];
+        handles.bndryY      = handles.limScale*[min(handles.particle.tankCoord(:,2)) max(handles.particle.tankCoord(:,2))];
+end
+
+FS_plotOverhead(handles)
+
+guidata(hObject, handles);
+
+
+% --- Executes when selected object is changed in uipanel19.
+function uipanel19_SelectionChangeFcn(hObject, eventdata, handles)
+% hObject    handle to the selected object in uipanel19 
+% eventdata  structure with the following fields (see UIBUTTONGROUP)
+%	EventName: string 'SelectionChanged' (read only)
+%	OldValue: handle of the previously selected object or empty if none was selected
+%	NewValue: handle of the currently selected object
+% handles    structure with handles and user data (see GUIDATA)
+handles.showNone        = get(handles.estNone,'Value');
+handles.showPosition    = get(handles.estPosition,'Value');
+handles.showAngle       = get(handles.estAngle,'Value');
+
+FS_plotOverhead(handles)
+
+guidata(hObject, handles);
+
+
+% --- Executes on button press in switchHeat.
+function switchHeat_Callback(hObject, eventdata, handles)
+% hObject    handle to switchHeat (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+if strcmp(handles.heatType,'actual')
+    handles.heatType = 'theoretical';
+    set(handles.switchHeat,'String','Plot Frequency Tracks');
+    set(handles.freqPanel,'Title','Theoretical Heatmap');
+elseif strcmp(handles.heatType,'theoretical')
+    handles.heatType = 'actual';
+    set(handles.switchHeat,'String','Plot Theoretical Heat');
+    set(handles.freqPanel,'Title','Frequency Tracks');
+end
+
+% FS_plotHeat(handles);
+FS_plotFreqTrack(handles);
+
+guidata(hObject, handles);
+
+%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% --- Executes during object creation, after setting all properties.
+function selGridButton_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to selGridButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+
+
+% --- Executes on selection change in elecFiles.
+function elecFiles_Callback(hObject, eventdata, handles)
+% hObject    handle to elecFiles (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns elecFiles contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from elecFiles
+
+
+% --- Executes during object creation, after setting all properties.
+function elecFiles_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to elecFiles (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: listbox controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function particles_Callback(hObject, eventdata, handles)
+% hObject    handle to particles (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of particles as text
+%        str2double(get(hObject,'String')) returns contents of particles as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function particles_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to particles (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+
+function data_path_Callback(hObject, eventdata, handles)
+% hObject    handle to data_path (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of data_path as text
+%        str2double(get(hObject,'String')) returns contents of data_path as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function data_path_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to data_path (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+% --- Executes during object creation, after setting all properties.
+function stepSlider_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to stepSlider (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: slider controls usually have a light gray background.
+if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor',[.9 .9 .9]);
+end
+
+% --- Executes during object creation, after setting all properties.
+function stepNo_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to stepNo (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function pSpeed_Callback(hObject, eventdata, handles)
+% hObject    handle to pSpeed (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of pSpeed as text
+%        str2double(get(hObject,'String')) returns contents of pSpeed as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function pSpeed_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to pSpeed (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+% --- Executes during object creation, after setting all properties.
+function elecFishList_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to elecFishList (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: listbox controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
 
 function vidStartStep_Callback(hObject, eventdata, handles)
 % hObject    handle to vidStartStep (see GCBO)
@@ -1003,26 +1108,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 
-% --- Executes on button press in saveTrackData.
-function saveTrackData_Callback(hObject, eventdata, handles)
-% hObject    handle to saveTrackData (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-[~,fName,~] = fileparts(handles.elecFile);
-dataFileName = fullfile(handles.dir_path,'freqtracks',[fName '_particle.mat']);
-
-[FileName,PathName,~] = uiputfile('*.mat','Save tracked data as ..',dataFileName);
-
-if FileName ~= 0
-    userFileName = fullfile(PathName, FileName);
-    movefile(handles.tempFileName,userFileName);
-    set(handles.figSaveText,'String',['Saved ' fName '_particle.mat at' datestr(now)]);
-    set(handles.saveTrackData,'Enable','off');
-end
-
-guidata(hObject, handles);
-
 function vidFPS_Callback(hObject, eventdata, handles)
 % hObject    handle to vidFPS (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -1043,23 +1128,6 @@ function vidFPS_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-
-
-% --- Executes on button press in plotParticles.
-function plotParticles_Callback(hObject, eventdata, handles)
-% hObject    handle to plotParticles (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of plotParticles
-
-handles.showParticles   = get(handles.plotParticles,'Value');
-
-FS_plotOverhead(handles)
-
-guidata(hObject, handles);
-
-
 
 function limEdit_Callback(hObject, eventdata, handles)
 % hObject    handle to limEdit (see GCBO)
@@ -1090,48 +1158,6 @@ function data_path_ButtonDownFcn(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-
-
-% --- Executes on key press with focus on data_path and none of its controls.
-function data_path_KeyPressFcn(hObject, eventdata, handles)
-% hObject    handle to data_path (see GCBO)
-% eventdata  structure with the following fields (see UICONTROL)
-%	Key: name of the key that was pressed, in lower case
-%	Character: character interpretation of the key(s) that was pressed
-%	Modifier: name(s) of the modifier key(s) (i.e., control, shift) pressed
-% handles    structure with handles and user data (see GUIDATA)
-handles.dir_path  = get(handles.data_path, 'String');
-folder_name = uigetdir(handles.dir_path,'Select dataset folder ...');
-if folder_name ~= 0
-    set(handles.data_path,'String',folder_name);
-    set(handles.data_path,'ToolTipString',['Dataset Directory: ' folder_name]);
-    lastFoldAddr = fullfile(fileparts(which('spatialTracking.m')),'lastFold');
-    save(lastFoldAddr,'folder_name');
-end
-
-guidata(hObject, handles);
-
-
-% --- Executes on button press in selDir.
-function selDir_Callback(hObject, eventdata, handles)
-% hObject    handle to selDir (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-handles.dir_path  = get(handles.data_path, 'String');
-folder_name = uigetdir(handles.dir_path,'Select dataset folder ...');
-if folder_name ~= 0
-    set(handles.data_path,'String',folder_name);
-    set(handles.data_path,'ToolTipString',['Dataset Directory: ' folder_name]);
-    lastFoldAddr = fullfile(fileparts(which('spatialTracking.m')),'lastFold');
-    save(lastFoldAddr,'folder_name');
-end
-
-% exist lastFoldAddr var
-
-guidata(hObject, handles);
-
-
-
 function numIter_Callback(hObject, eventdata, handles)
 % hObject    handle to numIter (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -1152,68 +1178,6 @@ function numIter_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-
-
-% --- Executes when selected object is changed in uipanel17.
-function uipanel17_SelectionChangeFcn(hObject, eventdata, handles)
-% hObject    handle to the selected object in uipanel17 
-% eventdata  structure with the following fields (see UIBUTTONGROUP)
-%	EventName: string 'SelectionChanged' (read only)
-%	OldValue: handle of the previously selected object or empty if none was selected
-%	NewValue: handle of the currently selected object
-% handles    structure with handles and user data (see GUIDATA)
-
-if get(handles.limDefault,'Value')
-    if get(handles.Wild,'Value')
-        handles.bndryX = [-200 200];
-        handles.bndryY = [-200 200];
-    elseif get(handles.Tank,'Value')
-        handles.bndryX = [handles.vidParams.tankcen(1,1) handles.vidParams.tankcen(2,1)];
-        handles.bndryY = [handles.vidParams.tankcen(1,2) handles.vidParams.tankcen(4,2)];
-    else
-        handles.bndryX = [-80 80];
-        handles.bndryY = [-80 80];
-    end
-elseif get(handles.limMax,'Value')
-        maxLim = max([max(max(abs(handles.xMean))) max(max(abs(handles.yMean)))]);
-        handles.bndryX = [-maxLim maxLim];
-        handles.bndryY = [-maxLim maxLim];
-elseif get(handles.limManual,'Value')
-    handles.limScale = str2num(get(handles.limEdit,'String'));
-    if get(handles.Wild,'Value')
-        handles.bndryX = handles.limScale*[-200 200];
-        handles.bndryY = handles.limScale*[-200 200];
-    elseif get(handles.Tank,'Value')
-        xPxl = handles.limScale*abs(handles.vidParams.tankcen(1,1)-handles.vidParams.tankcen(2,1));
-        yPxl = handles.limScale*abs(handles.vidParams.tankcen(1,2)-handles.vidParams.tankcen(4,2));
-        handles.bndryX = [handles.vidParams.tankcen(1,1)-xPxl handles.vidParams.tankcen(2,1)+xPxl];
-        handles.bndryY = [handles.vidParams.tankcen(1,2)-yPxl handles.vidParams.tankcen(4,2)+yPxl];
-    else
-        handles.bndryX = handles.limScale*[-80 80];
-        handles.bndryY = handles.limScale*[-80 80];
-    end
-end
-
-FS_plotOverhead(handles)
-
-guidata(hObject, handles);
-
-
-% --- Executes when selected object is changed in uipanel19.
-function uipanel19_SelectionChangeFcn(hObject, eventdata, handles)
-% hObject    handle to the selected object in uipanel19 
-% eventdata  structure with the following fields (see UIBUTTONGROUP)
-%	EventName: string 'SelectionChanged' (read only)
-%	OldValue: handle of the previously selected object or empty if none was selected
-%	NewValue: handle of the currently selected object
-% handles    structure with handles and user data (see GUIDATA)
-handles.showNone        = get(handles.estNone,'Value');
-handles.showPosition    = get(handles.estPosition,'Value');
-handles.showAngle       = get(handles.estAngle,'Value');
-
-FS_plotOverhead(handles)
-
-guidata(hObject, handles);
 
 
 % --- Executes during object creation, after setting all properties.
@@ -1353,28 +1317,6 @@ function uipanel10_SelectionChangeFcn(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 
-% --- Executes on button press in switchHeat.
-function switchHeat_Callback(hObject, eventdata, handles)
-% hObject    handle to switchHeat (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-if strcmp(handles.heatType,'actual')
-    handles.heatType = 'theoretical';
-    set(handles.switchHeat,'String','Plot Frequency Tracks');
-    set(handles.freqPanel,'Title','Theoretical Heatmap');
-elseif strcmp(handles.heatType,'theoretical')
-    handles.heatType = 'actual';
-    set(handles.switchHeat,'String','Plot Theoretical Heat');
-    set(handles.freqPanel,'Title','Frequency Tracks');
-end
-
-% FS_plotHeat(handles);
-FS_plotFreqTrack(handles);
-
-guidata(hObject, handles);
-
-
 % --- Executes on button press in batchProcess.
 function batchProcess_Callback(hObject, eventdata, handles)
 % hObject    handle to batchProcess (see GCBO)
@@ -1405,3 +1347,46 @@ function limManual_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of limManual
+
+
+
+function gridAddr_Callback(hObject, eventdata, handles)
+% hObject    handle to gridAddr (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of gridAddr as text
+%        str2double(get(hObject,'String')) returns contents of gridAddr as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function gridAddr_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to gridAddr (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in selGridButton.
+function selGridButton_Callback(hObject, eventdata, handles)
+% hObject    handle to selGridButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+handles.dir_path  = get(handles.data_path, 'String');
+[FileName,PathName] = uigetfile(fullfile(handles.dir_path,'*.txt'),'Select grid config file','MultiSelect','off');
+if folder_name ~= 0
+    set(handles.data_path,'String',folder_name);
+    set(handles.data_path,'ToolTipString',['Dataset Directory: ' folder_name]);
+    lastFoldAddr = fullfile(fileparts(which('spatialTracking.m')),'lastFold');
+    save(lastFoldAddr,'folder_name');
+end
+
+% exist lastFoldAddr var
+
+guidata(hObject, handles);

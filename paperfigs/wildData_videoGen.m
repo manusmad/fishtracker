@@ -23,7 +23,7 @@ trackedVideo_file_name  = strrep(particle_file_name,'particle.mat','video');
 
 %% Load files
     
-particleTracked         = load(fullfile(tracked_dir_path, particle_file_name),'xMean', 'yMean','thMean','gridCoord','tankCoord','nFish','ampAll','fishTime');
+load(fullfile(tracked_dir_path, particle_file_name));
 spec                    = load(fullfile(spec_dir_path, spec_file_name),'spec');
 freqtracks              = load(fullfile(freqtracks_dir_path, freqtracks_file_name),'tracks');
 
@@ -36,12 +36,12 @@ subplot = @(m,n,p) subtightplot (m, n, p, [0.01 0.01], [0.125 0.125], [0.03 0.01
 
 fW                  = 1;
 fL                  = 7;
-colrs               = distinguishable_colors(particleTracked.nFish,{'r','k','y'});
+colrs               = distinguishable_colors(particle.nFish,{'r','k','y'});
 scrsz               = get(groot,'ScreenSize');
 hAxis               = figure('Position',[1 scrsz(4)/2 scrsz(3) scrsz(4)]);
 set(gcf,'color',[1 1 1]);
 
-nFrames             = size(particleTracked.thMean,2);
+nFrames             = length(particle.t);
 frameRate           = 8;
 writerObj           = VideoWriter(fullfile(trackedVideo_dir_path, trackedVideo_file_name),'MPEG-4');
 writerObj.FrameRate = frameRate;
@@ -60,13 +60,13 @@ progressbar('Writing Video');
 open(writerObj);  
 elapsedTime = zeros(nFrames,1);
 
-flag = zeros(1,particleTracked.nFish);
-dispStep = ones(1,particleTracked.nFish);
+flag = zeros(1,particle.nFish);
+dispStep = ones(1,particle.nFish);
 for frameIdx = 1:nFrames
     tic;
     progressbar(frameIdx/nFrames);
 
-    time = particleTracked.fishTime(frameIdx);
+    time = particle.t(frameIdx);
     
     figure(hAxis), clf;
     
@@ -95,10 +95,10 @@ for frameIdx = 1:nFrames
     hold off;
     
     subplot(1,2,2), hold on;
-    plot(particleTracked.gridCoord(:,1),particleTracked.gridCoord(:,2),'ok','LineWidth',3.01);
-    plot(particleTracked.gridCoord(:,1),particleTracked.gridCoord(:,2),'+k','LineWidth',3.01);
+    plot(particle.gridCoord(:,1),particle.gridCoord(:,2),'ok','LineWidth',3.01);
+    plot(particle.gridCoord(:,1),particle.gridCoord(:,2),'+k','LineWidth',3.01);
     
-    for fID = 1:particleTracked.nFish
+    for fID = 1:particle.nFish
         visible = frameIdx>=firstIdx(fID) && frameIdx<=lastIdx(fID);
         
         if visible
@@ -107,7 +107,7 @@ for frameIdx = 1:nFrames
             else
                 colrsMat = [1 1 1;colrs(fID,:)];         
             end
-            pb=plot_ellipse(fW,fL,particleTracked.xMean(fID,frameIdx),particleTracked.yMean(fID,frameIdx),rad2deg(particleTracked.thMean(fID,frameIdx)),[colrsMat(1,:); colrsMat(2,:)]);       
+            pb=plot_ellipse(fW,fL,particle.fish(fID).x(frameIdx),particle.fish(fID).y(frameIdx),rad2deg(particle.fish(fID).theta(frameIdx)),[colrsMat(1,:); colrsMat(2,:)]);       
             alpha(pb,0.65);
         end
     end

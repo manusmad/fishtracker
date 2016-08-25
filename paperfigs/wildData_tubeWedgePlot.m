@@ -33,7 +33,7 @@ fig_dir_path          = fullfile(baseFolder,trialFolder,'figures');
 fig_file_name         = strrep(particle_file_name,'_particle.mat','.pdf');
 
 %% Load files
-load(fullfile(tracked_dir_path, particle_file_name),'xMean', 'yMean','thMean','gridCoord','nFish');
+load(fullfile(tracked_dir_path, particle_file_name));
 load(fullfile(handclick_dir_path,handclick_file_name));
 spec                    = load(fullfile(spec_dir_path, spec_file_name),'spec');
 freqtracks              = load(fullfile(freqtracks_dir_path, freqtracks_file_name),'tracks');
@@ -48,13 +48,13 @@ scaleFact = 23.8;
 
 for iLoop = 1:length(iFishVec)
     i = iFishVec(iLoop);
-    xFish(iLoop) = scaleFact*mean(xMean(i,:))+gridCenter(1);
-    yFish(iLoop) = scaleFact*mean(yMean(i,:))+gridCenter(2);
-    thFish(iLoop) = wrapTo2Pi(circ_mean(atan(tan(wrapTo2Pi(thMean(i,:))))'))'; 
+    xFish(iLoop) = scaleFact*mean(particle.fish(i).x)+gridCenter(1);
+    yFish(iLoop) = scaleFact*mean(particle.fish(i).y)+gridCenter(2);
+    thFish(iLoop) = wrapTo2Pi(circ_mean(atan(tan(wrapTo2Pi(particle.fish(i).theta))))); 
     
 %     posStd(iLoop) = max([std(xMean(i,:)) std(yMean(i,:))]); 
-    posStd(iLoop) = std(sqrt((xMean(i,:) - mean(xMean(i,:))).^2+ (yMean(i,:) - mean(xMean(i,:))).^2));
-    thStd(iLoop) = circ_std(2*thMean(i,:),[],[],2);
+    posStd(iLoop) = std(sqrt((particle.fish(i).x - mean(particle.fish(i).x)).^2+ (particle.fish(i).y - mean(particle.fish(i).y)).^2));
+    thStd(iLoop) = circ_std(2*particle.fish(i).theta,[],[],1);
 end
 %% Error vars readout
 %{
@@ -75,7 +75,7 @@ thStdDeg = rad2deg(thStd)
 %% Plot
 subplot = @(m,n,p) subtightplot (m, n, p, [0.01 0.01], [0.125 0.125], [0.03 0.01]);
 
-colrs               = distinguishable_colors(nFish,{'r','k','y'});
+colrs               = distinguishable_colors(particle.nFish,{'r','k','y'});
 scrsz               = get(groot,'ScreenSize');
 hAxis               = figure('Position',[1 scrsz(4)/2 scrsz(3) scrsz(4)]);
 set(gcf,'color',[1 1 1]);
@@ -108,8 +108,8 @@ subplot(1,2,2), hold on;
 imageMat = imread(fullfile(photo_dir_path,photo_file_name));
 imshow(imageMat,'InitialMagnification',50);
 hold on;
-plot(scaleFact*gridCoord(1:end,1)+gridCenter(1),scaleFact*gridCoord(1:end,2)+gridCenter(2),'ok','LineWidth',3.01)
-plot(scaleFact*gridCoord(1:end,1)+gridCenter(1),scaleFact*gridCoord(1:end,2)+gridCenter(2),'+k','LineWidth',3.01)
+plot(scaleFact*particle.gridCoord(1:end,1)+gridCenter(1),scaleFact*particle.gridCoord(1:end,2)+gridCenter(2),'ok','LineWidth',3.01)
+plot(scaleFact*particle.gridCoord(1:end,1)+gridCenter(1),scaleFact*particle.gridCoord(1:end,2)+gridCenter(2),'+k','LineWidth',3.01)
 for iLoop = 1:length(iFishVec)
     viscircles([xFish(iLoop) yFish(iLoop)],2*scaleFact*posStd(iLoop),'Color',colrs(iFishVec(iLoop),:));
 
@@ -127,4 +127,4 @@ end
 title('Overhead View with Spatial Estimates','FontSize',18);
 hold off;
 
-export_fig(fullfile(fig_dir_path,fig_file_name),'-pdf','-nocrop','-painters')
+% export_fig(fullfile(fig_dir_path,fig_file_name),'-pdf','-nocrop','-painters')

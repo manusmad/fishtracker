@@ -6,7 +6,7 @@ baseFolder = uigetdir(pwd,'Select dataset folder ...');
 trialFolder = 'terraronca';          
 
 %% Choose which file to generate video for
-particle_file_name = 'TerraRonca_PostCalibration_05_100s_particle.mat';
+particle_file_name      = 'TerraRonca_PostCalibration_05_100s_particle.mat';
 
 tracked_dir_path        = fullfile(baseFolder,trialFolder,'tracked');
 trackedVideo_dir_path   = fullfile(baseFolder,trialFolder,'tracked_video');
@@ -24,7 +24,7 @@ trackedAudio_file_name  = strrep(particle_file_name,'particle.mat','audio');
 
 %% Load files
     
-particleTracked         = load(fullfile(tracked_dir_path, particle_file_name),'xMean', 'yMean','thMean','gridCoord','tankCoord','nFish','ampAll','fishTime');
+load(fullfile(tracked_dir_path, particle_file_name));
 spec                    = load(fullfile(spec_dir_path, spec_file_name),'spec');
 freqtracks              = load(fullfile(freqtracks_dir_path, freqtracks_file_name),'tracks');
 elec                    = load(fullfile(elec_dir_path, elec_file_name),'elec');
@@ -36,7 +36,7 @@ Smag = mean(normSpecMag(spec.S),3);
 
 %% Video parameters
 
-nFrame                  = size(particleTracked.thMean,2);
+nFrame                  = length(particle.t);
 frameInterval           = 767:962;
 frameRate               = 8;
 fishSelect              = [9 10];
@@ -56,21 +56,21 @@ set(gcf,'color',[1 1 1]);
 writerObj           = VideoWriter(fullfile(trackedVideo_dir_path, trackedVideo_file_name),'MPEG-4');
 writerObj.FrameRate = frameRate;
 
-ids = unique([tracks.id]);
-nTracks = length(ids);
+ids                 = unique([tracks.id]);
+nTracks             = length(ids);
 
 progressbar('Writing Video');
 open(writerObj);  
 
-flag = zeros(1,particleTracked.nFish);
-dispStep = ones(1,particleTracked.nFish);
-time1 = particleTracked.fishTime(frameInterval(1));
-time2 = particleTracked.fishTime(frameInterval(end));
+flag                = zeros(1,particle.nFish);
+dispStep            = ones(1,particle.nFish);
+time1               = particle.t(frameInterval(1));
+time2               = particle.t(frameInterval(end));
 
 for frameIdx = frameInterval
     progressbar((frameIdx-frameInterval(1))/nFrames);
 
-    time = particleTracked.fishTime(frameIdx);
+    time = particle.t(frameIdx);
     
     figure(hAxis), cla;
     
@@ -102,12 +102,12 @@ for frameIdx = frameInterval
     
     h2 = subplot(1,2,2);
     hold on;
-    plot(particleTracked.gridCoord(:,1),particleTracked.gridCoord(:,2),'ok','LineWidth',3.01);
-    plot(particleTracked.gridCoord(:,1),particleTracked.gridCoord(:,2),'+k','LineWidth',3.01);
+    plot(particle.gridCoord(:,1),particle.gridCoord(:,2),'ok','LineWidth',3.01);
+    plot(particle.gridCoord(:,1),particle.gridCoord(:,2),'+k','LineWidth',3.01);
     
     for i = 1:length(fishSelect)
         fID = fishSelect(i);
-        if sum(~isnan(squeeze(particleTracked.ampAll(fID,:,frameIdx))))
+        if sum(~isnan(squeeze(particle.fish(fID).ampAct(:,frameIdx))))
             colrsMat = [colrs(i,:);colrs(i,:)];
             dispStep(fID) = frameIdx;
             flag(fID) = 0;
@@ -118,7 +118,7 @@ for frameIdx = frameInterval
                 flag(fID) = 1;
             end
         end
-        pb=plot_ellipse(fW,fL,particleTracked.xMean(fID,dispStep(fID)),particleTracked.yMean(fID,dispStep(fID)),rad2deg(particleTracked.thMean(fID,dispStep(fID))),[colrsMat(1,:); colrsMat(2,:)]);       
+        pb=plot_ellipse(fW,fL,particle.fish(fID).x(dispStep(fID)),particle.fish(fID).y(dispStep(fID)),rad2deg(particle.fish(fID).theta(dispStep(fID))),[colrsMat(1,:); colrsMat(2,:)]);       
         alpha(pb,0.65);      
     end
     xlim([-125 125])

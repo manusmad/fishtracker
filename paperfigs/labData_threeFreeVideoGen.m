@@ -30,7 +30,7 @@ video_file_path         = fullfile(baseFolder,trialFolder,'raw','140422_001.mp4'
 
 %% Load files
     
-particleTracked         = load(fullfile(tracked_dir_path, particle_file_name),'xMean', 'yMean','thMean','freqCell');
+load(fullfile(tracked_dir_path, particle_file_name));
 vidTracked              = load(fullfile(videotracks_dir_path, videotracks_file_name),'gridcen', 'tankcen','xcrop','ycrop','nFish','frameIdx','frameTime');            
 vObj                    = VideoReader(video_file_path);  
 
@@ -40,6 +40,13 @@ freqtracks              = load(fullfile(freqtracks_dir_path, freqtracks_file_nam
 spec = hlp_deserialize(spec.spec);
 tracks = freqtracks.tracks;
 Smag = mean(normSpecMag(spec.S),3);
+%%
+nSteps                  = length(vidTracked.frameTime);
+elecTime                = particle.t;
+timeIdx                 = zeros(nSteps,1);
+for n = 1:nSteps
+   [~,timeIdx(n)] = min(abs(elecTime - vidTracked.frameTime(n)));
+end
 
 %% Plot
 subplot = @(m,n,p) subtightplot (m, n, p, [0.01 0.01], [0.125 0.125], [0.03 0.01]);
@@ -101,7 +108,9 @@ for timeLoop = 1:nFrames
         plot(vidTracked.gridcen(:,1),vidTracked.gridcen(:,2),'ok','LineWidth',3.01);
         plot(vidTracked.gridcen(:,1),vidTracked.gridcen(:,2),'+k','LineWidth',3.01);
         for i = 1:vidTracked.nFish
-                pb=plot_ellipse(fW,fL,particleTracked.xMean(i,timeLoop),particleTracked.yMean(i,timeLoop),rad2deg(particleTracked.thMean(i,timeLoop)),[colrs(i,:); colrs(i,:)]);       
+                x = particle.fish(i).x(timeIdx(timeLoop))*6 + vidTracked.gridcen(5,1);
+                y = particle.fish(i).y(timeIdx(timeLoop))*6 + vidTracked.gridcen(5,2);
+                pb=plot_ellipse(fW,fL,x,y,rad2deg(particle.fish(i).theta(timeIdx(timeLoop))),[colrs(i,:); colrs(i,:)]);       
                 alpha(pb,0.65);      
         end
         title('Overhead View with Spatial Estimates','FontSize',18);

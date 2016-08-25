@@ -1,44 +1,35 @@
 function FS_plotHeat(handles)
 
-type        = handles.dataType;
 fishSelect  = handles.fishSelect; 
 numFish     = length(fishSelect);
 
-if strcmp(type,'tank')
+if ~handles.particle.wildTag
     stepNo      = handles.timeIdx(handles.sNo);
 else
     stepNo      = handles.sNo;
 end
 
-% if strcmp(handles.heatType,'actual')
-    amp = zeros(1,size(squeeze(handles.ampAll(1,:,stepNo)),2));
-    for fID = 1:numFish
-        i = fishSelect(fID);
-        if sum(isnan(squeeze(handles.ampAll(i,:,stepNo)))) < size(squeeze(handles.ampAll(1,:,stepNo)),2)
-           amp = amp + squeeze(handles.ampAll(i,:,stepNo));
-        end   
-    end
-% elseif strcmp(handles.heatType,'theoretical')
-    ampTheoret = zeros(1,size(squeeze(handles.ampMean(1,:,handles.sNo)),2));
-    for fID = 1:numFish
-        i = fishSelect(fID);
-        if sum(isnan(squeeze(handles.ampMean(i,:,handles.sNo)))) < size(squeeze(handles.ampMean(1,:,handles.sNo)),2)
-           ampTheoret = ampTheoret + squeeze(handles.ampMean(i,:,handles.sNo));
-        end   
-    end
-% end
+amp = zeros(handles.particle.nChannels,1);
+for fID = 1:numFish
+    i = fishSelect(fID);
+    if sum(isnan(handles.particle.fish(i).ampAct(:,stepNo))) < handles.particle.nChannels
+       amp = amp + handles.particle.fish(i).ampAct(:,stepNo);
+    end   
+end
 
-% (dot(amp,ampTheoret))
+ampTheoret = zeros(handles.particle.nChannels,1);
+for fID = 1:numFish
+    i = fishSelect(fID);
+    if sum(isnan(handles.particle.fish(i).ampTheor(:,stepNo))) < handles.particle.nChannels
+       ampTheoret = ampTheoret + handles.particle.fish(i).ampTheor(:,stepNo);
+    end   
+end
+    
 if sign(dot(amp,ampTheoret)) == -1
     amp = -amp;
 end
 
-% if (dot(amp,ampTheoret)) < 15
-%     amp = -amp;
-% end
-
 gridCoord   = handles.gridCoord;
-tankCoord   = handles.tankCoord;
 divNo = 100;
 
 xRange = max(gridCoord(:,1))- min(gridCoord(:,1));
@@ -49,7 +40,7 @@ yVec = min(gridCoord(:,2)):(max(gridCoord(:,2))- min(gridCoord(:,2)))/divNo:max(
 
 notNanIdx = find(~isnan(amp));
 vq = griddata(gridCoord(notNanIdx,1),gridCoord(notNanIdx,2),amp(notNanIdx),xq,yq);
-vq = flipdim(vq ,1);
+% vq = flipdim(vq ,1);
 
 axes(handles.ax_heatmap); cla
 
@@ -59,29 +50,6 @@ imGridCoord = (divNo+1)*(gridCoord - repmat([min(gridCoord(:,1)) min(gridCoord(:
 plot(imGridCoord(:,1),imGridCoord(:,2),'ow');
 plot(imGridCoord(:,1),imGridCoord(:,2),'+w');
 
+set(gca,'YDir','reverse');
 set (gca, 'xtick', [],'ytick', []);
 axis tight
-
-% actHeat = vq;
-% actHeat(isnan(actHeat)) = 0;
-% 
-% 
-% notNanIdx = find(~isnan(ampTheoret));
-% vqTh = griddata(gridCoord(notNanIdx,1),gridCoord(notNanIdx,2),ampTheoret(notNanIdx),xq,yq);
-% vqTh = flipdim(vqTh ,1);
-% vqTh(isnan(vqTh)) = 0;
-
-% ssimval = ssim(vqTh,actHeat)
-
-%%
-% clc
-% amp
-% ampTheoret
-% dot(amp,ampTheoret)
-% random = 1;
-%%
-% axes(handles.ax_freqTrack); cla
-% 
-% FS_ObsvModel(squeeze([xMean(fID,i,1);yMean(fID,i,1);thMean(fID,i,1)]), gridCoord, tankCoord, handles.motion)';
-
-
