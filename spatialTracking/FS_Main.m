@@ -30,7 +30,7 @@ tankStart   = [tankCoord(1,1);tankCoord(1,2); 0];
 tankRange   = [(tankCoord(2,1)-tankCoord(1,1));(tankCoord(4,2)-tankCoord(1,2)); 200];
 
 parfor_progress(nFish);
-parfor id = 1:nFish
+for id = 1:nFish
     display(sprintf('\nFish  %d  of  %d',id,nFish));
     ahk                     = zeros(nCh,nTime);
     xFish                   = zeros(nTime,nx);

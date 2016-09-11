@@ -37,7 +37,7 @@ if strcmp(handles.heatType,'theoretical')
     imagesc(vq); hold on
     save('theoHeat','vq')
 
-    imGridCoord = (divNo+1)*(gridCoord - repmat([min(gridCoord(:,1)) min(gridCoord(:,2))],size(gridCoord,1),1))./repmat([xRange yRange],size(gridCoord,1),1);
+    imGridCoord = (divNo+1)*(gridCoord(:,1:2) - repmat([min(gridCoord(:,1)) min(gridCoord(:,2))],size(gridCoord,1),1))./repmat([xRange yRange],size(gridCoord,1),1);
     plot(imGridCoord(:,1),imGridCoord(:,2),'ow');
     plot(imGridCoord(:,1),imGridCoord(:,2),'+w');
 
