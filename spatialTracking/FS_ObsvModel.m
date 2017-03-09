@@ -2,7 +2,8 @@ function z = FS_ObsvModel(X, gridcoord, minElecIdx)
 
 %% Description: 
 % Observation model: 
-%
+% X, gridcoord, minElecIdx
+
 % Author: Ravikrishnan Perur Jayakumar
 %%
 

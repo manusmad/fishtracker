@@ -1,9 +1,25 @@
-function [xk, xhk, wk,yk,ahk,wkPriorResample,xkPriorResamp] = FS_filter(pf, sys, gAmp, motion, gridcoord, tankcoord, tInt,minElecIdx)
+function [xk,xhk,wk,ahk] = FS_filter(pf, sys, gAmp, motion, gridcoord, tankcoord, tInt,minElecIdx)
 
 %% Description: 
-% Implementation of Algorithm 3 (Generic Particle Filter) of Arulampalam et al (2002):
-% A Tutorial on Particle Filters for Online Nonlinear/Non-Gaussian Bayesian
-% Tracking
+% Implementation of Algorithm 3 (Generic Particle Filter) of 
+% Arulampalam et al (2002): A Tutorial on Particle Filters for Online 
+% Nonlinear/Non-Gaussian Bayesian Tracking
+
+% Input variables: 
+%     pf: Particle structure
+%     sys: Motion model equation
+%     gAmp: electrode readings wrt ground
+%     motion: motion model type
+%     gridcoord: Electrode coordinates in (x,y,z)
+%     tankcoord: Tank boundary in (x,y)
+%     tInt: Mean sampling interval
+%     minElecIdx: Reference electrode with which to subtract off
+
+% Output variables: 
+%     xk: Current particle states
+%     xhk: Current state estimate
+%     wk: Current weights assigned to particles
+%     ahk: Theoretical electrode readings for current state estimate
 %
 % Author: Ravikrishnan Perur Jayakumar
 
@@ -55,7 +71,7 @@ resample_percentage = 0.5;
 Neff                = floor(1/sum(wk.^2));
 Ns                  = length(wk);
 
-xkPriorResamp       = xk;
+% xkPriorResamp       = xk;
 if Neff < resample_percentage*Ns;
    [xk, wk]         = resample(xk, wk, xhk, nx, motion,tankcoord, Neff, Ns);
 end
