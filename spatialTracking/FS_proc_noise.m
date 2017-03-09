@@ -1,6 +1,11 @@
 function sysv_noise = FS_proc_noise(rw, clmn, motion, tInt)
 
-% Generating process noise
+%% Description: 
+% Generating process noise. The noise statistics are tuned for a sampling
+% rate of 20Hz
+%
+% Author: Ravikrishnan Perur Jayakumar
+%%
 
 sig_x   = (tInt/3.02)^0.0001;
 sig_y   = (tInt/3.02)^0.0001;

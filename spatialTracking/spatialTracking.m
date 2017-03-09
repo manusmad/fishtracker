@@ -22,7 +22,7 @@ function varargout = spatialTracking(varargin)
 
 % Edit the above text to modify the response to help spatialTracking
 
-% Last Modified by GUIDE v2.5 22-Aug-2016 13:02:26
+% Last Modified by GUIDE v2.5 04-Mar-2017 12:04:14
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -1351,26 +1351,26 @@ function limManual_Callback(hObject, eventdata, handles)
 
 
 
-function gridAddr_Callback(hObject, eventdata, handles)
-% hObject    handle to gridAddr (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of gridAddr as text
-%        str2double(get(hObject,'String')) returns contents of gridAddr as a double
-
-
-% --- Executes during object creation, after setting all properties.
-function gridAddr_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to gridAddr (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
+% function gridAddr_Callback(hObject, eventdata, handles)
+% % hObject    handle to gridAddr (see GCBO)
+% % eventdata  reserved - to be defined in a future version of MATLAB
+% % handles    structure with handles and user data (see GUIDATA)
+% 
+% % Hints: get(hObject,'String') returns contents of gridAddr as text
+% %        str2double(get(hObject,'String')) returns contents of gridAddr as a double
+% 
+% 
+% % --- Executes during object creation, after setting all properties.
+% function gridAddr_CreateFcn(hObject, eventdata, handles)
+% % hObject    handle to gridAddr (see GCBO)
+% % eventdata  reserved - to be defined in a future version of MATLAB
+% % handles    empty - handles not created until after all CreateFcns called
+% 
+% % Hint: edit controls usually have a white background on Windows.
+% %       See ISPC and COMPUTER.
+% if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+%     set(hObject,'BackgroundColor','white');
+% end
 
 
 % --- Executes on button press in selGridButton.
@@ -1391,3 +1391,10 @@ end
 % exist lastFoldAddr var
 
 guidata(hObject, handles);
+
+
+% --- Executes during object deletion, before destroying properties.
+function uipanel18_DeleteFcn(hObject, eventdata, handles)
+% hObject    handle to uipanel18 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)

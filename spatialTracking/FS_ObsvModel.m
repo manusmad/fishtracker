@@ -1,5 +1,11 @@
 function z = FS_ObsvModel(X, gridcoord, minElecIdx)
-% Observation model
+
+%% Description: 
+% Observation model: 
+%
+% Author: Ravikrishnan Perur Jayakumar
+%%
+
 xD              = gridcoord(:,1);
 yD              = gridcoord(:,2);
 zD              = gridcoord(:,3);
@@ -14,12 +20,13 @@ xF_end          = xF + cos(thF);
 yF_end          = yF + sin(thF);
 dipMid          = [xF;yF;zF]; % 3xP
 dipEnd          = [xF_end;yF_end;zF]; % 3xP
-gridPt          = [xD'; yD'; repmat(0,1,N)];  % 3xN
+gridPt          = [xD'; yD'; zeros(0,1,N)];  % 3xN
 xElecDipMid     = (repmat(xD,1,P)-repmat(xF,N,1));
 yElecDipMid     = (repmat(yD,1,P)-repmat(yF,N,1));
 zElecDipMid     = repmat(zD,1,P)-repmat(zF,N,1);
 rMat            = (xElecDipMid.^2 + yElecDipMid.^2 + zElecDipMid.^2).^0.5; %NxP
 rVecMidEnd      = dipEnd - dipMid; % 3xP
+
 for i = 1:N
     rVecMidElec = repmat(gridPt(:,i),1,P) -  dipMid; % 3xP
     cosThetaMat(i,:) = dot(rVecMidEnd,rVecMidElec)./(sqrt(sum(rVecMidEnd.^2,1)).*sqrt(sum(rVecMidElec.^2,1)));

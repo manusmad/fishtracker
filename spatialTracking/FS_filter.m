@@ -1,17 +1,23 @@
 function [xk, xhk, wk,yk,ahk,wkPriorResample,xkPriorResamp] = FS_filter(pf, sys, gAmp, motion, gridcoord, tankcoord, tInt,minElecIdx)
 
+%% Description: 
+% Implementation of Algorithm 3 (Generic Particle Filter) of Arulampalam et al (2002):
+% A Tutorial on Particle Filters for Online Nonlinear/Non-Gaussian Bayesian
+% Tracking
+%
+% Author: Ravikrishnan Perur Jayakumar
+
+%%
 yk                  = gAmp - gAmp(minElecIdx);
 [nx,Ns]             = size(pf.x(1:(end-1),:));  
-
-%% Separate memory
 xkm1                = pf.x; 
 wkm1                = pf.w;
 
-%% Algorithm 3 of Ref [1]
+%% Finding weights
 xkm1(3,:)           = wrapTo2Pi(xkm1(3,:));
 TruncElecList       = ~isnan(yk); 
 if sum(TruncElecList)
-    xk              = sys(xkm1, FS_gen_sysv_noise(nx,Ns,motion,tInt));
+    xk              = sys(xkm1, FS_proc_noise(nx,Ns,motion,tInt));
 else 
     xk              = xkm1;
 end
@@ -23,7 +29,7 @@ ykTrunc             = yk(TruncElecList, :);
 if sum(TruncElecList)
     aXk             = FS_ObsvModel(xk, gridcoord, minElecIdx)';
     aXkTrunc        = aXk(:,TruncElecList);
-    wk              = wkm1 .* pf.p_yk_given_xk(repmat(normr(ykTrunc'),Ns,1), normr(aXkTrunc),TruncElecList,withinGridIdx);
+    wk              = wkm1 .* pf.p_yk_given_ykHat(repmat(normr(ykTrunc'),Ns,1), normr(aXkTrunc),TruncElecList,withinGridIdx);
 else
     wk              = wkm1;
 end

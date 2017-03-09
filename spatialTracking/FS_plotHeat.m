@@ -1,5 +1,12 @@
 function FS_plotHeat(handles)
 
+%% Description: 
+% Plots the distribution of actual electrode readings as a linearly 
+% interpolated heatmap in spatialTracking GUI
+%
+% Author: Ravikrishnan Perur Jayakumar
+%%
+
 fishSelect  = handles.fishSelect; 
 numFish     = length(fishSelect);
 

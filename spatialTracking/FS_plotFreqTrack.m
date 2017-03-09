@@ -1,5 +1,18 @@
 function FS_plotFreqTrack(handles)
 
+%% Description: 
+% Plots either:
+%
+% 1) the frequency tracks of the fish population in the dataset 
+% 2) Plots the distribution of actual electrode readings as a linearly 
+%    interpolated heatmap 
+%
+% in spatialTracking GUI. The two plots can be switched at the press of the
+% button below the figure in the GUI. 
+%
+% Author: Ravikrishnan Perur Jayakumar
+%%
+
 fishSelect  = handles.fishSelect; 
 numFish     = length(fishSelect);
 

@@ -1,11 +1,17 @@
 function FS_plotOverhead(handles)
 
-fishSelect  = handles.fishSelect;
-numFish     = length(fishSelect); 
-wildTag     = handles.particle.wildTag;
-gridCoord   = handles.particle.gridCoord;
-tankCoord   = handles.particle.tankCoord;
-stepNo      = handles.timeIdx(handles.sNo);
+%% Description: 
+% Plots overhead figure in the spatialTracking GUI
+%
+% Author: Ravikrishnan Perur Jayakumar
+%%
+
+fishSelect  = handles.fishSelect; % List of fish to plot
+numFish     = length(fishSelect); % Number of fish to plot
+wildTag     = handles.particle.wildTag; % Dataset collected in wild or lab
+gridCoord   = handles.particle.gridCoord; % Electrode x-y-z coordinates
+tankCoord   = handles.particle.tankCoord; % Tank boundary coordinates
+stepNo      = handles.timeIdx(handles.sNo); % Current time instant 
 
 colrs       = distinguishable_colors(handles.particle.nFish);
 

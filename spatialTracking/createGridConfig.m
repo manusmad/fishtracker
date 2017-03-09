@@ -1,6 +1,18 @@
 function createGridConfig()
 
-prompt = 'Number of electrodes? : ';
+%% Description: 
+% Creates a text file that specifies the (x,y,z) coordinates of the
+% electrodes in the grid.
+% - The units of the coordinates can be arbitrary - the output of the spatial
+% tracking will be in the same units
+% - Enter the electrodes in the same order as what was used for
+% recording the data. 
+%
+% Author: Ravikrishnan Perur Jayakumar
+
+%% Enter the grid configuration details. 
+
+prompt = 'Number of electrodes? : '; % Numerical entry
 nElec = input(prompt);
 doneFlag = 0;
 xD = zeros(nElec,1);
@@ -8,7 +20,7 @@ yD = zeros(nElec,1);
 zD = zeros(nElec,1);
 str = cell(nElec,1);
 figure();
-prompt = 'Grid descriptor text? : ';
+prompt = 'Grid descriptor text? : '; % Details like what dataset is this associated with e.g. Lab data, Terraronca
 gridText = input(prompt,'s');
 while ~doneFlag
     
@@ -61,10 +73,12 @@ while ~doneFlag
     end        
 end
 
-save ('sampleTxt','xD','yD','zD','-ascii')
-%%
-% Select base directory of dataset (the one containing freqtracks,specs,
-% raw etc)
+%% Save grid configuration text file
+
+% Note: Select base directory of dataset (the one containing the folders freqtracks,specs,
+% raw etc). 
+% spatialTracking.m will look for gridConfig.txt in this folder. 
+
 folder_name = uigetdir(pwd,'Save grid config file in ...');
 
 fileID = fopen(fullfile(folder_name,'gridConfig.txt'),'w');
