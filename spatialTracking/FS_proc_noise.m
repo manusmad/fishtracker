@@ -3,6 +3,11 @@ function sysv_noise = FS_proc_noise(rw, clmn, motion, tInt)
 %% Description: 
 % Generating process noise. The noise statistics are tuned for a sampling
 % rate of 20Hz
+% Input variables: 
+%     rw: no. of rows of noise matrix; corresponds to number of states
+%     clmn: no. of columns of noise matrix; corresponds to no. of particles
+%     motion: type of mition
+%     tInt: mean sampling interval
 %
 % Author: Ravikrishnan Perur Jayakumar
 %%

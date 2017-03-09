@@ -1,8 +1,20 @@
 function z = FS_ObsvModel(X, gridcoord, minElecIdx)
 
 %% Description: 
-% Observation model: 
-% X, gridcoord, minElecIdx
+% Observation model: Given the electrode grid coordinates and the location
+% of a electric dipole source, this function calculates the theoretical
+% electrode readings at each of the electrodes under the assumptions stated
+% under Oscillating Dipole Model section in Online Methods of the paper. 
+
+% Input variables:
+%     X: (x,y,theta,z) position of dipole sources
+%     gridcoord: (x,y,z) coordinates of electrodes. 
+%     minElecIdx: Ref electrode to subtract off ground electrode as per
+%     Eq(7)
+
+% Output variables: 
+%     z: Vector of electrode readings with respect to ref electrode
+%     minElecIdx
 
 % Author: Ravikrishnan Perur Jayakumar
 %%
