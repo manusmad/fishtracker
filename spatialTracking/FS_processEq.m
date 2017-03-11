@@ -1,7 +1,8 @@
 function [nx,sys] = FS_processEq(motion)
 
 %% Description: 
-% Process equation x[k] = sys(k, x[k-1], u[k]);
+% Process equation defining random motion model
+% x[k] = sys(k, x[k-1], u[k]);
 %
 % Author: Ravikrishnan Perur Jayakumar
 %%

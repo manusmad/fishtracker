@@ -10,6 +10,11 @@ function [particles,w] = FS_initParticles(Ns, nx, motion, partStart, partRange)
 %                                 implemented)
 %     partStart : Initial offset added to particles
 %     partRange : Range around initial offset in (x,y,theta and/or z) space
+
+% Input: 
+%     particles : Ns particles uniformly randomly distributed over the
+%     region partStart (initial offset) + partRange (range of state space)
+%     w         : initial weight associated with particles
 %
 % Author: Ravikrishnan Perur Jayakumar
 %%

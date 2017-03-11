@@ -55,7 +55,6 @@ if sum(wk) == 0 || any(isinf(wk)) || any(isnan(wk))
      wk             = wkm1;
 end
 wk                  = wk./sum(wk);
-wkPriorResample     = wk;
 
 %% Compute estimated state
 
@@ -71,7 +70,6 @@ resample_percentage = 0.5;
 Neff                = floor(1/sum(wk.^2));
 Ns                  = length(wk);
 
-% xkPriorResamp       = xk;
 if Neff < resample_percentage*Ns;
    [xk, wk]         = resample(xk, wk, xhk, nx, motion,tankcoord, Neff, Ns);
 end
