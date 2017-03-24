@@ -6,8 +6,8 @@ baseFolder = uigetdir(pwd,'Select dataset folder ...');
 trialFolder = 'terraronca';
 
 %% Choose which file to plot
-% particle_file_name = 'TerraRonca_Calibration_01_100s_particle.mat';
-% iFishVec = [6,9,10];
+particle_file_name = 'TerraRonca_Calibration_01_100s_particle.mat';
+iFishVec = [6,9,10];
 
 % particle_file_name = 'TerraRonca_Calibration_02_100s_particle.mat';
 % iFishVec = [8 10 12];
@@ -15,8 +15,8 @@ trialFolder = 'terraronca';
 % particle_file_name = 'TerraRonca_Calibration_03_100s_particle.mat';
 % iFishVec = [8 12 15];
 
-particle_file_name = 'TerraRonca_Calibration_04_100s_particle.mat';
-iFishVec = [9 12 14];
+% particle_file_name = 'TerraRonca_Calibration_04_100s_particle.mat';
+% iFishVec = [9 12 14];
 
 tracked_dir_path        = fullfile(baseFolder,trialFolder,'tracked');
 handclick_dir_path      = fullfile(baseFolder,trialFolder,'handclick');

@@ -10,13 +10,12 @@ particle_file_name = '140403_003_particle.mat';
 % particle_file_name = '140403_004_particle.mat';
 % particle_file_name = '140403_011_particle.mat';
 
-fig_dir_path            = fullfile(baseFolder,trialFolder,'figures');
+fig_dir_path            = fullfile('.');
 videotracks_dir_path    = fullfile(baseFolder,trialFolder,'videotracks');
 tracked_dir_path        = fullfile(baseFolder,trialFolder,'tracked');
 spec_dir_path           = fullfile(baseFolder,trialFolder,'spec');
 freqtracks_dir_path     = fullfile(baseFolder,trialFolder,'freqtracks');
 
-trackedVideo_file_name  = strrep(particle_file_name,'particle','video');
 spec_file_name          = strrep(particle_file_name,'particle','spec');
 freqtracks_file_name    = strrep(particle_file_name,'particle','tracks');
 videotracks_file_name   = strrep(particle_file_name,'particle','videotracks');
@@ -102,4 +101,4 @@ end
 title('Overhead View with Spatial Estimates','FontSize',18);
 hold off;
 
-% export_fig(fullfile(fig_dir_path,strrep(particle_file_name,'_particle.mat','')),'-pdf','-nocrop','-painters')
+export_fig(fullfile(fig_dir_path,strrep(particle_file_name,'_particle.mat','')),'-pdf','-nocrop','-painters')

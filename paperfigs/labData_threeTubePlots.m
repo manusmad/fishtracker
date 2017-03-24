@@ -6,9 +6,9 @@ baseFolder = uigetdir(pwd,'Select dataset folder ...');
 trialFolder = '140417_threeTubeTrials';
 
 %% Single tube files
-% particle_file_name = '140417_001_particle.mat';
+particle_file_name = '140417_001_particle.mat';
 % particle_file_name = '140417_025_particle.mat';
-particle_file_name = '140417_038_particle.mat';
+% particle_file_name = '140417_038_particle.mat';
 
 fig_dir_path            = fullfile(baseFolder,trialFolder,'figures');
 videotracks_dir_path    = fullfile(baseFolder,trialFolder,'videotracks');
@@ -101,4 +101,4 @@ end
 title('Overhead View with Spatial Estimates','FontSize',18);
 hold off;
 
-export_fig(fullfile(fig_dir_path,strrep(particle_file_name,'_particle.mat','')),'-pdf','-nocrop','-painters')
+% export_fig(fullfile(fig_dir_path,strrep(particle_file_name,'_particle.mat','')),'-pdf','-nocrop','-painters')
