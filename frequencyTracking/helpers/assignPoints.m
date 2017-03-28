@@ -1,4 +1,10 @@
 function handles = assignPoints(handles)
+% ASSIGNPOINTS Assigns the points inside the selection polygon to the first
+% selected track in the tracks list.
+%
+% Manu S. Madhav
+% 2016
+
     if isfield(handles,'tracks')
         if isfield(handles,'hPoly');
             handles = tracksView(handles);

@@ -1,4 +1,12 @@
-function handles = clearTracks(handles) 
+function handles = clearTracks(handles)
+% CLEARELEC Delete tracks structure from memory
+%
+% Also checks for tracks filename, and clears tracks list
+%
+% Manu S. Madhav
+% 2016
+% See also POPULATETRACKSLIST
+
     if isfield(handles,'tracks')
         handles = rmfield(handles,'tracks');
         if isfield(handles,'tracksFileName')

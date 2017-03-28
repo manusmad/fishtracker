@@ -1,4 +1,13 @@
 function handles = addPoints(handles,id,time,freq)
+% ADDPOINTS Adds set of track points.
+%
+% Takes in the handles structure from the GUI, and adds a 
+% set of points into the track identified by id
+% at the coordinates in the vectors time and freq.
+%
+% Manu S. Madhav
+% 2016
+
     [~,tidx] = ismember(time,handles.spec.T);
     [~,f1idx] = ismember(freq,handles.spec.F);
     [~,f2idx] = ismember(freq*2,handles.spec.F);

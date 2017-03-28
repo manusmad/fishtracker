@@ -1,4 +1,12 @@
 function handles = deletePoints(handles)
+% DELETEPOINTS Deletes set of track points.
+%
+% Takes in the handles structure from the GUI, and deletes 
+% all the points that are within the selection polygon.
+%
+% Manu S. Madhav
+% 2016
+
     if isfield(handles,'tracks')
         if isfield(handles,'hPoly');
             handles = tracksView(handles);

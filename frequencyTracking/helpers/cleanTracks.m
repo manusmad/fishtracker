@@ -1,5 +1,12 @@
-% Function to 'clean' tracks, i.e. delete tracks of length<2
 function [handles,del] = cleanTracks(handles)
+% CLEANTRACKS Delete tracks of length less than 10
+%
+% If any tracks are deleted, return value del is 1, else 0.
+%
+% Manu S. Madhav
+% 2016
+% See also CLEANTRACKSACTION,DELETETRACK
+
     ids = unique([handles.tracks.id]);
     del = 0;
     for id = ids

@@ -1,4 +1,15 @@
 function handles = loadSmr(handles)
+% LOADELEC Loads Spike2 smr raw data file
+%
+% Prompts user to choose an smr or smrx file, and then calls loadSmrFile or
+% loadSmrxFile with the prefix from the GUI field. 
+% Updates the GUI with the loaded parameters of the file.
+%
+% Manu S. Madhav
+% 2016
+% See also LOADSMRFILE, LOADSMRXFILE, SETRANGES, CREATESUBPLOTS, 
+% POPULATECHANNELLIST, COMPUTERESOLUTIONS
+
     if isfield(handles,'smrFilePath')
         [smrFileName,smrFilePath] = uigetfile({'*.smr';'*.smrx'},'Choose smr file',handles.smrFilePath);
     elseif isfield(handles,'lastOpenPath')

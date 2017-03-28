@@ -1,4 +1,14 @@
 function handles = combineTracksAction(handles)
+% COMBINETRACKSACTION GUI action to combine tracks
+%
+% Adds current state of tracks to the Undo stack, then calls combineTracks
+% with the currently selected track ids in the GUI. Then refreshes the tracks
+% list.
+%
+% Manu S. Madhav
+% 2016
+% See also COMBINETRACKS, POPULATETRACKSLIST
+
     if isfield(handles,'tracks')    
         handles = tracksView(handles);
         handles = addUndo(handles);

@@ -1,4 +1,12 @@
 function handles = deleteChannels(handles)
+% DELETECHANNELS Delete the channels selected in the GUI channel listbox.
+% 
+% Delete channels from both elec and spec structures.
+%
+% Manu S. Madhav
+% 2016
+% See also POPULATECHANNELLIST
+
     delidx = get(handles.channelListBox,'Value');
     
     handles.meta.chNum(delidx) = [];

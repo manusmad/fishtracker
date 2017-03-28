@@ -1,10 +1,14 @@
 function elec = loadSmrxFile(dataFolder,smrxFile,prefix)
+% LOADSMRFILE Loads Spike2 smrx raw data file
+%
+% Uses the CEDS64 library to attempt to load the *.smrx file smrxFile. Uses the
+% string variable prefix to look for Channel names in the file. Will only
+% work on Windows.
+%
+% Manu S. Madhav
+% 2016
 
 CEDS64LoadLib(fileparts(which('CEDS64LoadLib.m')));
-
-% dataFolder = 'E:\Google Drive\08-March-2016';
-% smrxFile = 'TerraRonca_Callibration_01.smrx';
-% prefix = 'Ch';
 
 fhand = CEDS64Open(fullfile(dataFolder,smrxFile));
 if (fhand <= 0); unloadlibrary ceds64int; return; end

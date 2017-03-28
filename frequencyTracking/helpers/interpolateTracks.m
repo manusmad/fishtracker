@@ -1,7 +1,14 @@
+function handles = interpolateTracks(handles)
+% INTERPOLATETRACKS Interpolate points between tracks
+%
 % Function to 'interpolate' tracks, i.e. add points to all the tracks if
 % the gap between two adjacent track points is within a certain time
 % threshold.
-function handles = interpolateTracks(handles)
+%
+% Manu S. Madhav
+% 2016
+% See also ADDLINE
+
     ids = unique([handles.tracks.id]);
     
     dT = diff(handles.spec.T(1:2));

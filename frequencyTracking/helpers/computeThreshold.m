@@ -1,6 +1,12 @@
 function handles = computeThreshold(handles)
-    % Compute thresholded spectrogram whenever threshold value is changed.
-    % same params as in findtracks, could either make these arguments to findTracks, or have both files pull them from a common source.
+% COMPUTETHRESHOLD Compute thresholded spectrogram whenever threshold 
+% value is changed.
+%
+% Computes matrix handles.Sthresh by thresholding existing absolute
+% spectrogram handles.Smag.
+% 
+% Manu S. Madhav
+% 2016
     
     if isfield(handles,'spec')
         if handles.params.minF1<handles.spec.F(1)

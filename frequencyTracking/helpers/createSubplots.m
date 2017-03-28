@@ -1,5 +1,9 @@
-% Function to create appropriate subplots
 function handles = createSubplots(handles)
+% CREATESUBPLOTS Creates subplot grid based on number of channels
+% 
+% Manu S. Madhav
+% 2016
+
     if isfield(handles,'meta')
         nCh = handles.meta.nCh;
     else
@@ -11,7 +15,6 @@ function handles = createSubplots(handles)
             delete(handles.hSub);
             handles = rmfield(handles,'hSub');
         end
-%         handles.hSub = zeros(nCh,1);
         handles.hSub = gobjects(nCh,1);
         
         n = ceil(sqrt(nCh));

@@ -741,8 +741,6 @@ function log_KeyPressFcn(hObject, eventdata, handles)
     handles = manageKeyPresses(handles,eventdata);
     guidata(hObject,handles);
     
- 
-
 function returnFocus(hObject)
     set(hObject, 'Enable', 'off');
     drawnow;

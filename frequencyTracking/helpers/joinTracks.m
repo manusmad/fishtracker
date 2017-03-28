@@ -1,5 +1,13 @@
-% Function to join two tracks
 function [handles,id1] = joinTracks(handles,id1,time1,id2,time2)
+% JOINTRACKS Function to join two tracks
+%
+% Splits track id1 at time t1 and track id2 at time t2. Then joins tracs 
+% from time1 to time 2 and assigns it to id1, and returns id1.
+%
+% Manu S. Madhav
+% 2016
+% See also SPLITTRACK
+
     if time1>time2
         % Swap
         temp = id2; id2 = id1; id1 = temp;

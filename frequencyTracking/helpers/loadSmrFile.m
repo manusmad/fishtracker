@@ -1,8 +1,11 @@
 function elec = loadSmrFile(dataFolder,smrFile,prefix)
-
-% dataFolder = '../../Field2014/data';
-% smrFile = 'machete_2.smr';
-% prefix = 'Ch';
+% LOADSMRFILE Loads Spike2 smr raw data file
+%
+% Uses the SON library to attempt to load the *.smr file smrFile. Uses the
+% string variable prefix to look for Channel names in the file.
+%
+% Manu S. Madhav
+% 2016
 
 % Open Spike2 file
 fid = fopen(fullfile(dataFolder,smrFile));

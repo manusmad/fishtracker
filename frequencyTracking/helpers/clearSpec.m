@@ -1,4 +1,12 @@
 function handles = clearSpec(handles)
+% CLEARELEC Delete spec structure from memory
+%
+% Also checks for spec filename and metadata, and clears channel list
+%
+% Manu S. Madhav
+% 2016
+% See also POPULATECHANNELLIST
+
     if isfield(handles,'spec')
         handles = rmfield(handles,'spec');
         if isfield(handles,'specFileName')

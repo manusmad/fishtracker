@@ -1,4 +1,12 @@
 function handles = computeResolutions(handles)
+% COMPUTERESOLUTIONS Computes temporal and frequency resolutions based on
+% current nFFT and overlap values.
+%
+% Also fills in the time and frequency resolution textboxes.
+%
+% Manu S. Madhav
+% 2016
+
     if isfield(handles,'meta')
         nFFT = handles.params.nFFT;
         overlap = handles.params.overlap;

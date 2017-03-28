@@ -1,4 +1,15 @@
 function handles = loadElec(handles)
+% LOADELEC Loads electrode file
+%
+% Prompts user to choose an electrode data file, and then attempts to load
+% it while showing a progress bar. Once file is loaded, fills in the elec
+% metadata structure, and runs the GUI commands to update these parameters.
+%
+% Manu S. Madhav
+% 2016
+% See also SETRANGES, CREATESUBPLOTS, POPULATECHANNELLIST,
+% COMPUTERESOLUTIONS
+
     if isfield(handles,'elecFilePath')
         [elecFileName,elecFilePath] = uigetfile([handles.elecFilePath filesep '*.mat'],'Choose electrode data file');
     elseif isfield(handles,'lastOpenPath')

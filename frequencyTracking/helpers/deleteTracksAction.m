@@ -1,4 +1,14 @@
 function handles = deleteTracksAction(handles)
+% DELETETRACKSACTION GUI action to delete tracks
+%
+% Adds current state of tracks to the Undo stack, then calls deleteTracks
+% with the currently selected track ids in the GUI. Then refreshes the tracks
+% list.
+%
+% Manu S. Madhav
+% 2016
+% See also DELETETRACKS, POPULATETRACKSLIST
+
     if isfield(handles,'tracks')    
         handles = tracksView(handles);
         handles = addUndo(handles);

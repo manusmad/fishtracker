@@ -1,4 +1,12 @@
 function handles = clearElec(handles)
+% CLEARELEC Delete elec structure from memory
+%
+% Also checks for elec filename and metadata, and clears channel list
+%
+% Manu S. Madhav
+% 2016
+% See also POPULATECHANNELLIST
+
     if isfield(handles,'elec')
         handles = rmfield(handles,'elec');
         if isfield(handles,'elecFileName')

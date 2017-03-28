@@ -1,9 +1,11 @@
+function tracks = fillWithNaNs(tracks,T,chNum,chNumOrig)
+% FILLWITHNANS Fill empty track points with NaNs, generally done prior to saving.
+%
 % Given tracks struct array and corresponding time array T, create NaNs for times where there is no track
 % information.
 %
 % Manu Madhav
-% 16-Jul-14
-function tracks = fillWithNaNs(tracks,T,chNum,chNumOrig)
+% 16-Jul-2014
 
 if isempty(chNum)
     nCh = length(tracks(1).a1);

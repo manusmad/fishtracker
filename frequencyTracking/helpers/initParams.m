@@ -1,4 +1,9 @@
 function handles = initParams(handles)
+% INITPARAMS Set default values for all the GUI parameters.
+%
+% Manu S. Madhav
+% 2016
+
     set(handles.log,'String',{''});
     set(handles.threshSlider,'Min',0.0);
     set(handles.threshSlider,'Max',1.0);

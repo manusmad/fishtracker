@@ -1,4 +1,15 @@
 function handles = joinTracksAction(handles)
+% JOINTRACKSACTION GUI action to join two tracks
+%
+% Adds current state of tracks to the Undo stack. The user is then prompted 
+% to click two points in the spectrogram window, which are then matched to 
+% the nearest (time,freq) points. joinTracks is then called on these pairs 
+% of coordinates.
+% 
+% Manu S. Madhav
+% 2016
+% See also JOINTRACKS, MATCHTRACK
+
     if isfield(handles,'tracks')    
         handles = tracksView(handles);
         handles = addUndo(handles);
