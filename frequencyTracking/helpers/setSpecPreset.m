@@ -1,4 +1,9 @@
 function handles = setSpecPreset(handles)
+% SETSPECPRESET Defines and sets the spectrogram preset values.
+%
+% Manu S. Madhav
+% 2016
+
     preset = handles.specPreset;
     if strcmp(preset,'Rough')
         handles.params.nFFT = 16384;

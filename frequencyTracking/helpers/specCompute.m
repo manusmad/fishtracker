@@ -1,4 +1,14 @@
 function handles = specCompute(handles)
+% SPECCOMPUTE GUI interface to compute spectrogram
+%
+% Calls specFullFile on the electrode data using the current values of nFFT
+% and overlap. Also computes the magnitude and normalized magnitude of the
+% spectrogram, and sets GUI parameters.
+%
+% Manu S. Madhav
+% 2016
+% See also SPECFULLFILE, SETRANGES, COMPUTETHRESHOLD
+
     if isfield(handles,'elec')
         tic;
         spec = specFullFile(handles.elec,handles.params.nFFT,handles.params.overlap);

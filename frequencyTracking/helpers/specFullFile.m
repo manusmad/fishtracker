@@ -1,4 +1,13 @@
 function spec = specFullFile(elec,nFFT,overlap)
+% SPECFULLFILE Computes spectrogram of electrode data
+%
+% Uses the values of 'nFFT' and 'overlap' to compute spectrogram of the
+% 'elec' structure. Also cuts off the spectrogram at specified low and high
+% frequencies.
+%
+% Manu S. Madhav
+% 2016
+% See also SPECTROGRAM
 
 windadv = round(nFFT * overlap);
        

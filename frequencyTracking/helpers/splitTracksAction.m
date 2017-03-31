@@ -1,4 +1,14 @@
 function handles = splitTracksAction(handles)
+% SPLITTRACKSACTION GUI action to split track
+%
+% Adds current state of tracks to the Undo stack, then prompts the user to 
+% select track to split. Finds the closest track to clicked point, and 
+% calls splitTrack on that track.
+%
+% Manu S. Madhav
+% 2016
+% See also SPLITTRACK, MAGNETGINPUT2, MATCHTRACK
+
     if isfield(handles,'tracks')    
         handles = tracksView(handles);
         handles = addUndo(handles);

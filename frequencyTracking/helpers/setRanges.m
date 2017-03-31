@@ -1,5 +1,11 @@
-% Function to set ranges based on edited values of F1,F2,T1,T2
 function handles = setRanges(handles,F1,F2,T1,T2)
+% SETRANGES Function to set frequency and time ranges
+%
+% Sets ranges based on edited values of F1,F2,T1,T2
+%
+% Manu S. Madhav
+% 2016
+
     handles.params.rangeF1 = F1;
     handles.params.rangeF2 = F2;
     handles.params.rangeT1 = T1;

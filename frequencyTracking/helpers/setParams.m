@@ -1,4 +1,9 @@
 function handles = setParams(handles)
+% SETPARAMS Sets the GUI parameters using the params structure.
+%
+% Manu S. Madhav
+% 2016
+% See also COMPUTERESOLUTIONS, COMPUTETHRESHOLD
 
 set(handles.prefixEdit,'String',handles.params.smrFilePrefix);
     

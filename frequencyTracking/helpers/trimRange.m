@@ -1,4 +1,14 @@
 function handles = trimRange(handles)
+% TRIMRANGE Trims frequency and time ranges of electrode and spectrogram
+% data.
+%
+% Uses the entered values of range F1, F2, T1 and T2 to trim the
+% spectrogram data. T1 and T2 are used to trim electrode data.
+%
+% Manu S. Madhav
+% 2016
+% See also COMPUTERESOLUTIONS, NORMSPECMAG
+
     if isfield(handles,'elec')
         elec = handles.elec;
         tidx = elec.t>=handles.params.rangeT1 & elec.t<=handles.params.rangeT2;

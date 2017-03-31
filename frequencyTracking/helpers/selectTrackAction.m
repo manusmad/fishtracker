@@ -1,4 +1,13 @@
 function handles = selectTrackAction(handles)
+% SELECTTRACKACTION GUI interface to select track by clicking in window.
+%
+% Prompts user to click on the plot, finds the nearest track to clicked
+% point, and then select that track in the tracks listbox.
+%
+% Manu S. Madhav
+% 2016
+% See also MAGNETGINPUT2, MATCHTRACK, POPULATETRACKSLIST
+
     if isfield(handles,'tracks')
         handles = writeLog(handles,'Click to select track (Right click to cancel)');
         [time,freq] = MagnetGInput2(handles.hTracks,true);

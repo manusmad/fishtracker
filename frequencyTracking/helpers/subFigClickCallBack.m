@@ -1,5 +1,9 @@
-% To change focus when a subfigure is clicked in 'All' view
 function subFigClickCallBack(hObject,~,handles)
+% SUBFIGCLICKCALLBACK To change focus when a subfigure is clicked in 'All' view
+%
+% Manu S. Madhav
+% 2016
+
     persistent chk
     if isempty(chk)
         chk = 1;

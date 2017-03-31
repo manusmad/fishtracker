@@ -7,7 +7,7 @@ function handles = loadSpec(handles)
 %
 % Manu S. Madhav
 % 2016
-% See also SETRANGES, CREATESUBPLOTS, POPULATECHANNELLIST,
+% See also HLP_DESERIALIZE, SETRANGES, CREATESUBPLOTS, POPULATECHANNELLIST,
 % COMPUTERESOLUTIONS, COMPUTETHRESHOLD
 
     if isfield(handles,'specFilePath')

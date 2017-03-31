@@ -1,4 +1,14 @@
 function handles = saveTracks(handles)
+% SAVETRACKS Saves tracks file
+%
+% Prompts user to choose a filename. Makes sure there are no points with
+% the same track id and time. Fills the empty spots in all tracks with
+% NaNs, and then saves the track structure to file.
+%
+% Manu S. Madhav
+% 2016
+% See also NOREPEATTIMES, FILLWITHNANS
+
     if isfield(handles,'tracks')
         if isfield(handles,'tracksFileName') && isfield(handles,'tracksFilePath')
             [tracksFileName,tracksFilePath] = uiputfile(fullfile(handles.tracksFilePath,handles.tracksFileName),'Save tracks as...');

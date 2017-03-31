@@ -1,4 +1,10 @@
 function handles = setUndoVisibility(handles)
+% SETUNDOVISIBILITY Changes visibility of undo and redo buttons based on
+% whether undo and redo stacks are empty.
+%
+% Manu S. Madhav
+% 2016
+
     if handles.undo.size()
         set(handles.tracksUndoBtn,'Enable','on');
     else

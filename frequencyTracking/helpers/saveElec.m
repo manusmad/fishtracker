@@ -1,4 +1,13 @@
 function handles = saveElec(handles)
+% SAVEELEC Saves electrode file
+%
+% Prompts user to choose a filename, and then saves the elec data structure 
+% to that file.
+%
+% Manu S. Madhav
+% 2016
+% See also SAVEFAST
+
     if isfield(handles,'elec')
         if isfield(handles,'elecFileName') && isfield(handles,'elecFilePath')
             [elecFileName,elecFilePath] = uiputfile(fullfile(handles.elecFilePath,handles.elecFileName),'Save electrode data as...');

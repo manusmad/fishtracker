@@ -1,4 +1,15 @@
 function handles = refreshPlot(handles)
+% REFRESHPLOT Main plot function for frequencyTracking
+%
+% Checks which plot mode options are active. Selects and toggles visibility
+% for the appropriate axes, either for single plot or multiple subplots.
+% Uses plotSpectrogram or plotTracks to plot on the axes, with the
+% appropriate limits.
+%
+% Manu S. Madhav
+% 2016
+% See also PLOTSPECTROGRAM, PLOTTRACKS
+
     plotFlag = 0;
     % Clear selections
     if isfield(handles,'hPoly');

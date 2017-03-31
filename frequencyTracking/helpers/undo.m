@@ -1,5 +1,13 @@
-% Main undo function
 function handles = undo(handles)
+% UNDO Main undo function
+%
+% Push the current tracks state to the redo stack. Pop the first element 
+% from the undo stack, and make that the current tracks state.
+%
+% Manu S. Madhav
+% 2016
+% See also SETUNDOVISIBILITY, POPULATETRACKSLIST
+
     if isfield(handles,'tracks')
         if handles.undo.size()
             handles.redo.push(handles.tracks);

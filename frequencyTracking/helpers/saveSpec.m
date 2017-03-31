@@ -1,4 +1,13 @@
 function handles = saveSpec(handles)
+% SAVESPEC Saves spectrogram file
+%
+% Prompts user to choose a filename, and then serializes and saves the spec
+% data structure to that file.
+%
+% Manu S. Madhav
+% 2016
+% See also HLP_SERIALIZE
+
     if isfield(handles,'spec')
         if isfield(handles,'specFileName') && isfield(handles,'specFilePath')
             [specFileName,specFilePath] = uiputfile(fullfile(handles.specFilePath,handles.specFileName),'Save spectrogram as...');
