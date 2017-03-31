@@ -1,4 +1,13 @@
 function handles = newLine(handles)
+% NEWLINE GUI interface for adding a new line to a track. 
+%
+% Prompts the user to click two points, and calls the addLine function 
+% with the currently selected track id and the two points.
+%
+% Manu S. Madhav
+% 2016
+% See also ADDLINE
+
     isConst = 1;
        
     if isfield(handles,'tracks')

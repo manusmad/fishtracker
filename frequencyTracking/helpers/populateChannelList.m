@@ -1,6 +1,11 @@
-% --- Function to populate the channel list box and clear the enable
-% selections.
 function handles = populateChannelList(handles)
+% POPULATECHANNELLIST Function to populate the channel listbox.
+%
+% Fills the channel listbox with information from the metadata structure.
+% 
+% Manu S. Madhav
+% 2016
+
     if isfield(handles,'meta')
         list = cell(handles.meta.nCh,1);
         for k = 1:handles.meta.nCh

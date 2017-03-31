@@ -1,4 +1,14 @@
 function [ret,h] = plotTracks(ax,tracks,selId)
+% PLOTTRACKS Plots track lines on spectrogram
+%
+% Plots track points in the 'track' structure axis 'ax'. Each track is 
+% plotted in a separate color. The selected tracks in 'selId' are
+% highlighted.
+% Returns ret=1 if successful, else ret = 0. 'h' is the returned handle to
+% the plot.
+%
+% Manu S. Madhav
+% 2016
 
 if nargin<3
     selId = [];
@@ -6,10 +16,7 @@ end
 
 ret = 0;
 ids = unique([tracks.id]);
-%col = distinguishable_colors(nTracks,{'r','k','y'});
 col = distinguishable_colors(max(ids),{'r','k','y'});
-% nTracks = length(ids);
-% h = zeros(nTracks,1);
 idsAll = unique([tracks.id]);
 
 % Select which tracks to plot

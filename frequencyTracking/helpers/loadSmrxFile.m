@@ -1,5 +1,5 @@
 function elec = loadSmrxFile(dataFolder,smrxFile,prefix)
-% LOADSMRFILE Loads Spike2 smrx raw data file
+% LOADSMRXFILE Loads Spike2 smrx raw data file
 %
 % Uses the CEDS64 library to attempt to load the *.smrx file smrxFile. Uses the
 % string variable prefix to look for Channel names in the file. Will only

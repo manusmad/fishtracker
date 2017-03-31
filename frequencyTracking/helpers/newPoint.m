@@ -1,4 +1,14 @@
 function handles = newPoint(handles)
+% NEWPOINT GUI interface for adding a new point to a track. 
+%
+% Prompts the user to click one point, and calls the addPoint function 
+% with the currently selected track id and the clicked point. If the const
+% checkbox is on, the user can keep clicking points.
+%
+% Manu S. Madhav
+% 2016
+% See also ADDPOINTS
+
     isConst = 1;
     if isfield(handles,'tracks')
         handles = tracksView(handles);

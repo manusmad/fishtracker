@@ -1,5 +1,11 @@
-% Main Keypress handling function, add keyboard shortcuts here 
 function handles = manageKeyPresses(handles,eventdata)
+% MANAGEKEYPRESSES Main Keypress handling function
+%
+% Sets all the keyboard shortcuts for the frequencyTracking GUI
+%
+% Manu S. Madhav
+% 2016
+
     if strcmp(eventdata.Key,'z') && ~isempty(eventdata.Modifier) && strcmp(eventdata.Modifier,'control')
         handles = undo(handles);
     elseif strcmp(eventdata.Key,'u') && isempty(eventdata.Modifier)

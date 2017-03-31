@@ -1,4 +1,13 @@
 function handles = populateTracksList(handles)
+% POPULATETRACKSLIST Function to populate the tracks listbox.
+%
+% Fills the tracks listbox with the track ids present, assigns each one a
+% color, and fills the background of each entry in the listbox with that
+% color.
+% 
+% Manu S. Madhav
+% 2016
+
     if isfield(handles,'tracks')
         % If there are f1=NaN only arrays, eliminate them.
         ids = unique([handles.tracks.id]);

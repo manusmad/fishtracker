@@ -1,4 +1,15 @@
 function handles = loadSpec(handles)
+% LOADSPEC Loads spectrogram file
+%
+% Prompts user to choose an spectrogram data file, and then attempts to load
+% it while showing a progress bar. Once file is loaded, fills in the spec
+% metadata structure, and runs the GUI commands to update these parameters.
+%
+% Manu S. Madhav
+% 2016
+% See also SETRANGES, CREATESUBPLOTS, POPULATECHANNELLIST,
+% COMPUTERESOLUTIONS, COMPUTETHRESHOLD
+
     if isfield(handles,'specFilePath')
         [specFileName,specFilePath] = uigetfile([handles.specFilePath filesep '*.mat'],'Choose spectrogram file');
     elseif isfield(handles,'lastOpenPath')

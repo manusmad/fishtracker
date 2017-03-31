@@ -1,4 +1,11 @@
 function tracks = noRepeatTimes(tracks)
+% NOREPEATTRACKS Delete duplicate track points
+%
+% If any track points have the same id and the same time, keep the track
+% point with the highest max amplitude, and delete the rest.
+%
+% Manu S. Madhav
+% 2016
 
 A = [[tracks.id];[tracks.t]]'; % Combination of id and time should be unique.
 [A,idx] = sortrows(A);

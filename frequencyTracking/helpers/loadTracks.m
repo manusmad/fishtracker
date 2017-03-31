@@ -1,4 +1,14 @@
 function handles = loadTracks(handles)
+% LOADTRACKS Loads tracks file
+%
+% Prompts user to choose an tracks data file, and then attempts to load
+% it while showing a progress bar. Once file is loaded, runs GUI commands 
+% to update parameters.
+%
+% Manu S. Madhav
+% 2016
+% See also POPULATETRACKSLIST
+
     if isfield(handles,'tracksFilePath')
         [tracksFileName,tracksFilePath] = uigetfile([handles.tracksFilePath filesep '*.mat'],'Choose tracks file');    
     elseif isfield(handles,'lastOpenPath')
