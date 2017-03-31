@@ -1,3 +1,12 @@
+% CORRECTTRACKS Script for correcting tracks with some errors
+% 
+% Not a part of the GUI code, but can be used to correct some errors in
+% manually edited tracks files.
+%
+% Manu S. Madhav
+% 2016
+% See also NOREPEATTIMES, FILLWITHNANS
+
 % Open tracks file
 [tracksFileNames,filePath] = uigetfile('*tracks.mat','MultiSelect','on');        
 if ~iscell(tracksFileNames)
@@ -9,7 +18,6 @@ specFileNames = cell(N,1);
 for k = 1:N
     specFileNames{k} = [tracksFileNames{k}(1:end-10) 'spec.mat'];
 end
-
 
 addpath('serialization');
 for k = 1:N
@@ -42,6 +50,9 @@ for k = 1:N
         end
     end
     tracks(j) = [];
+    
+    % Ensure that there are no repeating times in each track.
+    tracks = noRepeatTimes(tracks);
     
     % Add NaNs in time instances where the fish is not being detected.
     tracks = fillWithNaNs(tracks,spec.T,size(spec.S,3));

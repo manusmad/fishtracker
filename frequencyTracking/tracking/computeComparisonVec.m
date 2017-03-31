@@ -1,8 +1,13 @@
-% Pre-compute comparison vector for candidates
 function cand = computeComparisonVec(cand)
+% COMPUTECOMPARISONVEC Compute comparison vector for candidates
+% 
+% Comparison vector is just the concatenated amplitudes of the fundamental
+% and second harmonic, but this can be changed.
+%
+% Manu S. Madhav
+% 2016
+
     for k = 1:length(cand)
         c = cand(k);
-%         cand(k).vec = [500*c.f1;2*mean(c.a1./c.a2);(c.a1-min(c.a1))/(max(c.a1)-min(c.a1))];
-%         cand(k).vec = [30*c.f1;c.a1;c.a2];
         cand(k).vec = [c.a1;c.a2];
     end

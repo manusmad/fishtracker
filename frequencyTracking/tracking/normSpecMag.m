@@ -1,5 +1,12 @@
-% Return normalized magnitude of complex spectrogram (F,T,Ch)
 function Smag = normSpecMag(S)
+% NORMSPECMAG Return normalized magnitude of complex spectrogram
+% 
+% Spectrogram 'S' is a complex 3-D matrix with dimensions
+% (frequency,time,channels).
+%
+% Manu S. Madhav
+% 2016
+
     nF = size(S,1);
     Smag = abs(S);
     % Normalize
